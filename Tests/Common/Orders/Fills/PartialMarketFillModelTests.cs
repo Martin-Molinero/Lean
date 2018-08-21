@@ -26,6 +26,7 @@ using QuantConnect.Orders;
 using QuantConnect.Orders.Fills;
 using QuantConnect.Securities;
 using QuantConnect.Tests.Engine;
+using QuantConnect.Util;
 
 namespace QuantConnect.Tests.Common.Orders.Fills
 {
@@ -101,7 +102,7 @@ namespace QuantConnect.Tests.Common.Orders.Fills
             var config = new SubscriptionDataConfig(typeof(TradeBar), Symbols.SPY, Resolution.Second, TimeZones.NewYork, TimeZones.NewYork, false, false, false);
             security = new Security(SecurityExchangeHours.AlwaysOpen(TimeZones.NewYork), config, new Cash(CashBook.AccountCurrency, 0, 1m), SymbolProperties.GetDefault(CashBook.AccountCurrency));
 
-            model = new PartialMarketFillModel(algorithm.Transactions, 2);
+            model = new PartialMarketFillModel(algorithm.Transactions, Resolution.Second, 2);
 
             algorithm.Securities.Add(security);
             algorithm.Securities[Symbols.SPY].FillModel = model;
@@ -131,6 +132,7 @@ namespace QuantConnect.Tests.Common.Orders.Fills
         {
             private readonly decimal _percent;
             private readonly IOrderProvider _orderProvider;
+            private readonly Resolution _resolution;
 
             /// <summary>
             /// Initializes a new instance of the <see cref="PartialMarketFillModel"/> class
@@ -140,11 +142,13 @@ namespace QuantConnect.Tests.Common.Orders.Fills
             /// Securities["SPY"].FillModel = new PartialMarketFillModel(Transactions, 2);
             /// </code>
             /// <param name="orderProvider">The order provider used for getting order tickets</param>
+            /// <param name="resolution">Used to determine the increment</param>
             /// <param name="numberOfFills"></param>
-            public PartialMarketFillModel(IOrderProvider orderProvider, int numberOfFills = 1)
+            public PartialMarketFillModel(IOrderProvider orderProvider, Resolution resolution, int numberOfFills = 1)
             {
                 _orderProvider = orderProvider;
                 _percent = 1m / numberOfFills;
+                _resolution = resolution;
             }
 
             /// <summary>
@@ -166,7 +170,7 @@ namespace QuantConnect.Tests.Common.Orders.Fills
 
                 // make sure some time has passed
                 var lastOrderEvent = ticket.OrderEvents.LastOrDefault();
-                var increment = TimeSpan.FromTicks(Math.Max(asset.Resolution.ToTimeSpan().Ticks, 1));
+                var increment = TimeSpan.FromTicks(Math.Max(_resolution.ToTimeSpan().Ticks, 1));
                 if (lastOrderEvent != null && currentUtcTime - lastOrderEvent.UtcTime < increment)
                 {
                     // wait a minute between fills

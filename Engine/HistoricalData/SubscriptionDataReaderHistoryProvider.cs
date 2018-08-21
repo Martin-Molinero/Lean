@@ -133,7 +133,7 @@ namespace QuantConnect.Lean.Engine.HistoricalData
                 }
 
                 var readOnlyRef = Ref.CreateReadOnly(() => request.FillForwardResolution.Value.ToTimeSpan());
-                reader = new FillForwardEnumerator(reader, security.Exchange, readOnlyRef, security.IsExtendedMarketHours, end, config.Increment, config.DataTimeZone);
+                reader = new FillForwardEnumerator(reader, security.Exchange, readOnlyRef, config.ExtendedMarketHours, end, config.Increment, config.DataTimeZone);
             }
 
             // since the SubscriptionDataReader performs an any overlap condition on the trade bar's entire
@@ -141,7 +141,7 @@ namespace QuantConnect.Lean.Engine.HistoricalData
             // so to combat this we deliberately filter the results from the data reader to fix these cases
             // which only apply to non-tick data
 
-            reader = new SubscriptionFilterEnumerator(reader, security, end);
+            reader = new SubscriptionFilterEnumerator(reader, security, end, config.ExtendedMarketHours);
             reader = new FilterEnumerator<BaseData>(reader, data =>
             {
                 // allow all ticks

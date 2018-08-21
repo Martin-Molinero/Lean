@@ -1,11 +1,11 @@
 /*
  * QUANTCONNECT.COM - Democratizing Finance, Empowering Individuals.
  * Lean Algorithmic Trading Engine v2.0. Copyright 2014 QuantConnect Corporation.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,9 +17,11 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using QuantConnect.Data;
 using QuantConnect.Interfaces;
 using QuantConnect.Logging;
 using QuantConnect.Packets;
+using QuantConnect.Util;
 
 namespace QuantConnect.Brokerages
 {
@@ -74,7 +76,7 @@ namespace QuantConnect.Brokerages
                 case BrokerageMessageType.Information:
                     _algorithm.Debug("Brokerage Info: " + message.Message);
                     break;
-                
+
                 case BrokerageMessageType.Warning:
                     _algorithm.Error("Brokerage Warning: " + message.Message);
                     break;
@@ -88,13 +90,15 @@ namespace QuantConnect.Brokerages
                     _connected = false;
                     Log.Trace("DefaultBrokerageMessageHandler.Handle(): Disconnected.");
 
+                    var subscriptionsDataConfigsBySymbol = _algorithm.SubscriptionManager.SubscriptionsBySymbol();
+
                     // check to see if any non-custom security exchanges are open within the next x minutes
                     var open = (from kvp in _algorithm.Securities
                                 let security = kvp.Value
                                 where security.Type != SecurityType.Base
                                 let exchange = security.Exchange
                                 let localTime = _algorithm.UtcTime.ConvertFromUtc(exchange.TimeZone)
-                                where exchange.IsOpenDuringBar(localTime, localTime + _openThreshold, security.IsExtendedMarketHours)
+                                where exchange.IsOpenDuringBar(localTime, localTime + _openThreshold, subscriptionsDataConfigsBySymbol[security.Symbol].IsExtendedMarketHours())
                                 select security).Any();
 
                     // if any are open then we need to kill the algorithm
@@ -118,7 +122,7 @@ namespace QuantConnect.Brokerages
                                                  where security.Type != SecurityType.Base
                                                  let exchange = security.Exchange
                                                  let localTime = _algorithm.UtcTime.ConvertFromUtc(exchange.TimeZone)
-                                                 let marketOpen = exchange.Hours.GetNextMarketOpen(localTime, security.IsExtendedMarketHours)
+                                                 let marketOpen = exchange.Hours.GetNextMarketOpen(localTime, subscriptionsDataConfigsBySymbol[security.Symbol].IsExtendedMarketHours())
                                                  let marketOpenUtc = marketOpen.ConvertToUtc(exchange.TimeZone)
                                                  select marketOpenUtc).Min();
                         }

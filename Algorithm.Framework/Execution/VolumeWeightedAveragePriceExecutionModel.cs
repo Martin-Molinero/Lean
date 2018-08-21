@@ -156,8 +156,8 @@ namespace QuantConnect.Algorithm.Framework.Execution
             public SymbolData(QCAlgorithmFramework algorithm, Security security)
             {
                 Security = security;
-                Consolidator = algorithm.ResolveConsolidator(security.Symbol, security.Resolution);
-                var name = algorithm.CreateIndicatorName(security.Symbol, "VWAP", security.Resolution);
+                Consolidator = algorithm.ResolveConsolidator(security.Symbol);
+                var name = algorithm.CreateIndicatorName(security.Symbol, "VWAP");
                 VWAP = new IntradayVwap(name);
 
                 algorithm.RegisterIndicator(security.Symbol, VWAP, Consolidator, bd => (BaseData) bd);

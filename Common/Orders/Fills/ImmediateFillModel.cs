@@ -16,7 +16,6 @@
 using System;
 using System.Linq;
 using QuantConnect.Data.Market;
-using QuantConnect.Logging;
 using QuantConnect.Securities;
 
 namespace QuantConnect.Orders.Fills
@@ -26,6 +25,11 @@ namespace QuantConnect.Orders.Fills
     /// </summary>
     public class ImmediateFillModel : IFillModel
     {
+        /// <summary>
+        /// Determines if the fill model will allow extended market hours fills
+        /// </summary>
+        public bool AllowExtendedMarketHoursFills { get; set; }
+
         /// <summary>
         /// Default market fill model for the base security class. Fills at the last traded price.
         /// </summary>
@@ -43,7 +47,7 @@ namespace QuantConnect.Orders.Fills
             if (order.Status == OrderStatus.Canceled) return fill;
 
             // make sure the exchange is open/normal market hours before filling
-            if (!IsExchangeOpen(asset, false)) return fill;
+            if (!IsExchangeOpen(asset, false, AllowExtendedMarketHoursFills)) return fill;
 
             //Order [fill]price for a market order model is the current security price
             fill.FillPrice = GetPrices(asset, order.Direction).Current;
@@ -91,7 +95,7 @@ namespace QuantConnect.Orders.Fills
             if (order.Status == OrderStatus.Canceled) return fill;
 
             // make sure the exchange is open/normal market hours before filling
-            if (!IsExchangeOpen(asset, false)) return fill;
+            if (!IsExchangeOpen(asset, false, AllowExtendedMarketHoursFills)) return fill;
 
             //Get the range of prices in the last bar:
             var prices = GetPrices(asset, order.Direction);
@@ -158,7 +162,7 @@ namespace QuantConnect.Orders.Fills
             if (order.Status == OrderStatus.Canceled) return fill;
 
             // make sure the exchange is open before filling -- allow pre/post market fills to occur
-            if (!IsExchangeOpen(asset, true)) return fill;
+            if (!IsExchangeOpen(asset, true, AllowExtendedMarketHoursFills)) return fill;
 
             //Get the range of prices in the last bar:
             var prices = GetPrices(asset, order.Direction);
@@ -227,7 +231,7 @@ namespace QuantConnect.Orders.Fills
             if (order.Status == OrderStatus.Canceled) return fill;
 
             // make sure the exchange is open before filling -- allow pre/post market fills to occur
-            if (!IsExchangeOpen(asset, true)) return fill;
+            if (!IsExchangeOpen(asset, true, AllowExtendedMarketHoursFills)) return fill;
 
             //Get the range of prices in the last bar:
             var prices = GetPrices(asset, order.Direction);
@@ -299,7 +303,7 @@ namespace QuantConnect.Orders.Fills
 
             // wait until market open
             // make sure the exchange is open/normal market hours before filling
-            if (!IsExchangeOpen(asset, false)) return fill;
+            if (!IsExchangeOpen(asset, false, AllowExtendedMarketHoursFills)) return fill;
 
             fill.FillPrice = GetPrices(asset, order.Direction).Open;
             fill.Status = OrderStatus.Filled;
@@ -350,7 +354,7 @@ namespace QuantConnect.Orders.Fills
                 return fill;
             }
             // make sure the exchange is open/normal market hours before filling
-            if (!IsExchangeOpen(asset, false)) return fill;
+            if (!IsExchangeOpen(asset, false, AllowExtendedMarketHoursFills)) return fill;
 
             fill.FillPrice = GetPrices(asset, order.Direction).Close;
             fill.Status = OrderStatus.Filled;
@@ -442,13 +446,13 @@ namespace QuantConnect.Orders.Fills
         /// <summary>
         /// Determines if the exchange is open using the current time of the asset
         /// </summary>
-        private static bool IsExchangeOpen(Security asset, bool allowExtendedMarketHoursFills)
+        private static bool IsExchangeOpen(Security asset, bool enableExtendedMarketHoursFills, bool allowExtendedMarketHoursFills)
         {
             if (!asset.Exchange.DateTimeIsOpen(asset.LocalTime))
             {
                 // if we're not open at the current time exactly, check the bar size, this handle large sized bars (hours/days)
                 var currentBar = asset.GetLastData();
-                var isExtendedMarketHours = allowExtendedMarketHoursFills && asset.IsExtendedMarketHours;
+                var isExtendedMarketHours = enableExtendedMarketHoursFills && allowExtendedMarketHoursFills;
                 if (asset.LocalTime.Date != currentBar.EndTime.Date || !asset.Exchange.IsOpenDuringBar(currentBar.Time, currentBar.EndTime, isExtendedMarketHours))
                 {
                     return false;

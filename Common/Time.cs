@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using NodaTime;
+using QuantConnect.Data;
 using QuantConnect.Logging;
 using QuantConnect.Securities;
 
@@ -293,12 +294,14 @@ namespace QuantConnect
         /// <param name="securities">Securities we have in portfolio</param>
         /// <param name="from">Start date</param>
         /// <param name="thru">End date</param>
+        /// <param name="subscriptionDataConfigs">The subscription data configurations of the securities.</param>
         /// <returns>Enumerable date range</returns>
-        public static IEnumerable<DateTime> EachTradeableDay(ICollection<Security> securities, DateTime from, DateTime thru)
+        public static IEnumerable<DateTime> EachTradeableDay(ICollection<Security> securities, DateTime from, DateTime thru,
+                                                            IReadOnlyDictionary<Symbol, IReadOnlyCollection<SubscriptionDataConfig>> subscriptionsBySymbol)
         {
             for (var day = from.Date; day.Date <= thru.Date; day = day.AddDays(1))
             {
-                if (TradableDate(securities, day))
+                if (TradableDate(securities, day, subscriptionsBySymbol))
                 {
                     yield return day;
                 }
@@ -381,15 +384,17 @@ namespace QuantConnect
         /// Make sure this date is not a holiday, or weekend for the securities in this algorithm.
         /// </summary>
         /// <param name="securities">Security manager from the algorithm</param>
-        /// <param name="day">DateTime to check if trade-able.</param>
+        /// <param name="day">DateTime to check if trade-able.</param
+        /// <param name="configsBySymbol">The subscription data configurations of organized by Symbol</param>
         /// <returns>True if tradeable date</returns>
-        public static bool TradableDate(IEnumerable<Security> securities, DateTime day)
+        public static bool TradableDate(IEnumerable<Security> securities, DateTime day,
+                                        IReadOnlyDictionary<Symbol, IReadOnlyCollection<SubscriptionDataConfig>> configsBySymbol)
         {
             try
             {
                 foreach (var security in securities)
                 {
-                    if (security.Exchange.IsOpenDuringBar(day.Date, day.Date.AddDays(1), security.IsExtendedMarketHours)) return true;
+                    if (security.Exchange.IsOpenDuringBar(day.Date, day.Date.AddDays(1), configsBySymbol[security.Symbol].IsExtendedMarketHours())) return true;
                 }
             }
             catch (Exception err)
@@ -406,8 +411,10 @@ namespace QuantConnect
         /// <param name="securities">Securities we're trading</param>
         /// <param name="start">Start of Date Loop</param>
         /// <param name="finish">End of Date Loop</param>
+        /// <param name="subscriptionsBySymbol">The subscription data configurations organized by Symbol.</param>
         /// <returns>Number of dates</returns>
-        public static int TradeableDates(ICollection<Security> securities, DateTime start, DateTime finish)
+        public static int TradeableDates(ICollection<Security> securities, DateTime start, DateTime finish,
+                                         IReadOnlyDictionary<Symbol, IReadOnlyCollection<SubscriptionDataConfig>>  subscriptionsBySymbol)
         {
             var count = 0;
             Log.Trace("Time.TradeableDates(): Security Count: " + securities.Count);
@@ -415,7 +422,7 @@ namespace QuantConnect
             {
                 foreach (var day in EachDay(start, finish))
                 {
-                    if (TradableDate(securities, day))
+                    if (TradableDate(securities, day, subscriptionsBySymbol))
                     {
                         count++;
                     }

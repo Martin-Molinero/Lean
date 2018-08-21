@@ -1,10 +1,27 @@
-﻿using System;
+﻿/*
+ * QUANTCONNECT.COM - Democratizing Finance, Empowering Individuals.
+ * Lean Algorithmic Trading Engine v2.0. Copyright 2014 QuantConnect Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using QuantConnect.Algorithm;
 using QuantConnect.Brokerages;
+using QuantConnect.Data;
 using QuantConnect.Data.Auxiliary;
+using QuantConnect.Data.Market;
 using QuantConnect.Lean.Engine.DataFeeds;
 using QuantConnect.Lean.Engine.Results;
 using QuantConnect.Packets;
@@ -17,6 +34,7 @@ namespace QuantConnect.Tests.Engine
     {
         private TestableLiveTradingDataFeed _liveTradingDataFeed;
         private SecurityExchangeHours _exchangeHours;
+        private SubscriptionDataConfig _configuration;
 
         [TestFixtureSetUp]
         public void Setup()
@@ -47,6 +65,8 @@ namespace QuantConnect.Tests.Engine
             _liveTradingDataFeed.Initialize(algo, jobPacket, new LiveTradingResultHandler(), new LocalDiskMapFileProvider(), null, new DefaultDataProvider());
 
             algo.Initialize();
+
+            _configuration = new SubscriptionDataConfig(typeof(TradeBar), Symbols.SPY, Resolution.Daily, _exchangeHours.TimeZone, _exchangeHours.TimeZone, false, false, false);
         }
 
         /// <summary>
@@ -75,7 +95,7 @@ namespace QuantConnect.Tests.Engine
         public void ClosedExchanges_DoNotIndicateRealTimePriceUpdates()
         {
             var security = new Security(Symbol.Empty, _exchangeHours, new Cash("USA", 100m, 1m), SymbolProperties.GetDefault("USA"));
-            var subscription = new Subscription(null, security, null, null, new TimeZoneOffsetProviderNeverOpen(), DateTime.MinValue, DateTime.MaxValue, false);
+            var subscription = new Subscription(null, security, _configuration, null, new TimeZoneOffsetProviderNeverOpen(), DateTime.MinValue, DateTime.MaxValue, false);
             Assert.IsFalse(_liveTradingDataFeed.UpdateRealTimePrice(subscription, new TimeZoneOffsetProviderNeverOpen()));
         }
 
@@ -83,7 +103,7 @@ namespace QuantConnect.Tests.Engine
         public void OpenExchanges_DoIndicateRealTimePriceUpdates()
         {
             var security = new Security(Symbol.Empty, _exchangeHours, new Cash("USA", 100m, 1m), SymbolProperties.GetDefault("USA"));
-            var subscription = new Subscription(null, security, null, null, new TimeZoneOffsetProviderAlwaysOpen(), DateTime.MinValue, DateTime.MaxValue, false);
+            var subscription = new Subscription(null, security, _configuration, null, new TimeZoneOffsetProviderAlwaysOpen(), DateTime.MinValue, DateTime.MaxValue, false);
             Assert.IsTrue(_liveTradingDataFeed.UpdateRealTimePrice(subscription, new TimeZoneOffsetProviderAlwaysOpen()));
         }
 

@@ -37,11 +37,12 @@ namespace QuantConnect.Securities
         /// Execute each of the internally held initializers in sequence
         /// </summary>
         /// <param name="security">The security to be initialized</param>
-        public void Initialize(Security security)
+        /// <param name="extendedMarketHours">True, allow extended market hours fills </param>
+        public void Initialize(Security security, bool extendedMarketHours)
         {
             foreach (var initializer in _initializers)
             {
-                initializer.Initialize(security);
+                initializer.Initialize(security, extendedMarketHours);
             }
         }
     }

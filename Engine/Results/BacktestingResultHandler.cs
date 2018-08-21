@@ -437,7 +437,7 @@ namespace QuantConnect.Lean.Engine.Results
 
             //Setup the sampling periods:
             _jobDays = Algorithm.Securities.Count > 0
-                ? Time.TradeableDates(Algorithm.Securities.Values, _job.PeriodStart, _job.PeriodFinish)
+                ? Time.TradeableDates(Algorithm.Securities.Values, _job.PeriodStart, _job.PeriodFinish, Algorithm.SubscriptionManager.SubscriptionsBySymbol())
                 : Convert.ToInt32((_job.PeriodFinish.Date - _job.PeriodStart.Date).TotalDays) + 1;
 
             //Set the security / market types.

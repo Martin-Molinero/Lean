@@ -113,8 +113,8 @@ class VolumeWeightedAveragePriceExecutionModel(ExecutionModel):
 class SymbolData:
     def __init__(self, algorithm, security):
         self.Security = security
-        self.Consolidator = algorithm.ResolveConsolidator(security.Symbol, security.Resolution)
-        name = algorithm.CreateIndicatorName(security.Symbol, "VWAP", security.Resolution)
+        self.Consolidator = algorithm.ResolveConsolidator(security.Symbol)
+        name = algorithm.CreateIndicatorName(security.Symbol, "VWAP")
         self.vwap = IntradayVwap(name)
         algorithm.RegisterIndicator(security.Symbol, self.vwap, self.Consolidator)
 

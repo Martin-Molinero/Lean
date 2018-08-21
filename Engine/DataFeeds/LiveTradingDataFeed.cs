@@ -562,7 +562,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
                 // define market hours and user filters to incoming data
                 if (request.Configuration.IsFilteredSubscription)
                 {
-                    enumerator = new SubscriptionFilterEnumerator(enumerator, request.Security, localEndTime);
+                    enumerator = new SubscriptionFilterEnumerator(enumerator, request.Security, localEndTime, request.Configuration.ExtendedMarketHours);
                 }
 
                 // finally, make our subscriptions aware of the frontier of the data feed, prevents future data from spewing into the feed
@@ -724,7 +724,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
             return subscription != null &&
                    subscription.Security.Exchange.Hours.IsOpen(
                        timeZoneOffsetProvider.ConvertFromUtc(_timeProvider.GetUtcNow()),
-                       subscription.Security.IsExtendedMarketHours);
+                       subscription.Configuration.ExtendedMarketHours);
         }
 
         /// <summary>

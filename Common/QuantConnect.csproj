@@ -180,6 +180,7 @@
     <Compile Include="Chart.cs" />
     <Compile Include="ChartPoint.cs" />
     <Compile Include="Python\BuyingPowerModelPythonWrapper.cs" />
+    <Compile Include="Data\SubscriptionDataConfigExtensions.cs" />
     <Compile Include="Series.cs" />
     <Compile Include="Data\Custom\Intrinio\IntrinioConfig.cs" />
     <Compile Include="Data\Custom\Intrinio\IntrinioEconomicData.cs" />

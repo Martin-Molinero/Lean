@@ -77,10 +77,11 @@ namespace QuantConnect.Algorithm.CSharp
             /// Initializes the specified security by setting up the models
             /// </summary>
             /// <param name="security">The security to be initialized</param>
-            public override void Initialize(Security security)
+            /// <param name="extendedMarketHours">True, allow extended market hours fills </param>
+            public override void Initialize(Security security, bool extendedMarketHours)
             {
                 // first call the default implementation
-                base.Initialize(security);
+                base.Initialize(security, extendedMarketHours);
 
                 // now apply our data normalization mode
                 security.SetDataNormalizationMode(_dataNormalizationMode);

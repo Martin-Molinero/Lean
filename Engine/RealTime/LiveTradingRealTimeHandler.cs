@@ -23,10 +23,10 @@ using QuantConnect.Lean.Engine.Results;
 using QuantConnect.Logging;
 using QuantConnect.Packets;
 using QuantConnect.Scheduling;
-using QuantConnect.Util;
 using QuantConnect.Securities;
 using System.Collections.Generic;
 using QuantConnect.Configuration;
+using QuantConnect.Data;
 
 namespace QuantConnect.Lean.Engine.RealTime
 {
@@ -81,12 +81,14 @@ namespace QuantConnect.Lean.Engine.RealTime
             // add end of day events for each tradeable day
             Add(ScheduledEventFactory.EveryAlgorithmEndOfDay(_algorithm, _resultHandler, todayInAlgorithmTimeZone, Time.EndOfTime, ScheduledEvent.AlgorithmEndOfDayDelta, DateTime.UtcNow));
 
+            var subscriptionsBySymbol = algorithm.SubscriptionManager.SubscriptionsBySymbol();
+
             // add end of trading day events for each security
             foreach (var kvp in _algorithm.Securities)
             {
                 var security = kvp.Value;
 
-                if (!security.IsInternalFeed())
+                if (!subscriptionsBySymbol[security.Symbol].IsInternalFeed())
                 {
                     // assumes security.Exchange has been updated with today's hours via RefreshMarketHoursToday
                     Add(ScheduledEventFactory.EverySecurityEndOfDay(_algorithm, _resultHandler, security, todayInAlgorithmTimeZone, Time.EndOfTime, ScheduledEvent.SecurityEndOfDayDelta, DateTime.UtcNow));

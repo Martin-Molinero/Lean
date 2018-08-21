@@ -38,11 +38,12 @@ namespace QuantConnect.Python
         /// Initializes the specified security
         /// </summary>
         /// <param name="security">The security to be initialized</param>
-        public void Initialize(Security security)
+        /// <param name="extendedMarketHours">True, allow extended market hours fills </param>
+        public void Initialize(Security security, bool extendedMarketHours)
         {
             using (Py.GIL())
             {
-                _model.Initialize(security);
+                _model.Initialize(security, extendedMarketHours);
             }
         }
     }

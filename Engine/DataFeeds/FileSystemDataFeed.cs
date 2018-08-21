@@ -515,13 +515,15 @@ namespace QuantConnect.Lean.Engine.DataFeeds
                 var fillForwardResolution = _subscriptions.UpdateAndGetFillForwardResolution(request.Configuration);
 
                 enumerator = new FillForwardEnumerator(enumerator, request.Security.Exchange, fillForwardResolution,
-                    request.Security.IsExtendedMarketHours, request.EndTimeLocal, request.Configuration.Resolution.ToTimeSpan(), request.Configuration.DataTimeZone);
+                    request.Configuration.ExtendedMarketHours, request.EndTimeLocal,
+                    request.Configuration.Resolution.ToTimeSpan(), request.Configuration.DataTimeZone);
             }
 
             // optionally apply exchange/user filters
             if (request.Configuration.IsFilteredSubscription)
             {
-                enumerator = SubscriptionFilterEnumerator.WrapForDataFeed(_resultHandler, enumerator, request.Security, request.EndTimeLocal);
+                enumerator = SubscriptionFilterEnumerator.WrapForDataFeed(_resultHandler, enumerator, request.Security,
+                                                                          request.EndTimeLocal, request.Configuration.ExtendedMarketHours);
             }
 
             return enumerator;

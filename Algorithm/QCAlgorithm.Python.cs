@@ -92,11 +92,13 @@ namespace QuantConnect.Algorithm
             var symbolObject = new Symbol(SecurityIdentifier.GenerateBase(symbol, Market.USA), symbol);
             var symbolProperties = _symbolPropertiesDatabase.GetSymbolProperties(Market.USA, symbol, SecurityType.Base, CashBook.AccountCurrency);
 
+            RemoveExistingInternalFeedSecurity(symbolObject);
+
             //Add this new generic data as a tradeable security:
             var security = SecurityManager.CreateSecurity(dataType, Portfolio, SubscriptionManager, marketHoursDbEntry.ExchangeHours, marketHoursDbEntry.DataTimeZone,
                 symbolProperties, SecurityInitializer, symbolObject, resolution, fillDataForward, leverage, true, false, true, LiveMode);
 
-            AddToUserDefinedUniverse(security);
+            AddToUserDefinedUniverse(security, resolution, fillDataForward, true);
             return security;
         }
 
@@ -621,7 +623,7 @@ namespace QuantConnect.Algorithm
                         .FirstOrDefault(s => s.Type.BaseType == CreateType(type).BaseType);
                 if (config == null) return null;
 
-                Resolution? res = resolution ?? security.Resolution;
+                Resolution? res = GetResolution(x, resolution);
                 var start = GetStartTimeAlgoTz(x, periods, resolution).ConvertToUtc(TimeZone);
                 return CreateHistoryRequest(config, start, UtcTime.RoundDown(res.Value.ToTimeSpan()), resolution);
             });
@@ -684,7 +686,7 @@ namespace QuantConnect.Algorithm
             if (resolution == Resolution.Tick) throw new ArgumentException("History functions that accept a 'periods' parameter can not be used with Resolution.Tick");
 
             var start = GetStartTimeAlgoTz(symbol, periods, resolution);
-            var end = Time.RoundDown((resolution ?? Securities[symbol].Resolution).ToTimeSpan());
+            var end = Time.RoundDown(GetResolution(symbol, resolution).Value.ToTimeSpan());
             return History(type, symbol, start, end, resolution);
         }
 

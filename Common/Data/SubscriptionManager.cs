@@ -247,5 +247,65 @@ namespace QuantConnect.Data
             return AvailableDataTypes[symbolSecurityType].Select(tickType => new Tuple<Type, TickType>(LeanData.GetDataType(resolution, tickType), tickType)).ToList();
         }
 
+        /// <summary>
+        /// Determines if all subscriptions for the security are internal feeds
+        /// </summary>
+        /// <returns>True, all subscriptions matching symbol are internal</returns>
+        public bool IsInternalFeed(Symbol symbol)
+        {
+            return Subscriptions.IsInternalFeed(symbol);
+        }
+
+        /// <summary>
+        /// Determines base on security subscriptions the highest resolution
+        /// </summary>
+        /// <returns>Highest subscription resolution. Defaults to Daily if no subscription</returns>
+        public Resolution GetHighestSubscriptionResolution( Symbol symbol)
+        {
+            return Subscriptions.GetHighestSubscriptionResolution(symbol);
+        }
+
+        /// <summary>
+        /// Determines base on security subscriptions if the security will continue feeding data after the primary market hours have closed.
+        /// </summary>
+        /// <returns>True, indicates the security will continue feeding data after the primary market hours have closed.</returns>
+        public bool IsExtendedMarketHours(Symbol symbol)
+        {
+            return Subscriptions.IsExtendedMarketHours(symbol);
+        }
+
+        /// <summary>
+        /// Determines base on security subscriptions the data normalization mode used for this security.
+        /// </summary>
+        /// <returns>The DataNormalizationMode of the first subscription found. Defaults to Adjusted if no subscription</returns>
+        public DataNormalizationMode DataNormalizationMode(Symbol symbol)
+        {
+            return Subscriptions.DataNormalizationMode(symbol);
+        }
+
+        /// <summary>
+        /// Will filter the Symbols available Subscriptions Data Configs
+        /// </summary>
+        /// <returns>Subscriptions matching the provided Symbol</returns>
+        public List<SubscriptionDataConfig> SymbolsSubscriptionsList(Symbol symbol)
+        {
+            return Subscriptions.Where(x => x.Symbol == symbol).ToList();
+        }
+
+        /// <summary>
+        /// Organizes subscriptions by symbol
+        /// </summary>
+        /// <returns>Dictionary: Symbol, list of all Symbols subscriptions data configs</returns>
+        public IReadOnlyDictionary<Symbol, IReadOnlyCollection<SubscriptionDataConfig>> SubscriptionsBySymbol()
+        {
+            var result = new Dictionary<Symbol, IReadOnlyCollection<SubscriptionDataConfig>>();
+            var groupedBy = Subscriptions.GroupBy(x => x.Symbol);
+            foreach (var group in groupedBy)
+            {
+                result[group.Key] = group.ToList();
+            }
+
+            return result;
+        }
     }
 }

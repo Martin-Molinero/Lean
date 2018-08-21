@@ -35,7 +35,6 @@ using QuantConnect.Logging;
 using QuantConnect.Orders;
 using QuantConnect.Packets;
 using QuantConnect.Securities;
-using QuantConnect.Util;
 using QuantConnect.Securities.Option;
 
 namespace QuantConnect.Lean.Engine
@@ -465,11 +464,14 @@ namespace QuantConnect.Lean.Engine
                     }
                 }
 
+                var subscriptionsDataConfigBySymbol = algorithm.SubscriptionManager.SubscriptionsBySymbol();
+
                 // apply dividends
                 foreach (var dividend in timeSlice.Slice.Dividends.Values)
                 {
+                    var dataNormalizationMode = subscriptionsDataConfigBySymbol[dividend.Symbol].DataNormalizationMode();
                     Log.Debug($"AlgorithmManager.Run(): {algorithm.Time}: Applying Dividend for {dividend.Symbol}");
-                    algorithm.Portfolio.ApplyDividend(dividend);
+                    algorithm.Portfolio.ApplyDividend(dividend, dataNormalizationMode);
                 }
 
                 // apply splits
@@ -483,10 +485,12 @@ namespace QuantConnect.Lean.Engine
                             continue;
                         }
 
+                        var dataNormalizationMode = subscriptionsDataConfigBySymbol[split.Symbol].DataNormalizationMode();
+
                         Log.Debug($"AlgorithmManager.Run(): {algorithm.Time}: Applying Split for {split.Symbol}");
-                        algorithm.Portfolio.ApplySplit(split);
+                        algorithm.Portfolio.ApplySplit(split, dataNormalizationMode);
                         // apply the split to open orders as well in raw mode, all other modes are split adjusted
-                        if (_liveMode || algorithm.Securities[split.Symbol].DataNormalizationMode == DataNormalizationMode.Raw)
+                        if (_liveMode || dataNormalizationMode == DataNormalizationMode.Raw)
                         {
                             // in live mode we always want to have our order match the order at the brokerage, so apply the split to the orders
                             var openOrders = transactions.GetOpenOrderTickets(ticket => ticket.Symbol == split.Symbol);
@@ -773,10 +777,13 @@ namespace QuantConnect.Lean.Engine
                 // rewrite internal feed requests
                 var subscriptions = algorithm.SubscriptionManager.Subscriptions.Where(x => !x.IsInternalFeed).ToList();
                 var minResolution = subscriptions.Count > 0 ? subscriptions.Min(x => x.Resolution) : Resolution.Second;
+
+                var subscriptionsDataConfigBySymbol = algorithm.SubscriptionManager.SubscriptionsBySymbol();
+
                 foreach (var request in historyRequests)
                 {
                     Security security;
-                    if (algorithm.Securities.TryGetValue(request.Symbol, out security) && security.IsInternalFeed())
+                    if (algorithm.Securities.TryGetValue(request.Symbol, out security) && subscriptionsDataConfigBySymbol[security.Symbol].IsInternalFeed())
                     {
                         if (request.Resolution < minResolution)
                         {
@@ -962,13 +969,18 @@ namespace QuantConnect.Lean.Engine
         {
             Log.Trace("AlgorithmManager.ProcessVolatilityHistoryRequirements(): Updating volatility models with historical data...");
 
+            var subscriptionDataConfigsBySymbol = algorithm.SubscriptionManager.SubscriptionsBySymbol();
+
             foreach (var kvp in algorithm.Securities)
             {
                 var security = kvp.Value;
 
                 if (security.VolatilityModel != VolatilityModel.Null)
                 {
-                    var historyReq = security.VolatilityModel.GetHistoryRequirements(security, algorithm.UtcTime);
+                    var configs = subscriptionDataConfigsBySymbol[security.Symbol];
+                    var historyReq = security.VolatilityModel.GetHistoryRequirements(security, algorithm.UtcTime,
+                                                                                    configs.IsExtendedMarketHours(), configs.DataNormalizationMode(),
+                                                                                    configs.GetHighestSubscriptionResolution());
 
                     if (historyReq != null && algorithm.HistoryProvider != null)
                     {
@@ -1132,6 +1144,8 @@ namespace QuantConnect.Lean.Engine
             //       This is a small performance optimization to prevent scanning every contract on every time step,
             //       instead we scan just the underlyings, thereby reducing the time footprint of this methods by a factor
             //       of N, the number of derivative subscriptions
+            var subscriptionsDataConfigBySymbol = algorithm.SubscriptionManager.SubscriptionsBySymbol();
+
             for (int i = splitWarnings.Count - 1; i >= 0; i--)
             {
                 var split = splitWarnings[i];
@@ -1142,7 +1156,9 @@ namespace QuantConnect.Lean.Engine
                 // determine the latest possible time we can submit a MOC order
                 var highestResolutionSubscription = security.Subscriptions.OrderBy(sub => sub.Resolution).First();
                 var latestMarketOnCloseTimeRoundedDownByResolution = nextMarketClose.Subtract(MarketOnCloseOrder.DefaultSubmissionTimeBuffer)
-                    .RoundDownInTimeZone(security.Resolution.ToTimeSpan(), security.Exchange.TimeZone, highestResolutionSubscription.DataTimeZone);
+                    .RoundDownInTimeZone(subscriptionsDataConfigBySymbol[split.Symbol].GetHighestSubscriptionResolution().ToTimeSpan(),
+                                         security.Exchange.TimeZone,
+                                         highestResolutionSubscription.DataTimeZone);
 
                 // we don't need to do anyhing until the market closes
                 if (security.LocalTime < latestMarketOnCloseTimeRoundedDownByResolution) continue;

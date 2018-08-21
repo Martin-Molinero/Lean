@@ -23,6 +23,7 @@ using QuantConnect.AlgorithmFactory;
 using QuantConnect.Brokerages;
 using QuantConnect.Brokerages.InteractiveBrokers;
 using QuantConnect.Configuration;
+using QuantConnect.Data;
 using QuantConnect.Data.Market;
 using QuantConnect.Interfaces;
 using QuantConnect.Lean.Engine.DataFeeds;
@@ -304,7 +305,7 @@ namespace QuantConnect.Lean.Engine.Setup
                     {
                         SecurityType.Equity, SecurityType.Forex, SecurityType.Cfd, SecurityType.Option, SecurityType.Future, SecurityType.Crypto
                     };
-                    var minResolution = new Lazy<Resolution>(() => algorithm.Securities.Select(x => x.Value.Resolution).DefaultIfEmpty(Resolution.Second).Min());
+                    var minResolution = new Lazy<Resolution>(() => algorithm.SubscriptionManager.Subscriptions.GetHighestSubscriptionResolution(Resolution.Second));
                     foreach (var holding in holdings)
                     {
                         Log.Trace("BrokerageSetupHandler.Setup(): Has existing holding: " + holding);

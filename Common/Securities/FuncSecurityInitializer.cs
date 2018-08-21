@@ -38,7 +38,8 @@ namespace QuantConnect.Securities
         /// Initializes the specified security
         /// </summary>
         /// <param name="security">The security to be initialized</param>
-        public void Initialize(Security security)
+        /// <param name="extendedMarketHours">True, allow extended market hours fills </param>
+        public void Initialize(Security security, bool extendedMarketHours)
         {
             _initializer(security);
         }

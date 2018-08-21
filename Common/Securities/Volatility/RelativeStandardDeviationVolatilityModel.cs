@@ -2,11 +2,11 @@
 /*
  * QUANTCONNECT.COM - Democratizing Finance, Empowering Individuals.
  * Lean Algorithmic Trading Engine v2.0. Copyright 2014 QuantConnect Corporation.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -108,26 +108,31 @@ namespace QuantConnect.Securities
         /// </summary>
         /// <param name="security">The security of the request</param>
         /// <param name="utcTime">The date/time of the request</param>
+        /// <param name="isExtendedMarketHours">True, extended market hours are enabled</param>
+        /// <param name="dataNormalizationMode">Data normalization mode</param>
+        /// <param name="resolution">Desired resolution</param>
         /// <returns>History request object list, or empty if no requirements</returns>
-        public IEnumerable<HistoryRequest> GetHistoryRequirements(Security security, DateTime utcTime)
+        public IEnumerable<HistoryRequest> GetHistoryRequirements(Security security, DateTime utcTime,
+                                                                  bool isExtendedMarketHours, DataNormalizationMode dataNormalizationMode,
+                                                                  Resolution resolution)
         {
             var barCount = _window.Size + 1;
-            var localStartTime = Time.GetStartTimeForTradeBars(security.Exchange.Hours, utcTime.ConvertFromUtc(security.Exchange.TimeZone), _periodSpan, barCount, security.IsExtendedMarketHours);
+            var localStartTime = Time.GetStartTimeForTradeBars(security.Exchange.Hours, utcTime.ConvertFromUtc(security.Exchange.TimeZone),
+                                                                _periodSpan, barCount, isExtendedMarketHours);
             var utcStartTime = localStartTime.ConvertToUtc(security.Exchange.TimeZone);
-
-            return new[] 
+            return new[]
             {
-                new HistoryRequest(utcStartTime, 
+                new HistoryRequest(utcStartTime,
                                    utcTime,
                                    typeof(TradeBar),
                                    security.Symbol,
-                                   security.Resolution,
+                                   resolution,
                                    security.Exchange.Hours,
                                    MarketHoursDatabase.FromDataFolder().GetDataTimeZone(security.Symbol.ID.Market, security.Symbol, security.Type),
-                                   security.Resolution,
-                                   security.IsExtendedMarketHours,
+                                   resolution,
+                                   isExtendedMarketHours,
                                    security.IsCustomData(),
-                                   security.DataNormalizationMode,
+                                   dataNormalizationMode,
                                    LeanData.GetCommonTickTypeForCommonDataTypes(typeof(TradeBar), security.Type))
             };
         }

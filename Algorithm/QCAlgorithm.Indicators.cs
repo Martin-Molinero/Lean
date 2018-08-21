@@ -1268,7 +1268,7 @@ namespace QuantConnect.Algorithm
         /// <param name="type">The indicator type, for example, 'SMA5'</param>
         /// <param name="resolution">The resolution requested</param>
         /// <returns>A unique for the given parameters</returns>
-        public string CreateIndicatorName(Symbol symbol, string type, Resolution? resolution)
+        public string CreateIndicatorName(Symbol symbol, string type, Resolution? resolution = null)
         {
             if (!resolution.HasValue)
             {
@@ -1482,7 +1482,7 @@ namespace QuantConnect.Algorithm
         /// <param name="symbol">The symbo whose data is to be consolidated</param>
         /// <param name="resolution">The resolution for the consolidator, if null, uses the resolution from subscription</param>
         /// <returns>The new default consolidator</returns>
-        public IDataConsolidator ResolveConsolidator(Symbol symbol, Resolution? resolution)
+        public IDataConsolidator ResolveConsolidator(Symbol symbol, Resolution? resolution = null)
         {
             var subscription = GetSubscription(symbol);
 

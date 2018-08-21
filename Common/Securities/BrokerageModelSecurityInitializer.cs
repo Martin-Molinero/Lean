@@ -15,6 +15,7 @@
 */
 
 using QuantConnect.Brokerages;
+using QuantConnect.Orders.Fills;
 
 namespace QuantConnect.Securities
 {
@@ -53,11 +54,19 @@ namespace QuantConnect.Securities
         /// Initializes the specified security by setting up the models
         /// </summary>
         /// <param name="security">The security to be initialized</param>
-        public virtual void Initialize(Security security)
+        /// <param name="extendedMarketHours">True, allow extended market hours fills </param>
+        public virtual void Initialize(Security security, bool extendedMarketHours)
         {
             // set leverage and models
             security.SetLeverage(_brokerageModel.GetLeverage(security));
             security.FillModel = _brokerageModel.GetFillModel(security);
+
+            var fillModel = security.FillModel as ImmediateFillModel;
+            if (fillModel != null)
+            {
+                fillModel.AllowExtendedMarketHoursFills = extendedMarketHours;
+            }
+
             security.FeeModel = _brokerageModel.GetFeeModel(security);
             security.SlippageModel = _brokerageModel.GetSlippageModel(security);
             security.SettlementModel = _brokerageModel.GetSettlementModel(security);

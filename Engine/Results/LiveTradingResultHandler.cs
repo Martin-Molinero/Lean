@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using QuantConnect.Data;
 using QuantConnect.Data.Market;
 using QuantConnect.Interfaces;
 using QuantConnect.Lean.Engine.DataFeeds;
@@ -228,12 +229,14 @@ namespace QuantConnect.Lean.Engine.Results
                     serverStatistics["Up Time"] = $"{upTime.Days}d {upTime:hh\\:mm\\:ss}";
                     serverStatistics["Total RAM (MB)"] = _job.Controls.RamAllocation.ToString();
 
+                    var subscriptionDataConfigsBySymbol = _algorithm.SubscriptionManager.SubscriptionsBySymbol();
+
                     // Only send holdings updates when we have changes in orders, except for first time, then we want to send all
                     foreach (var kvp in _algorithm.Securities.OrderBy(x => x.Key.Value))
                     {
                         var security = kvp.Value;
 
-                        if (!security.IsInternalFeed() && !security.Symbol.IsCanonical())
+                        if (!subscriptionDataConfigsBySymbol[kvp.Key].IsInternalFeed() && !security.Symbol.IsCanonical())
                         {
                             holdings.Add(security.Symbol.Value, new Holding(security));
                         }
@@ -587,12 +590,16 @@ namespace QuantConnect.Lean.Engine.Results
         {
             // don't send stockplots for internal feeds
             Security security;
-            if (_algorithm.Securities.TryGetValue(symbol, out security) && !security.IsInternalFeed() && value > 0)
+            if (_algorithm.Securities.TryGetValue(symbol, out security) && value > 0)
             {
-                var now = DateTime.UtcNow.ConvertFromUtc(security.Exchange.TimeZone);
-                if (security.Exchange.Hours.IsOpen(now, security.IsExtendedMarketHours))
+                var subscriptionDataConfigs = _algorithm.SubscriptionManager.SymbolsSubscriptionsList(symbol);
+                if (!subscriptionDataConfigs.IsInternalFeed())
                 {
-                    Sample("Stockplot: " + symbol.Value, "Stockplot: " + symbol.Value, 0, SeriesType.Line, time, value);
+                    var now = DateTime.UtcNow.ConvertFromUtc(security.Exchange.TimeZone);
+                    if (security.Exchange.Hours.IsOpen(now, subscriptionDataConfigs.IsExtendedMarketHours()))
+                    {
+                        Sample("Stockplot: " + symbol.Value, "Stockplot: " + symbol.Value, 0, SeriesType.Line, time, value);
+                    }
                 }
             }
         }

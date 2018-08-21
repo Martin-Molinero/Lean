@@ -79,26 +79,30 @@ namespace QuantConnect.Securities
         /// </remarks>
         public SecurityType Type => Symbol.ID.SecurityType;
 
-        /// <summary>
-        /// Resolution of data requested for this security.
-        /// </summary>
-        /// <remarks>Tick, second or minute resolution for QuantConnect assets.</remarks>
-        public Resolution Resolution { get; private set; }
+        ///// <summary>
+        ///// Resolution of data requested for this security.
+        ///// </summary>
+        ///// <remarks>Tick, second or minute resolution for QuantConnect assets.</remarks>
+        // [Obsolete("This property is obsolete. Use the 'SubscriptionManager' class to access this value.")]
+        //public Resolution Resolution { get; private set; }
 
-        /// <summary>
-        /// Indicates the data will use previous bars when there was no trading in this time period. This was a configurable datastream setting set in initialization.
-        /// </summary>
-        public bool IsFillDataForward { get; private set; }
+        ///// <summary>
+        ///// Indicates the data will use previous bars when there was no trading in this time period. This was a configurable datastream setting set in initialization.
+        ///// </summary>
+        // [Obsolete("This property is obsolete. Use the 'SubscriptionManager' class to access this value.")]
+        //public bool IsFillDataForward { get; private set; }
 
-        /// <summary>
-        /// Indicates the security will continue feeding data after the primary market hours have closed. This was a configurable setting set in initialization.
-        /// </summary>
-        public bool IsExtendedMarketHours { get; private set; }
+        ///// <summary>
+        ///// Indicates the security will continue feeding data after the primary market hours have closed. This was a configurable setting set in initialization.
+        ///// </summary>
+        // [Obsolete("This property is obsolete. Use the 'SubscriptionManager' class to access this value.")]
+        //public bool IsExtendedMarketHours { get; private set; }
 
-        /// <summary>
-        /// Gets the data normalization mode used for this security
-        /// </summary>
-        public DataNormalizationMode DataNormalizationMode { get; private set; }
+        ///// <summary>
+        ///// Gets the data normalization mode used for this security
+        ///// </summary>
+        // [Obsolete("This property is obsolete. Use the 'SubscriptionManager' class to access this value.")]
+        //public DataNormalizationMode DataNormalizationMode { get; private set; }
 
         /// <summary>
         /// Gets the subscription configuration for this security
@@ -387,7 +391,7 @@ namespace QuantConnect.Securities
             VolatilityModel = volatilityModel;
             Holdings = new SecurityHolding(this);
 
-            UpdateSubscriptionProperties();
+            //UpdateSubscriptionProperties();
         }
 
 
@@ -426,7 +430,7 @@ namespace QuantConnect.Securities
                 )
         {
             SubscriptionsBag.Add(config);
-            UpdateSubscriptionProperties();
+            //UpdateSubscriptionProperties();
         }
 
         /// <summary>
@@ -636,7 +640,7 @@ namespace QuantConnect.Securities
             {
                 subscription.DataNormalizationMode = mode;
             }
-            UpdateSubscriptionProperties();
+            //UpdateSubscriptionProperties();
         }
 
         /// <summary>
@@ -768,7 +772,7 @@ namespace QuantConnect.Securities
             if (subscription.Symbol != Symbol) throw new ArgumentException("Symbols must match.", "subscription.Symbol");
             if (!subscription.ExchangeTimeZone.Equals(Exchange.TimeZone)) throw new ArgumentException("ExchangeTimeZones must match.", "subscription.ExchangeTimeZone");
             SubscriptionsBag.Add(subscription);
-            UpdateSubscriptionProperties();
+            //UpdateSubscriptionProperties();
         }
 
         /// <summary>
@@ -783,15 +787,15 @@ namespace QuantConnect.Securities
                 if (!subscription.ExchangeTimeZone.Equals(Exchange.TimeZone)) throw new ArgumentException("ExchangeTimeZones must match.", "subscription.ExchangeTimeZone");
                 SubscriptionsBag.Add(subscription);
             }
-            UpdateSubscriptionProperties();
+            //UpdateSubscriptionProperties();
         }
 
-        private void UpdateSubscriptionProperties()
-        {
-            Resolution = SubscriptionsBag.Select(x => x.Resolution).DefaultIfEmpty(Resolution.Daily).Min();
-            IsFillDataForward = SubscriptionsBag.Any(x => x.FillDataForward);
-            IsExtendedMarketHours = SubscriptionsBag.Any(x => x.ExtendedMarketHours);
-            DataNormalizationMode = SubscriptionsBag.Select(x => x.DataNormalizationMode).DefaultIfEmpty(DataNormalizationMode.Adjusted).FirstOrDefault();
-        }
+        //private void UpdateSubscriptionProperties()
+        //{
+        //    Resolution = SubscriptionsBag.Select(x => x.Resolution).DefaultIfEmpty(Resolution.Daily).Min();
+        //    IsFillDataForward = SubscriptionsBag.Any(x => x.FillDataForward);
+        //    IsExtendedMarketHours = SubscriptionsBag.Any(x => x.ExtendedMarketHours);
+        //    DataNormalizationMode = SubscriptionsBag.Select(x => x.DataNormalizationMode).DefaultIfEmpty(DataNormalizationMode.Adjusted).FirstOrDefault();
+        //}
     }
 }

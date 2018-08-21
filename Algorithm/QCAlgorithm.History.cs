@@ -461,7 +461,7 @@ namespace QuantConnect.Algorithm
 
             resolution = GetResolution(symbol, resolution);
             var exchange = GetExchangeHours(symbol);
-            var isExtendedMarketHours = Securities.TryGetValue(symbol, out security) ? security.IsExtendedMarketHours : false;
+            var isExtendedMarketHours = Securities.TryGetValue(symbol, out security) && SubscriptionManager.IsExtendedMarketHours(symbol);
 
             var timeSpan = resolution.Value.ToTimeSpan();
             // make this a minimum of one second
@@ -503,10 +503,15 @@ namespace QuantConnect.Algorithm
                 return null;
             }
 
-            // For speed and memory usage, use Resolution.Minute as the minimum resolution
-            var resolution = (Resolution)Math.Max((int)Resolution.Minute, (int)security.Resolution);
+            var symbolsSubscriptions = SubscriptionManager.SymbolsSubscriptionsList(security.Symbol);
+            var highestSubscriptionResolution = symbolsSubscriptions.GetHighestSubscriptionResolution();
+            var isExtendedMarketHours = symbolsSubscriptions.IsExtendedMarketHours();
+            var dataNormalizationMode = symbolsSubscriptions.DataNormalizationMode();
 
-            var startTime = GetStartTimeAlgoTzForSecurity(security, 1, resolution);
+            // For speed and memory usage, use Resolution.Minute as the minimum resolution
+            var resolution = (Resolution)Math.Max((int)Resolution.Minute, (int)highestSubscriptionResolution);
+
+            var startTime = GetStartTimeAlgoTzForSecurity(security, 1, resolution, isExtendedMarketHours);
             var endTime   = Time.RoundDown(resolution.ToTimeSpan());
 
             // request QuoteBar for Options and Futures
@@ -535,9 +540,9 @@ namespace QuantConnect.Algorithm
                 security.Exchange.Hours,
                 MarketHoursDatabase.FromDataFolder().GetDataTimeZone(security.Symbol.ID.Market, security.Symbol, security.Symbol.SecurityType),
                 resolution,
-                security.IsExtendedMarketHours,
+                isExtendedMarketHours,
                 security.IsCustomData(),
-                security.DataNormalizationMode,
+                dataNormalizationMode,
                 subscriptionDataConfig == null ? LeanData.GetCommonTickTypeForCommonDataTypes(typeof(TradeBar), security.Type) : subscriptionDataConfig.TickType
             );
 
@@ -555,14 +560,15 @@ namespace QuantConnect.Algorithm
         /// Gets the start time required for the specified bar count for a security in terms of the algorithm's time zone
         /// Used when the security has not yet been subscribed to
         /// </summary>
-        private DateTime GetStartTimeAlgoTzForSecurity(Security security, int periods, Resolution? resolution = null)
+        private DateTime GetStartTimeAlgoTzForSecurity(Security security, int periods, Resolution resolution, bool isExtendedMarketHours)
         {
-            var timeSpan = (resolution ?? security.Resolution).ToTimeSpan();
+            var timeSpan = resolution.ToTimeSpan();
 
             // make this a minimum of one second
             timeSpan = timeSpan < QuantConnect.Time.OneSecond ? QuantConnect.Time.OneSecond : timeSpan;
 
-            var localStartTime = QuantConnect.Time.GetStartTimeForTradeBars(security.Exchange.Hours, UtcTime.ConvertFromUtc(security.Exchange.TimeZone), timeSpan, periods, security.IsExtendedMarketHours);
+            var localStartTime = QuantConnect.Time.GetStartTimeForTradeBars(security.Exchange.Hours,
+                UtcTime.ConvertFromUtc(security.Exchange.TimeZone), timeSpan, periods, isExtendedMarketHours);
             return localStartTime.ConvertTo(security.Exchange.TimeZone, TimeZone);
         }
 
@@ -693,7 +699,7 @@ namespace QuantConnect.Algorithm
             Security security;
             if (Securities.TryGetValue(symbol, out security))
             {
-                return resolution ?? security.Resolution;
+                return resolution ?? SubscriptionManager.GetHighestSubscriptionResolution(symbol);
             }
             else
             {

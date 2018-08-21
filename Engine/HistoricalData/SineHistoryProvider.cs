@@ -36,6 +36,7 @@ namespace QuantConnect.Lean.Engine.HistoricalData
         private CashBook _cashBook = new CashBook();
         private SecurityChanges _securityChanges = SecurityChanges.None;
         private SecurityManager _securities;
+        private SubscriptionManager _subscriptionManager;
 
         /// <summary>
         /// Gets the total number of data points emitted by this history provider
@@ -46,9 +47,10 @@ namespace QuantConnect.Lean.Engine.HistoricalData
         /// Initializes a new instance of the <see cref="SineHistoryProvider"/> class
         /// </summary>
         /// <param name="securities">Collection of securities that a history request can return</param>
-        public SineHistoryProvider(SecurityManager securities)
+        public SineHistoryProvider(SecurityManager securities, SubscriptionManager subscriptionManager)
         {
             _securities = securities;
+            _subscriptionManager = subscriptionManager;
         }
 
         /// <summary>
@@ -76,6 +78,7 @@ namespace QuantConnect.Lean.Engine.HistoricalData
             var count = securitiesByDateTime.Count;
             var i = 0;
 
+            var subscriptionsDataConfigsBySymbol = _subscriptionManager.SubscriptionsBySymbol();
             foreach (var kvp in securitiesByDateTime)
             {
                 var utcDateTime = kvp.Key;
@@ -88,8 +91,9 @@ namespace QuantConnect.Lean.Engine.HistoricalData
 
                 foreach (var security in securities)
                 {
-                    var configuration = security.Subscriptions.FirstOrDefault(x => x.Resolution == security.Resolution);
-                    var period = security.Resolution.ToTimeSpan();
+                    var configuration = subscriptionsDataConfigsBySymbol[security.Symbol].First();
+                    var period =
+                        subscriptionsDataConfigsBySymbol[security.Symbol].GetHighestSubscriptionResolution().ToTimeSpan();
                     var time = (utcDateTime - period).ConvertFromUtc(configuration.DataTimeZone);
                     var data = new TradeBar(time, security.Symbol, last, high, last, last, 1000, period);
                     security.SetMarketPrice(data);
@@ -109,6 +113,7 @@ namespace QuantConnect.Lean.Engine.HistoricalData
             var startUtc = requests.Min(x => x.StartTimeUtc);
             var endUtc = requests.Max(x => x.EndTimeUtc);
 
+            var subscriptionsDataConfigsBySymbol = _subscriptionManager.SubscriptionsBySymbol();
             for (var utcDateTime = startUtc; utcDateTime < endUtc; utcDateTime += barSize)
             {
                 var securities = new List<Security>();
@@ -122,7 +127,7 @@ namespace QuantConnect.Lean.Engine.HistoricalData
                     }
 
                     var exchange = security.Exchange.Hours;
-                    var extendedMarket = security.IsExtendedMarketHours;
+                    var extendedMarket = subscriptionsDataConfigsBySymbol[request.Symbol].IsExtendedMarketHours();
                     var localDateTime = utcDateTime.ConvertFromUtc(exchange.TimeZone);
                     if (!exchange.IsOpen(localDateTime, extendedMarket))
                     {

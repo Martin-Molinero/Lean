@@ -92,7 +92,7 @@ namespace QuantConnect.Tests.Common.Securities
         {
             Assert.AreEqual(_tradeBarSecurity.Leverage, 1.0);
 
-            _brokerageInitializer.Initialize(_tradeBarSecurity);
+            _brokerageInitializer.Initialize(_tradeBarSecurity, false);
 
             Assert.AreEqual(_tradeBarSecurity.Leverage, 2.0);
         }
@@ -105,7 +105,7 @@ namespace QuantConnect.Tests.Common.Securities
             _algo.SetDateTime(dateForWhichDataExist);
 
             // Act
-            _brokerageInitializer.Initialize(_tradeBarSecurity);
+            _brokerageInitializer.Initialize(_tradeBarSecurity, false);
 
             // Assert
             Assert.IsFalse(_tradeBarSecurity.Price == 0);
@@ -119,7 +119,7 @@ namespace QuantConnect.Tests.Common.Securities
             _algo.SetDateTime(dateForWhichDataExist);
 
             // Act
-            _brokerageInitializer.Initialize(_quoteBarSecurity);
+            _brokerageInitializer.Initialize(_quoteBarSecurity, false);
 
             // Assert
             Assert.IsFalse(_quoteBarSecurity.Price == 0);
@@ -133,7 +133,7 @@ namespace QuantConnect.Tests.Common.Securities
             _algo.SetDateTime(dateForWhichDataDoesNotExist);
 
             // Act
-            _brokerageInitializer.Initialize(_tradeBarSecurity);
+            _brokerageInitializer.Initialize(_tradeBarSecurity, false);
 
             // Assert
             Assert.IsTrue(_tradeBarSecurity.Price == 0);
@@ -146,7 +146,7 @@ namespace QuantConnect.Tests.Common.Securities
             var localBrokerageInitializer = new BrokerageModelSecurityInitializer(brokerageModel,
                 new FuncSecuritySeeder(_algo.GetLastKnownPrice));
             Assert.AreEqual(1.0, _tradeBarSecurity.Leverage);
-            localBrokerageInitializer.Initialize(_tradeBarSecurity);
+            localBrokerageInitializer.Initialize(_tradeBarSecurity, false);
             Assert.AreEqual(1.0, _tradeBarSecurity.Leverage);
             Assert.AreEqual(1.0, _tradeBarSecurity.BuyingPowerModel.GetLeverage(_tradeBarSecurity));
         }

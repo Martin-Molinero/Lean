@@ -20,6 +20,7 @@ using System.Linq;
 using QuantConnect.Data.Market;
 using QuantConnect.Interfaces;
 using QuantConnect.Orders;
+using QuantConnect.Util;
 
 namespace QuantConnect.Securities
 {
@@ -539,13 +540,13 @@ namespace QuantConnect.Securities
         /// Applies a dividend to the portfolio
         /// </summary>
         /// <param name="dividend">The dividend to be applied</param>
-        public void ApplyDividend(Dividend dividend)
+        /// <param name="dataNormalizationMode">The target security DataNormalizationMode</param>
+        public void ApplyDividend(Dividend dividend, DataNormalizationMode dataNormalizationMode)
         {
             var security = Securities[dividend.Symbol];
 
             // only apply dividends when we're in raw mode or split adjusted mode
-            var mode = security.DataNormalizationMode;
-            if (mode == DataNormalizationMode.Raw || mode == DataNormalizationMode.SplitAdjusted)
+            if (dataNormalizationMode == DataNormalizationMode.Raw || dataNormalizationMode == DataNormalizationMode.SplitAdjusted)
             {
                 // longs get benefits, shorts get clubbed on dividends
                 var total = security.Holdings.Quantity*dividend.Distribution;
@@ -559,7 +560,8 @@ namespace QuantConnect.Securities
         /// Applies a split to the portfolio
         /// </summary>
         /// <param name="split">The split to be applied</param>
-        public void ApplySplit(Split split)
+        /// <param name="dataNormalizationMode">The target security DataNormalizationMode</param>
+        public void ApplySplit(Split split, DataNormalizationMode dataNormalizationMode)
         {
             var security = Securities[split.Symbol];
 
@@ -570,8 +572,7 @@ namespace QuantConnect.Securities
             }
 
             // only apply splits in raw data mode,
-            var mode = security.DataNormalizationMode;
-            if (mode != DataNormalizationMode.Raw)
+            if (dataNormalizationMode != DataNormalizationMode.Raw)
             {
                 return;
             }

@@ -1,11 +1,11 @@
 /*
  * QUANTCONNECT.COM - Democratizing Finance, Empowering Individuals.
  * Lean Algorithmic Trading Engine v2.0. Copyright 2014 QuantConnect Corporation.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using QuantConnect.Data;
 using QuantConnect.Interfaces;
 using QuantConnect.Lean.Engine.Results;
 using QuantConnect.Logging;
@@ -53,7 +54,7 @@ namespace QuantConnect.Lean.Engine.RealTime
         }
 
         /// <summary>
-        /// Creates a new <see cref="ScheduledEvent"/> that will fire before market close by the specified time 
+        /// Creates a new <see cref="ScheduledEvent"/> that will fire before market close by the specified time
         /// </summary>
         /// <param name="algorithm">The algorithm instance the event is fo</param>
         /// <param name="resultHandler">The result handler, used to communicate run time errors</param>
@@ -75,7 +76,7 @@ namespace QuantConnect.Lean.Engine.RealTime
             // create enumerable of end of day in algorithm's time zone
             var times =
                 // for every date any exchange is open in the algorithm
-                from date in Time.EachTradeableDay(algorithm.Securities.Values, start, end)
+                from date in Time.EachTradeableDay(algorithm.Securities.Values, start, end, algorithm.SubscriptionManager.SubscriptionsBySymbol())
                 // define the time of day we want the event to fire, a little before midnight
                 let eventTime = date + eodEventTime
                 // convert the event time into UTC
@@ -99,9 +100,9 @@ namespace QuantConnect.Lean.Engine.RealTime
         }
 
         /// <summary>
-        /// Creates a new <see cref="ScheduledEvent"/> that will fire before market close by the specified time 
+        /// Creates a new <see cref="ScheduledEvent"/> that will fire before market close by the specified time
         /// </summary>
-        /// <param name="algorithm">The algorithm instance the event is fo</param>
+        /// <param name="algorithm">The algorithm instance the event is for</param>
         /// <param name="resultHandler">The result handler, used to communicate run time errors</param>
         /// <param name="security">The security used for defining tradeable dates</param>
         /// <param name="start">The first date for the events</param>
@@ -122,7 +123,7 @@ namespace QuantConnect.Lean.Engine.RealTime
                 // for every date the exchange is open for this security
                 from date in Time.EachTradeableDay(security, start, end)
                 // get the next market close for the specified date
-                let marketClose = security.Exchange.Hours.GetNextMarketClose(date, security.IsExtendedMarketHours)
+                let marketClose = security.Exchange.Hours.GetNextMarketClose(date, algorithm.SubscriptionManager.IsExtendedMarketHours(security.Symbol))
                 // define the time of day we want the event to fire before marketclose
                 let eventTime = marketClose.Subtract(endOfDayDelta)
                 // convert the event time into UTC
