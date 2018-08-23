@@ -36,6 +36,7 @@ namespace QuantConnect.Lean.Engine.HistoricalData
         private CashBook _cashBook = new CashBook();
         private SecurityChanges _securityChanges = SecurityChanges.None;
         private SecurityManager _securities;
+        private Func<Symbol, Resolution> _getHighestSubscriptionResolution;
 
         /// <summary>
         /// Gets the total number of data points emitted by this history provider
@@ -46,9 +47,11 @@ namespace QuantConnect.Lean.Engine.HistoricalData
         /// Initializes a new instance of the <see cref="SineHistoryProvider"/> class
         /// </summary>
         /// <param name="securities">Collection of securities that a history request can return</param>
-        public SineHistoryProvider(SecurityManager securities)
+        /// <param name="getHighestSubscriptionResolution">Func that returns symbols subscriptions highest resolution</param>
+        public SineHistoryProvider(SecurityManager securities, Func<Symbol, Resolution> getHighestSubscriptionResolution)
         {
             _securities = securities;
+            _getHighestSubscriptionResolution = getHighestSubscriptionResolution;
         }
 
         /// <summary>
@@ -88,8 +91,9 @@ namespace QuantConnect.Lean.Engine.HistoricalData
 
                 foreach (var security in securities)
                 {
-                    var configuration = security.Subscriptions.FirstOrDefault(x => x.Resolution == security.Resolution);
-                    var period = security.Resolution.ToTimeSpan();
+                    var resolution = _getHighestSubscriptionResolution(security.Symbol);
+                    var configuration = security.Subscriptions.FirstOrDefault(x => x.Resolution == resolution);
+                    var period = resolution.ToTimeSpan();
                     var time = (utcDateTime - period).ConvertFromUtc(configuration.DataTimeZone);
                     var data = new TradeBar(time, security.Symbol, last, high, last, last, 1000, period);
                     security.SetMarketPrice(data);

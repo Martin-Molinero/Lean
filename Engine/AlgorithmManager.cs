@@ -968,7 +968,8 @@ namespace QuantConnect.Lean.Engine
 
                 if (security.VolatilityModel != VolatilityModel.Null)
                 {
-                    var historyReq = security.VolatilityModel.GetHistoryRequirements(security, algorithm.UtcTime);
+                    var historyReq = security.VolatilityModel.GetHistoryRequirements(security, algorithm.UtcTime,
+                                                                                    algorithm.SubscriptionManager.GetHighestSubscriptionResolution(security.Symbol));
 
                     if (historyReq != null && algorithm.HistoryProvider != null)
                     {
@@ -1142,7 +1143,8 @@ namespace QuantConnect.Lean.Engine
                 // determine the latest possible time we can submit a MOC order
                 var highestResolutionSubscription = security.Subscriptions.OrderBy(sub => sub.Resolution).First();
                 var latestMarketOnCloseTimeRoundedDownByResolution = nextMarketClose.Subtract(MarketOnCloseOrder.DefaultSubmissionTimeBuffer)
-                    .RoundDownInTimeZone(security.Resolution.ToTimeSpan(), security.Exchange.TimeZone, highestResolutionSubscription.DataTimeZone);
+                    .RoundDownInTimeZone(algorithm.SubscriptionManager.GetHighestSubscriptionResolution(security.Symbol).ToTimeSpan(),
+                                        security.Exchange.TimeZone, highestResolutionSubscription.DataTimeZone);
 
                 // we don't need to do anyhing until the market closes
                 if (security.LocalTime < latestMarketOnCloseTimeRoundedDownByResolution) continue;

@@ -13,6 +13,7 @@
  * limitations under the License.
 */
 
+using System;
 using System.Collections.Generic;
 using QuantConnect.Data;
 using QuantConnect.Indicators;
@@ -30,11 +31,14 @@ namespace QuantConnect.Algorithm.CSharp
     /// <meta name="tag" content="warm up" />
     public class IndicatorWarmupAlgorithm : QCAlgorithm
     {
-        private const string SPY    = "SPY";
-        private const string GOOG   = "GOOG";
-        private const string IBM    = "IBM";
-        private const string BAC    = "BAC";
-        private const string GOOGL  = "GOOGL";
+        private readonly List<Tuple<string, Resolution>> _desiredSymbolsAndResolutions = new List<Tuple<string, Resolution>>
+        {
+            new Tuple<string, Resolution>("SPY", Resolution.Minute),
+            new Tuple<string, Resolution>("IBM", Resolution.Minute),
+            new Tuple<string, Resolution>("BAC", Resolution.Minute),
+            new Tuple<string, Resolution>("GOOG", Resolution.Daily),
+            new Tuple<string, Resolution>("GOOGL", Resolution.Daily),
+        };
 
         private readonly Dictionary<Symbol, SymbolData> _sd = new Dictionary<Symbol, SymbolData>();
 
@@ -45,16 +49,10 @@ namespace QuantConnect.Algorithm.CSharp
 
             SetCash(1000000);
 
-            AddSecurity(SecurityType.Equity, SPY, Resolution.Minute);
-            AddSecurity(SecurityType.Equity, IBM, Resolution.Minute);
-            AddSecurity(SecurityType.Equity, BAC, Resolution.Minute);
-
-            AddSecurity(SecurityType.Equity, GOOG, Resolution.Daily);
-            AddSecurity(SecurityType.Equity, GOOGL, Resolution.Daily);
-
-            foreach (var security in Securities)
+            foreach (var tuplePair in _desiredSymbolsAndResolutions)
             {
-                _sd.Add(security.Key, new SymbolData(security.Key, this));
+                var symbol = AddSecurity(SecurityType.Equity, tuplePair.Item1, tuplePair.Item2).Symbol;
+                _sd.Add(symbol, new SymbolData(symbol, this, tuplePair.Item2));
             }
 
             // we want to warm up our algorithm
@@ -70,7 +68,7 @@ namespace QuantConnect.Algorithm.CSharp
             {
                 var lastPriceTime = sd.Close.Current.Time;
                 // only make decisions when we have data on our requested resolution
-                if (lastPriceTime.RoundDown(sd.Security.Resolution.ToTimeSpan()) == lastPriceTime)
+                if (lastPriceTime.RoundDown(sd.Resolution.ToTimeSpan()) == lastPriceTime)
                 {
                     sd.Update();
                 }
@@ -93,6 +91,7 @@ namespace QuantConnect.Algorithm.CSharp
             public const decimal PercentGlobalStopLoss = 0.01m;
             private const int LotSize = 10;
 
+            public readonly Resolution Resolution;
             public readonly Symbol Symbol;
             public readonly Security Security;
 
@@ -110,10 +109,11 @@ namespace QuantConnect.Algorithm.CSharp
 
             private OrderTicket _currentStopLoss;
 
-            public SymbolData(Symbol symbol, QCAlgorithm algorithm)
+            public SymbolData(Symbol symbol, QCAlgorithm algorithm, Resolution resolution)
             {
                 Symbol = symbol;
                 Security = algorithm.Securities[symbol];
+                Resolution = resolution;
 
                 Close = algorithm.Identity(symbol);
                 ADX = algorithm.ADX(symbol, 14);

@@ -42,7 +42,7 @@ namespace QuantConnect.Tests.Algorithm.Framework.Alphas
         {
             _algorithm = new QCAlgorithmFramework();
             _algorithm.PortfolioConstruction = new NullPortfolioConstructionModel();
-            _algorithm.HistoryProvider = new SineHistoryProvider(_algorithm.Securities);
+            _algorithm.HistoryProvider = new SineHistoryProvider(_algorithm.Securities, _algorithm.SubscriptionManager.GetHighestSubscriptionResolution);
             InitializeAlgorithm(_algorithm);
         }
 
@@ -227,7 +227,7 @@ namespace QuantConnect.Tests.Algorithm.Framework.Alphas
                         continue;
                     }
                     var configuration = security.Subscriptions.FirstOrDefault();
-                    var period = security.Resolution.ToTimeSpan();
+                    var period = _algorithm.SubscriptionManager.GetHighestSubscriptionResolution(security.Symbol).ToTimeSpan();
                     var time = (utcDateTime - period).ConvertFromUtc(configuration.DataTimeZone);
                     var tradeBar = new TradeBar(time, security.Symbol, last, high, low, last, 1000, period);
                     packets.Add(new DataFeedPacket(security, configuration, new List<BaseData> { tradeBar }));
@@ -255,7 +255,7 @@ namespace QuantConnect.Tests.Algorithm.Framework.Alphas
             {
                 foreach (var kvp in _algorithm.Securities)
                 {
-                    var resolution = kvp.Value.Resolution.ToTimeSpan();
+                    var resolution = _algorithm.SubscriptionManager.GetHighestSubscriptionResolution(kvp.Key).ToTimeSpan();
                     utcDateTime = utcDateTime.Add(resolution);
                     if (resolution == Time.OneDay && utcDateTime.TimeOfDay == TimeSpan.Zero)
                     {

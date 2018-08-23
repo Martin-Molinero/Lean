@@ -82,10 +82,12 @@ namespace QuantConnect.Algorithm
                         Security underlyingSecurity;
                         var underlyingSymbol = security.Symbol.Underlying;
 
+                        var securityResolution = SubscriptionManager.GetHighestSubscriptionResolution(security.Symbol);
+
                         // create the underlying security object if it doesn't already exist
                         if (!Securities.TryGetValue(underlyingSymbol, out underlyingSecurity))
                         {
-                            underlyingSecurity = AddSecurity(underlyingSymbol.SecurityType, underlyingSymbol.Value, security.Resolution,
+                            underlyingSecurity = AddSecurity(underlyingSymbol.SecurityType, underlyingSymbol.Value, securityResolution,
                                 underlyingSymbol.ID.Market, false, 0, security.IsExtendedMarketHours);
                         }
 
@@ -99,14 +101,14 @@ namespace QuantConnect.Algorithm
                                 // lets request the higher resolution
                                 var currentResolutionRequest = requiredHistoryRequests[underlyingSecurity];
                                 if (currentResolutionRequest != Resolution.Minute  // Can not be less than Minute
-                                    && security.Resolution < currentResolutionRequest)
+                                    && securityResolution < currentResolutionRequest)
                                 {
-                                    requiredHistoryRequests[underlyingSecurity] = (Resolution)Math.Max((int)security.Resolution, (int)Resolution.Minute);
+                                    requiredHistoryRequests[underlyingSecurity] = (Resolution)Math.Max((int)securityResolution, (int)Resolution.Minute);
                                 }
                             }
                             else
                             {
-                                requiredHistoryRequests.Add(underlyingSecurity, (Resolution)Math.Max((int)security.Resolution, (int)Resolution.Minute));
+                                requiredHistoryRequests.Add(underlyingSecurity, (Resolution)Math.Max((int)securityResolution, (int)Resolution.Minute));
                             }
                         }
                         // set the underlying security on the derivative -- we do this in two places since it's possible
@@ -475,7 +477,7 @@ namespace QuantConnect.Algorithm
                         }
 
                         universe = new UserDefinedUniverse(uconfig,
-                            new UniverseSettings(security.Resolution, security.Leverage, security.IsFillDataForward, security.IsExtendedMarketHours,
+                            new UniverseSettings(SubscriptionManager.GetHighestSubscriptionResolution(security.Symbol), security.Leverage, security.IsFillDataForward, security.IsExtendedMarketHours,
                                 TimeSpan.Zero),
                             SecurityInitializer,
                             QuantConnect.Time.MaxTimeSpan,

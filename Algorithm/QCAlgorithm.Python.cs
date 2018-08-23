@@ -621,7 +621,7 @@ namespace QuantConnect.Algorithm
                         .FirstOrDefault(s => s.Type.BaseType == CreateType(type).BaseType);
                 if (config == null) return null;
 
-                Resolution? res = resolution ?? security.Resolution;
+                var res = GetResolution(x, resolution);
                 var start = GetStartTimeAlgoTz(x, periods, resolution).ConvertToUtc(TimeZone);
                 return CreateHistoryRequest(config, start, UtcTime.RoundDown(res.Value.ToTimeSpan()), resolution);
             });
@@ -684,7 +684,7 @@ namespace QuantConnect.Algorithm
             if (resolution == Resolution.Tick) throw new ArgumentException("History functions that accept a 'periods' parameter can not be used with Resolution.Tick");
 
             var start = GetStartTimeAlgoTz(symbol, periods, resolution);
-            var end = Time.RoundDown((resolution ?? Securities[symbol].Resolution).ToTimeSpan());
+            var end = Time.RoundDown(GetResolution(symbol, resolution).Value.ToTimeSpan());
             return History(type, symbol, start, end, resolution);
         }
 

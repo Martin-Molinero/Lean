@@ -44,7 +44,7 @@ namespace QuantConnect.Jupyter
     {
         private dynamic _pandas;
         private IDataCacheProvider _dataCacheProvider;
-        
+
         /// <summary>
         /// <see cref = "QuantBook" /> constructor.
         /// Provides access to data for quantitative analysis
@@ -156,7 +156,7 @@ namespace QuantConnect.Jupyter
             }
 
             var option = Securities[symbol] as Option;
-            var underlying = AddEquity(symbol.Underlying.Value, option.Resolution);
+            var underlying = AddEquity(symbol.Underlying.Value, SubscriptionManager.GetHighestSubscriptionResolution(symbol));
 
             var allSymbols = new List<Symbol>();
             for (var date = start; date < end; date = date.AddDays(1))
@@ -203,7 +203,7 @@ namespace QuantConnect.Jupyter
         }
 
         /// <summary>
-        /// Gets the historical data of an indicator for the specified symbol. The exact number of bars will be returned. 
+        /// Gets the historical data of an indicator for the specified symbol. The exact number of bars will be returned.
         /// The symbol must exist in the Securities collection.
         /// </summary>
         /// <param name="symbol">The symbol to retrieve historical data for</param>
@@ -218,7 +218,7 @@ namespace QuantConnect.Jupyter
         }
 
         /// <summary>
-        /// Gets the historical data of a bar indicator for the specified symbol. The exact number of bars will be returned. 
+        /// Gets the historical data of a bar indicator for the specified symbol. The exact number of bars will be returned.
         /// The symbol must exist in the Securities collection.
         /// </summary>
         /// <param name="symbol">The symbol to retrieve historical data for</param>
@@ -233,7 +233,7 @@ namespace QuantConnect.Jupyter
         }
 
         /// <summary>
-        /// Gets the historical data of a bar indicator for the specified symbol. The exact number of bars will be returned. 
+        /// Gets the historical data of a bar indicator for the specified symbol. The exact number of bars will be returned.
         /// The symbol must exist in the Securities collection.
         /// </summary>
         /// <param name="symbol">The symbol to retrieve historical data for</param>
@@ -248,7 +248,7 @@ namespace QuantConnect.Jupyter
         }
 
         /// <summary>
-        /// Gets the historical data of an indicator for the specified symbol. The exact number of bars will be returned. 
+        /// Gets the historical data of an indicator for the specified symbol. The exact number of bars will be returned.
         /// The symbol must exist in the Securities collection.
         /// </summary>
         /// <param name="indicator">Indicator</param>
@@ -264,7 +264,7 @@ namespace QuantConnect.Jupyter
         }
 
         /// <summary>
-        /// Gets the historical data of a bar indicator for the specified symbol. The exact number of bars will be returned. 
+        /// Gets the historical data of a bar indicator for the specified symbol. The exact number of bars will be returned.
         /// The symbol must exist in the Securities collection.
         /// </summary>
         /// <param name="indicator">Indicator</param>
@@ -280,7 +280,7 @@ namespace QuantConnect.Jupyter
         }
 
         /// <summary>
-        /// Gets the historical data of a bar indicator for the specified symbol. The exact number of bars will be returned. 
+        /// Gets the historical data of a bar indicator for the specified symbol. The exact number of bars will be returned.
         /// The symbol must exist in the Securities collection.
         /// </summary>
         /// <param name="indicator">Indicator</param>
@@ -296,7 +296,7 @@ namespace QuantConnect.Jupyter
         }
 
         /// <summary>
-        /// Gets the historical data of an indicator for the specified symbol. The exact number of bars will be returned. 
+        /// Gets the historical data of an indicator for the specified symbol. The exact number of bars will be returned.
         /// The symbol must exist in the Securities collection.
         /// </summary>
         /// <param name="indicator">Indicator</param>
@@ -313,7 +313,7 @@ namespace QuantConnect.Jupyter
         }
 
         /// <summary>
-        /// Gets the historical data of a bar indicator for the specified symbol. The exact number of bars will be returned. 
+        /// Gets the historical data of a bar indicator for the specified symbol. The exact number of bars will be returned.
         /// The symbol must exist in the Securities collection.
         /// </summary>
         /// <param name="indicator">Indicator</param>
@@ -330,7 +330,7 @@ namespace QuantConnect.Jupyter
         }
 
         /// <summary>
-        /// Gets the historical data of a bar indicator for the specified symbol. The exact number of bars will be returned. 
+        /// Gets the historical data of a bar indicator for the specified symbol. The exact number of bars will be returned.
         /// The symbol must exist in the Securities collection.
         /// </summary>
         /// <param name="indicator">Indicator</param>
@@ -432,7 +432,7 @@ namespace QuantConnect.Jupyter
         }
 
         /// <summary>
-        /// Calculates the daily rate of change 
+        /// Calculates the daily rate of change
         /// </summary>
         /// <param name="dictionary"><see cref="IDictionary{DateTime, Double}"/> with prices keyed by time</param>
         /// <returns><see cref="List{Double}"/> with daily rate of change</returns>
@@ -463,7 +463,7 @@ namespace QuantConnect.Jupyter
         {
             // Reset the indicator
             indicator.Reset();
-            
+
             // Create a dictionary of the properties
             var name = indicator.GetType().Name;
 
@@ -538,7 +538,7 @@ namespace QuantConnect.Jupyter
 
             return PandasConverter.GetIndicatorDataFrame(properties);
         }
-        
+
         /// <summary>
         /// Gets a value of a property
         /// </summary>

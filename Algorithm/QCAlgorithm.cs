@@ -1584,7 +1584,7 @@ namespace QuantConnect.Algorithm
             Security equity;
             if (!Securities.TryGetValue(underlying, out equity))
             {
-                equity = AddEquity(underlying.Value, option.Resolution, underlying.ID.Market, false);
+                equity = AddEquity(underlying.Value, SubscriptionManager.GetHighestSubscriptionResolution(option.Symbol), underlying.ID.Market, false);
             }
             else if (equity.DataNormalizationMode != DataNormalizationMode.Raw)
             {

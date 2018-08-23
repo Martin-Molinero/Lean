@@ -83,6 +83,7 @@ namespace QuantConnect.Securities
         /// Resolution of data requested for this security.
         /// </summary>
         /// <remarks>Tick, second or minute resolution for QuantConnect assets.</remarks>
+        [Obsolete("This property is obsolete. See 'SubscriptionManager.GetHighestSubscriptionResolution()'")]
         public Resolution Resolution { get; private set; }
 
         /// <summary>

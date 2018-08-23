@@ -504,7 +504,7 @@ namespace QuantConnect.Algorithm
             }
 
             // For speed and memory usage, use Resolution.Minute as the minimum resolution
-            var resolution = (Resolution)Math.Max((int)Resolution.Minute, (int)security.Resolution);
+            var resolution = (Resolution)Math.Max((int)Resolution.Minute, (int)SubscriptionManager.GetHighestSubscriptionResolution(security.Symbol));
 
             var startTime = GetStartTimeAlgoTzForSecurity(security, 1, resolution);
             var endTime   = Time.RoundDown(resolution.ToTimeSpan());
@@ -557,7 +557,7 @@ namespace QuantConnect.Algorithm
         /// </summary>
         private DateTime GetStartTimeAlgoTzForSecurity(Security security, int periods, Resolution? resolution = null)
         {
-            var timeSpan = (resolution ?? security.Resolution).ToTimeSpan();
+            var timeSpan = (resolution ?? SubscriptionManager.GetHighestSubscriptionResolution(security.Symbol)).ToTimeSpan();
 
             // make this a minimum of one second
             timeSpan = timeSpan < QuantConnect.Time.OneSecond ? QuantConnect.Time.OneSecond : timeSpan;
@@ -693,7 +693,7 @@ namespace QuantConnect.Algorithm
             Security security;
             if (Securities.TryGetValue(symbol, out security))
             {
-                return resolution ?? security.Resolution;
+                return resolution ?? SubscriptionManager.GetHighestSubscriptionResolution(security.Symbol);
             }
             else
             {

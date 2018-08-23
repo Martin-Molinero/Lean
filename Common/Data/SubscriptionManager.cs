@@ -247,5 +247,27 @@ namespace QuantConnect.Data
             return AvailableDataTypes[symbolSecurityType].Select(tickType => new Tuple<Type, TickType>(LeanData.GetDataType(resolution, tickType), tickType)).ToList();
         }
 
+        /// <summary>
+        /// Determines base on symbols subscriptions the highest resolution
+        /// </summary>
+        /// <returns>Highest subscription resolution</returns>
+        public Resolution GetHighestSubscriptionResolution(Symbol symbol)
+        {
+            return Subscriptions.Where(x => x.Symbol == symbol)
+                .Select(x => x.Resolution)
+                .DefaultIfEmpty(Resolution.Daily)
+                .Min();
+        }
+
+        /// <summary>
+        /// Determines from all subscriptions the highest resolution
+        /// </summary>
+        /// <returns>Highest subscription resolution</returns>
+        public Resolution GetHighestSubscriptionResolution(Resolution defaultResolution)
+        {
+            return Subscriptions.Select(x => x.Resolution)
+                .DefaultIfEmpty(defaultResolution)
+                .Min();
+        }
     }
 }
