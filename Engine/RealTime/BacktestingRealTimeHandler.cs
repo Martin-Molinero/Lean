@@ -58,14 +58,12 @@ namespace QuantConnect.Lean.Engine.RealTime
             // create events for algorithm's end of tradeable dates
             Add(ScheduledEventFactory.EveryAlgorithmEndOfDay(_algorithm, _resultHandler, _algorithm.StartDate, _algorithm.EndDate, ScheduledEvent.AlgorithmEndOfDayDelta));
 
-            var subscriptionsBySymbol = algorithm.SubscriptionManager.SubscriptionsBySymbol();
-
             // set up the events for each security to fire every tradeable date before market close
             foreach (var kvp in _algorithm.Securities)
             {
                 var security = kvp.Value;
 
-                if (!subscriptionsBySymbol[security.Symbol].IsInternalFeed())
+                if (!algorithm.SubscriptionManager.IsInternalFeed(security.Symbol))
                 {
                     Add(ScheduledEventFactory.EverySecurityEndOfDay(_algorithm, _resultHandler, security, algorithm.StartDate, _algorithm.EndDate, ScheduledEvent.SecurityEndOfDayDelta));
                 }

@@ -229,14 +229,13 @@ namespace QuantConnect.Lean.Engine.Results
                     serverStatistics["Up Time"] = $"{upTime.Days}d {upTime:hh\\:mm\\:ss}";
                     serverStatistics["Total RAM (MB)"] = _job.Controls.RamAllocation.ToString();
 
-                    var subscriptionDataConfigsBySymbol = _algorithm.SubscriptionManager.SubscriptionsBySymbol();
-
                     // Only send holdings updates when we have changes in orders, except for first time, then we want to send all
                     foreach (var kvp in _algorithm.Securities.OrderBy(x => x.Key.Value))
                     {
                         var security = kvp.Value;
 
-                        if (!subscriptionDataConfigsBySymbol[kvp.Key].IsInternalFeed() && !security.Symbol.IsCanonical())
+                        if (!_algorithm.SubscriptionManager.IsInternalFeed(kvp.Key)
+                            && !security.Symbol.IsCanonical())
                         {
                             holdings.Add(security.Symbol.Value, new Holding(security));
                         }
@@ -590,16 +589,14 @@ namespace QuantConnect.Lean.Engine.Results
         {
             // don't send stockplots for internal feeds
             Security security;
-            if (_algorithm.Securities.TryGetValue(symbol, out security) && value > 0)
+            if (_algorithm.Securities.TryGetValue(symbol, out security)
+                && !_algorithm.SubscriptionManager.IsInternalFeed(symbol)
+                && value > 0)
             {
-                var subscriptionDataConfigs = _algorithm.SubscriptionManager.SymbolsSubscriptionsList(symbol);
-                if (!subscriptionDataConfigs.IsInternalFeed())
+                var now = DateTime.UtcNow.ConvertFromUtc(security.Exchange.TimeZone);
+                if (security.Exchange.Hours.IsOpen(now, _algorithm.SubscriptionManager.IsExtendedMarketHours(symbol)))
                 {
-                    var now = DateTime.UtcNow.ConvertFromUtc(security.Exchange.TimeZone);
-                    if (security.Exchange.Hours.IsOpen(now, subscriptionDataConfigs.IsExtendedMarketHours()))
-                    {
-                        Sample("Stockplot: " + symbol.Value, "Stockplot: " + symbol.Value, 0, SeriesType.Line, time, value);
-                    }
+                    Sample("Stockplot: " + symbol.Value, "Stockplot: " + symbol.Value, 0, SeriesType.Line, time, value);
                 }
             }
         }

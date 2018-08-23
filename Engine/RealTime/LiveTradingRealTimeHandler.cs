@@ -81,14 +81,12 @@ namespace QuantConnect.Lean.Engine.RealTime
             // add end of day events for each tradeable day
             Add(ScheduledEventFactory.EveryAlgorithmEndOfDay(_algorithm, _resultHandler, todayInAlgorithmTimeZone, Time.EndOfTime, ScheduledEvent.AlgorithmEndOfDayDelta, DateTime.UtcNow));
 
-            var subscriptionsBySymbol = algorithm.SubscriptionManager.SubscriptionsBySymbol();
-
             // add end of trading day events for each security
             foreach (var kvp in _algorithm.Securities)
             {
                 var security = kvp.Value;
 
-                if (!subscriptionsBySymbol[security.Symbol].IsInternalFeed())
+                if (!algorithm.SubscriptionManager.IsInternalFeed(security.Symbol))
                 {
                     // assumes security.Exchange has been updated with today's hours via RefreshMarketHoursToday
                     Add(ScheduledEventFactory.EverySecurityEndOfDay(_algorithm, _resultHandler, security, todayInAlgorithmTimeZone, Time.EndOfTime, ScheduledEvent.SecurityEndOfDayDelta, DateTime.UtcNow));

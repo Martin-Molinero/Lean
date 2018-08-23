@@ -67,42 +67,27 @@ namespace QuantConnect.Algorithm
             // rewrite securities w/ derivatives to be in raw mode
             lock (_pendingUniverseAdditionsLock)
             {
-                var subscriptionDataConfigsBySymbol = SubscriptionManager.SubscriptionsBySymbol();
-
                 foreach (var security in Securities.Select(kvp => kvp.Value).Union(_pendingUserDefinedUniverseSecurityAdditions.Keys))
                 {
                     // check for any derivative securities and mark the underlying as raw
                     if (Securities.Any(skvp => skvp.Key.HasUnderlyingSymbol(security.Symbol)))
                     {
-                        IReadOnlyCollection<SubscriptionDataConfig> subscriptionDataConfigs;
-                        // If it is an underlying security we just added we wont have it in 'subscriptionDataConfigsBySymbol'.
-                        // ConfigureUnderlyingSecurity() will solve it
-                        subscriptionDataConfigsBySymbol.TryGetValue(security.Symbol, out subscriptionDataConfigs);
-
-                        // set data mode raw and default volatility model
-                        ConfigureUnderlyingSecurity(security, subscriptionDataConfigs);
+                        ConfigureUnderlyingSecurity(security);
                     }
 
                     if (security.Symbol.HasUnderlying)
                     {
-                        var securityResolution = Resolution.Daily;
-                        var isExtendedMarketHours = false;
-                        if (subscriptionDataConfigsBySymbol.ContainsKey(security.Symbol))
-                        {
-                            var configs = subscriptionDataConfigsBySymbol[security.Symbol];
-                            securityResolution = configs.GetHighestSubscriptionResolution();
-                            isExtendedMarketHours = configs.IsExtendedMarketHours();
-                        }
-
                         Security underlyingSecurity;
                         var underlyingSymbol = security.Symbol.Underlying;
+
+                        var securityResolution = SubscriptionManager.GetHighestSubscriptionResolution(security.Symbol);
 
                         // create the underlying security object if it doesn't already exist
                         if (!Securities.TryGetValue(underlyingSymbol, out underlyingSecurity))
                         {
                             underlyingSecurity = AddSecurity(underlyingSymbol.SecurityType, underlyingSymbol.Value,
                                 securityResolution,
-                                underlyingSymbol.ID.Market, false, 0, isExtendedMarketHours);
+                                underlyingSymbol.ID.Market, false, 0, SubscriptionManager.IsExtendedMarketHours(security.Symbol));
                         }
 
                         // set data mode raw and default volatility model
@@ -476,7 +461,7 @@ namespace QuantConnect.Algorithm
 
             // add this security to the user defined universe
             Universe universe;
-            var subscription = SubscriptionManager.SymbolsSubscriptionsList(security.Symbol).First();
+            var subscription = SubscriptionManager.Subscriptions.FirstOrDefault(x => x.Symbol == security.Symbol);
             var universeSymbol = UserDefinedUniverse.CreateSymbol(subscription.SecurityType, subscription.Market);
             lock (_pendingUniverseAdditionsLock)
             {
@@ -526,21 +511,12 @@ namespace QuantConnect.Algorithm
         /// Configures the security to be in raw data mode and ensures that a reasonable default volatility model is supplied
         /// </summary>
         /// <param name="security">The underlying security</param>
-        /// <param name="subscriptionDataConfigs">The underlying securities subscriptions</param>
-        private void ConfigureUnderlyingSecurity(Security security, IReadOnlyCollection<SubscriptionDataConfig> subscriptionDataConfigs = null)
+        private void ConfigureUnderlyingSecurity(Security security)
         {
             // force underlying securities to be raw data mode
             Debug($"ConfigureUnderlyingSecurity().Warning: The {security.Symbol.Value} " +
                   "equity security was set the raw price normalization mode to work with options.");
-            if (subscriptionDataConfigs == null)
-            {
-                subscriptionDataConfigs = SubscriptionManager.SymbolsSubscriptionsList(security.Symbol);
-                if (subscriptionDataConfigs.IsNullOrEmpty())
-                {
-                    Debug($"ConfigureUnderlyingSecurity().Warning: No SubscriptionDataConfig found for security {security.Symbol.Value}.");
-                }
-            }
-            foreach (var subscriptionDataConfig in subscriptionDataConfigs)
+            foreach (var subscriptionDataConfig in SubscriptionManager.Subscriptions.Where(x => x.Symbol == security.Symbol))
             {
                 subscriptionDataConfig.DataNormalizationMode = DataNormalizationMode.Raw;
             }

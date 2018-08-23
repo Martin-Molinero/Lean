@@ -993,8 +993,6 @@ namespace QuantConnect.Algorithm
                 // purposefully use the direct setter vs Set method so we don't flip the switch :/
                 SecurityInitializer = new BrokerageModelSecurityInitializer(model, SecuritySeeder.Null);
 
-                var subscriptionDataConfigsBySymbol = SubscriptionManager.SubscriptionsBySymbol();
-
                 // update models on securities added earlier (before SetBrokerageModel is called)
                 foreach (var kvp in Securities)
                 {
@@ -1005,7 +1003,7 @@ namespace QuantConnect.Algorithm
                     // SetSecurityInitializer must be called before SetBrokerageModel
                     var leverage = security.Leverage;
 
-                    SecurityInitializer.Initialize(security, subscriptionDataConfigsBySymbol[security.Symbol].IsExtendedMarketHours());
+                    SecurityInitializer.Initialize(security, SubscriptionManager.IsExtendedMarketHours(security.Symbol));
 
                     // restore the saved leverage
                     security.SetLeverage(leverage);

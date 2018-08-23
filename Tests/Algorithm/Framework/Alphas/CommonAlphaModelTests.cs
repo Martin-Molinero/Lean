@@ -217,19 +217,18 @@ namespace QuantConnect.Tests.Algorithm.Framework.Alphas
                 var high = last * 1.005m;
                 var low = last / 1.005m;
 
-                var subscriptionDataConfigsBySymbol = _algorithm.SubscriptionManager.SubscriptionsBySymbol();
                 foreach (var kvp in _algorithm.Securities)
                 {
                     var security = kvp.Value;
                     var exchange = security.Exchange.Hours;
-                    var extendedMarket = subscriptionDataConfigsBySymbol[kvp.Key].IsExtendedMarketHours();
+                    var extendedMarket = _algorithm.SubscriptionManager.IsExtendedMarketHours(kvp.Key);
                     var localDateTime = utcDateTime.ConvertFromUtc(exchange.TimeZone);
                     if (!exchange.IsOpen(localDateTime, extendedMarket))
                     {
                         continue;
                     }
                     var configuration = security.Subscriptions.FirstOrDefault();
-                    var period = subscriptionDataConfigsBySymbol[kvp.Key].GetHighestSubscriptionResolution().ToTimeSpan();
+                    var period = _algorithm.SubscriptionManager.GetHighestSubscriptionResolution(kvp.Key).ToTimeSpan();
                     var time = (utcDateTime - period).ConvertFromUtc(configuration.DataTimeZone);
                     var tradeBar = new TradeBar(time, security.Symbol, last, high, low, last, 1000, period);
                     packets.Add(new DataFeedPacket(security, configuration, new List<BaseData> { tradeBar }));
@@ -255,10 +254,9 @@ namespace QuantConnect.Tests.Algorithm.Framework.Alphas
 
             while (sliceDateTimes.Count < maxCount)
             {
-                var subscriptionDataConfigsBySymbol = _algorithm.SubscriptionManager.SubscriptionsBySymbol();
                 foreach (var kvp in _algorithm.Securities)
                 {
-                    var resolution = subscriptionDataConfigsBySymbol[kvp.Key].GetHighestSubscriptionResolution().ToTimeSpan();
+                    var resolution = _algorithm.SubscriptionManager.GetHighestSubscriptionResolution(kvp.Key).ToTimeSpan();
                     utcDateTime = utcDateTime.Add(resolution);
                     if (resolution == Time.OneDay && utcDateTime.TimeOfDay == TimeSpan.Zero)
                     {
@@ -267,7 +265,7 @@ namespace QuantConnect.Tests.Algorithm.Framework.Alphas
 
                     var security = kvp.Value;
                     var exchange = security.Exchange.Hours;
-                    var extendedMarket = subscriptionDataConfigsBySymbol[kvp.Key].IsExtendedMarketHours();
+                    var extendedMarket = _algorithm.SubscriptionManager.IsExtendedMarketHours(kvp.Key);
                     var localDateTime = utcDateTime.ConvertFromUtc(exchange.TimeZone);
                     if (exchange.IsOpen(localDateTime, extendedMarket))
                     {

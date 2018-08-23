@@ -76,7 +76,7 @@ namespace QuantConnect.Lean.Engine.RealTime
             // create enumerable of end of day in algorithm's time zone
             var times =
                 // for every date any exchange is open in the algorithm
-                from date in Time.EachTradeableDay(algorithm.Securities.Values, start, end, algorithm.SubscriptionManager.SubscriptionsBySymbol())
+                from date in Time.EachTradeableDay(algorithm.Securities.Values, start, end, algorithm.SubscriptionManager.IsExtendedMarketHours)
                 // define the time of day we want the event to fire, a little before midnight
                 let eventTime = date + eodEventTime
                 // convert the event time into UTC

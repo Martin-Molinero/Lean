@@ -294,14 +294,14 @@ namespace QuantConnect
         /// <param name="securities">Securities we have in portfolio</param>
         /// <param name="from">Start date</param>
         /// <param name="thru">End date</param>
-        /// <param name="subscriptionDataConfigs">The subscription data configurations of the securities.</param>
+        /// <param name="isExtendedMarketHoursFun">Function that will return isExtendedMarketHours for each Symbol</param>
         /// <returns>Enumerable date range</returns>
         public static IEnumerable<DateTime> EachTradeableDay(ICollection<Security> securities, DateTime from, DateTime thru,
-                                                            IReadOnlyDictionary<Symbol, IReadOnlyCollection<SubscriptionDataConfig>> subscriptionsBySymbol)
+                                                             Func<Symbol, bool> isExtendedMarketHoursFun)
         {
             for (var day = from.Date; day.Date <= thru.Date; day = day.AddDays(1))
             {
-                if (TradableDate(securities, day, subscriptionsBySymbol))
+                if (TradableDate(securities, day, isExtendedMarketHoursFun))
                 {
                     yield return day;
                 }
@@ -385,16 +385,16 @@ namespace QuantConnect
         /// </summary>
         /// <param name="securities">Security manager from the algorithm</param>
         /// <param name="day">DateTime to check if trade-able.</param
-        /// <param name="configsBySymbol">The subscription data configurations of organized by Symbol</param>
+        /// <param name="isExtendedMarketHoursFun">Function that will return isExtendedMarketHours for each Symbol</param>
         /// <returns>True if tradeable date</returns>
         public static bool TradableDate(IEnumerable<Security> securities, DateTime day,
-                                        IReadOnlyDictionary<Symbol, IReadOnlyCollection<SubscriptionDataConfig>> configsBySymbol)
+                                        Func<Symbol, bool> isExtendedMarketHoursFun)
         {
             try
             {
                 foreach (var security in securities)
                 {
-                    if (security.Exchange.IsOpenDuringBar(day.Date, day.Date.AddDays(1), configsBySymbol[security.Symbol].IsExtendedMarketHours())) return true;
+                    if (security.Exchange.IsOpenDuringBar(day.Date, day.Date.AddDays(1), isExtendedMarketHoursFun(security.Symbol))) return true;
                 }
             }
             catch (Exception err)
@@ -411,10 +411,10 @@ namespace QuantConnect
         /// <param name="securities">Securities we're trading</param>
         /// <param name="start">Start of Date Loop</param>
         /// <param name="finish">End of Date Loop</param>
-        /// <param name="subscriptionsBySymbol">The subscription data configurations organized by Symbol.</param>
+        /// <param name="isExtendedMarketHoursFun">Function that will return isExtendedMarketHours for each Symbol</param>
         /// <returns>Number of dates</returns>
         public static int TradeableDates(ICollection<Security> securities, DateTime start, DateTime finish,
-                                         IReadOnlyDictionary<Symbol, IReadOnlyCollection<SubscriptionDataConfig>>  subscriptionsBySymbol)
+                                         Func<Symbol, bool> isExtendedMarketHoursFun)
         {
             var count = 0;
             Log.Trace("Time.TradeableDates(): Security Count: " + securities.Count);
@@ -422,7 +422,7 @@ namespace QuantConnect
             {
                 foreach (var day in EachDay(start, finish))
                 {
-                    if (TradableDate(securities, day, subscriptionsBySymbol))
+                    if (TradableDate(securities, day, isExtendedMarketHoursFun))
                     {
                         count++;
                     }

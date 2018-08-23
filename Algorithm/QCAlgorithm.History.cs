@@ -503,10 +503,9 @@ namespace QuantConnect.Algorithm
                 return null;
             }
 
-            var symbolsSubscriptions = SubscriptionManager.SymbolsSubscriptionsList(security.Symbol);
-            var highestSubscriptionResolution = symbolsSubscriptions.GetHighestSubscriptionResolution();
-            var isExtendedMarketHours = symbolsSubscriptions.IsExtendedMarketHours();
-            var dataNormalizationMode = symbolsSubscriptions.DataNormalizationMode();
+            var highestSubscriptionResolution = SubscriptionManager.GetHighestSubscriptionResolution(security.Symbol);
+            var isExtendedMarketHours = SubscriptionManager.IsExtendedMarketHours(security.Symbol);
+            var dataNormalizationMode = SubscriptionManager.DataNormalizationMode(security.Symbol);
 
             // For speed and memory usage, use Resolution.Minute as the minimum resolution
             var resolution = (Resolution)Math.Max((int)Resolution.Minute, (int)highestSubscriptionResolution);

@@ -305,7 +305,7 @@ namespace QuantConnect.Lean.Engine.Setup
                     {
                         SecurityType.Equity, SecurityType.Forex, SecurityType.Cfd, SecurityType.Option, SecurityType.Future, SecurityType.Crypto
                     };
-                    var minResolution = new Lazy<Resolution>(() => algorithm.SubscriptionManager.Subscriptions.GetHighestSubscriptionResolution(Resolution.Second));
+                    var minResolution = new Lazy<Resolution>(() => algorithm.SubscriptionManager.GetHighestSubscriptionResolution(Resolution.Second));
                     foreach (var holding in holdings)
                     {
                         Log.Trace("BrokerageSetupHandler.Setup(): Has existing holding: " + holding);

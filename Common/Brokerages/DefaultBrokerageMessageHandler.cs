@@ -90,15 +90,13 @@ namespace QuantConnect.Brokerages
                     _connected = false;
                     Log.Trace("DefaultBrokerageMessageHandler.Handle(): Disconnected.");
 
-                    var subscriptionsDataConfigsBySymbol = _algorithm.SubscriptionManager.SubscriptionsBySymbol();
-
                     // check to see if any non-custom security exchanges are open within the next x minutes
                     var open = (from kvp in _algorithm.Securities
                                 let security = kvp.Value
                                 where security.Type != SecurityType.Base
                                 let exchange = security.Exchange
                                 let localTime = _algorithm.UtcTime.ConvertFromUtc(exchange.TimeZone)
-                                where exchange.IsOpenDuringBar(localTime, localTime + _openThreshold, subscriptionsDataConfigsBySymbol[security.Symbol].IsExtendedMarketHours())
+                                where exchange.IsOpenDuringBar(localTime, localTime + _openThreshold, _algorithm.SubscriptionManager.IsExtendedMarketHours(security.Symbol))
                                 select security).Any();
 
                     // if any are open then we need to kill the algorithm
@@ -122,7 +120,7 @@ namespace QuantConnect.Brokerages
                                                  where security.Type != SecurityType.Base
                                                  let exchange = security.Exchange
                                                  let localTime = _algorithm.UtcTime.ConvertFromUtc(exchange.TimeZone)
-                                                 let marketOpen = exchange.Hours.GetNextMarketOpen(localTime, subscriptionsDataConfigsBySymbol[security.Symbol].IsExtendedMarketHours())
+                                                 let marketOpen = exchange.Hours.GetNextMarketOpen(localTime, _algorithm.SubscriptionManager.IsExtendedMarketHours(security.Symbol))
                                                  let marketOpenUtc = marketOpen.ConvertToUtc(exchange.TimeZone)
                                                  select marketOpenUtc).Min();
                         }

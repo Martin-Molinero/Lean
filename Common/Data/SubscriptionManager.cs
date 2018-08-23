@@ -253,16 +253,30 @@ namespace QuantConnect.Data
         /// <returns>True, all subscriptions matching symbol are internal</returns>
         public bool IsInternalFeed(Symbol symbol)
         {
-            return Subscriptions.IsInternalFeed(symbol);
+            return Subscriptions.Where(x => x.Symbol == symbol).All(x => x.IsInternalFeed);
         }
 
         /// <summary>
         /// Determines base on security subscriptions the highest resolution
         /// </summary>
         /// <returns>Highest subscription resolution. Defaults to Daily if no subscription</returns>
-        public Resolution GetHighestSubscriptionResolution( Symbol symbol)
+        public Resolution GetHighestSubscriptionResolution(Symbol symbol, Resolution defaultResolution = Resolution.Daily)
         {
-            return Subscriptions.GetHighestSubscriptionResolution(symbol);
+            return Subscriptions.Where(x => x.Symbol == symbol)
+                                .Select(x => x.Resolution)
+                                .DefaultIfEmpty(defaultResolution)
+                                .Min();
+        }
+
+        /// <summary>
+        /// Determines the highest resolution from all subscriptions
+        /// </summary>
+        /// <returns>Highest subscription resolution. Defaults to Daily if no subscription</returns>
+        public Resolution GetHighestSubscriptionResolution(Resolution defaultResolution = Resolution.Daily)
+        {
+            return Subscriptions.Select(x => x.Resolution)
+                                .DefaultIfEmpty(defaultResolution)
+                                .Min();
         }
 
         /// <summary>
@@ -271,41 +285,19 @@ namespace QuantConnect.Data
         /// <returns>True, indicates the security will continue feeding data after the primary market hours have closed.</returns>
         public bool IsExtendedMarketHours(Symbol symbol)
         {
-            return Subscriptions.IsExtendedMarketHours(symbol);
+            return Subscriptions.Where(x => x.Symbol == symbol).Any(x => x.ExtendedMarketHours);
         }
 
         /// <summary>
         /// Determines base on security subscriptions the data normalization mode used for this security.
         /// </summary>
         /// <returns>The DataNormalizationMode of the first subscription found. Defaults to Adjusted if no subscription</returns>
-        public DataNormalizationMode DataNormalizationMode(Symbol symbol)
+        public DataNormalizationMode DataNormalizationMode(Symbol symbol, DataNormalizationMode defaultDataNormalizationMode = QuantConnect.DataNormalizationMode.Adjusted)
         {
-            return Subscriptions.DataNormalizationMode(symbol);
-        }
-
-        /// <summary>
-        /// Will filter the Symbols available Subscriptions Data Configs
-        /// </summary>
-        /// <returns>Subscriptions matching the provided Symbol</returns>
-        public List<SubscriptionDataConfig> SymbolsSubscriptionsList(Symbol symbol)
-        {
-            return Subscriptions.Where(x => x.Symbol == symbol).ToList();
-        }
-
-        /// <summary>
-        /// Organizes subscriptions by symbol
-        /// </summary>
-        /// <returns>Dictionary: Symbol, list of all Symbols subscriptions data configs</returns>
-        public IReadOnlyDictionary<Symbol, IReadOnlyCollection<SubscriptionDataConfig>> SubscriptionsBySymbol()
-        {
-            var result = new Dictionary<Symbol, IReadOnlyCollection<SubscriptionDataConfig>>();
-            var groupedBy = Subscriptions.GroupBy(x => x.Symbol);
-            foreach (var group in groupedBy)
-            {
-                result[group.Key] = group.ToList();
-            }
-
-            return result;
+            return Subscriptions.Where(x => x.Symbol == symbol)
+                                .Select(x => x.DataNormalizationMode)
+                                .DefaultIfEmpty(defaultDataNormalizationMode)
+                                .FirstOrDefault();
         }
     }
 }

@@ -464,12 +464,12 @@ namespace QuantConnect.Lean.Engine
                     }
                 }
 
-                var subscriptionsDataConfigBySymbol = algorithm.SubscriptionManager.SubscriptionsBySymbol();
+                var subscriptionManager = algorithm.SubscriptionManager;
 
                 // apply dividends
                 foreach (var dividend in timeSlice.Slice.Dividends.Values)
                 {
-                    var dataNormalizationMode = subscriptionsDataConfigBySymbol[dividend.Symbol].DataNormalizationMode();
+                    var dataNormalizationMode = subscriptionManager.DataNormalizationMode(dividend.Symbol);
                     Log.Debug($"AlgorithmManager.Run(): {algorithm.Time}: Applying Dividend for {dividend.Symbol}");
                     algorithm.Portfolio.ApplyDividend(dividend, dataNormalizationMode);
                 }
@@ -485,7 +485,7 @@ namespace QuantConnect.Lean.Engine
                             continue;
                         }
 
-                        var dataNormalizationMode = subscriptionsDataConfigBySymbol[split.Symbol].DataNormalizationMode();
+                        var dataNormalizationMode = subscriptionManager.DataNormalizationMode(split.Symbol);
 
                         Log.Debug($"AlgorithmManager.Run(): {algorithm.Time}: Applying Split for {split.Symbol}");
                         algorithm.Portfolio.ApplySplit(split, dataNormalizationMode);
@@ -778,12 +778,11 @@ namespace QuantConnect.Lean.Engine
                 var subscriptions = algorithm.SubscriptionManager.Subscriptions.Where(x => !x.IsInternalFeed).ToList();
                 var minResolution = subscriptions.Count > 0 ? subscriptions.Min(x => x.Resolution) : Resolution.Second;
 
-                var subscriptionsDataConfigBySymbol = algorithm.SubscriptionManager.SubscriptionsBySymbol();
-
                 foreach (var request in historyRequests)
                 {
                     Security security;
-                    if (algorithm.Securities.TryGetValue(request.Symbol, out security) && subscriptionsDataConfigBySymbol[security.Symbol].IsInternalFeed())
+                    if (algorithm.Securities.TryGetValue(request.Symbol, out security)
+                        && algorithm.SubscriptionManager.IsInternalFeed(security.Symbol))
                     {
                         if (request.Resolution < minResolution)
                         {
@@ -969,7 +968,7 @@ namespace QuantConnect.Lean.Engine
         {
             Log.Trace("AlgorithmManager.ProcessVolatilityHistoryRequirements(): Updating volatility models with historical data...");
 
-            var subscriptionDataConfigsBySymbol = algorithm.SubscriptionManager.SubscriptionsBySymbol();
+            var subscriptionManager = algorithm.SubscriptionManager;
 
             foreach (var kvp in algorithm.Securities)
             {
@@ -977,10 +976,10 @@ namespace QuantConnect.Lean.Engine
 
                 if (security.VolatilityModel != VolatilityModel.Null)
                 {
-                    var configs = subscriptionDataConfigsBySymbol[security.Symbol];
                     var historyReq = security.VolatilityModel.GetHistoryRequirements(security, algorithm.UtcTime,
-                                                                                    configs.IsExtendedMarketHours(), configs.DataNormalizationMode(),
-                                                                                    configs.GetHighestSubscriptionResolution());
+                                                                                    subscriptionManager.IsExtendedMarketHours(security.Symbol),
+                                                                                    subscriptionManager.DataNormalizationMode(security.Symbol),
+                                                                                    subscriptionManager.GetHighestSubscriptionResolution(security.Symbol));
 
                     if (historyReq != null && algorithm.HistoryProvider != null)
                     {
@@ -1144,8 +1143,6 @@ namespace QuantConnect.Lean.Engine
             //       This is a small performance optimization to prevent scanning every contract on every time step,
             //       instead we scan just the underlyings, thereby reducing the time footprint of this methods by a factor
             //       of N, the number of derivative subscriptions
-            var subscriptionsDataConfigBySymbol = algorithm.SubscriptionManager.SubscriptionsBySymbol();
-
             for (int i = splitWarnings.Count - 1; i >= 0; i--)
             {
                 var split = splitWarnings[i];
@@ -1156,7 +1153,7 @@ namespace QuantConnect.Lean.Engine
                 // determine the latest possible time we can submit a MOC order
                 var highestResolutionSubscription = security.Subscriptions.OrderBy(sub => sub.Resolution).First();
                 var latestMarketOnCloseTimeRoundedDownByResolution = nextMarketClose.Subtract(MarketOnCloseOrder.DefaultSubmissionTimeBuffer)
-                    .RoundDownInTimeZone(subscriptionsDataConfigBySymbol[split.Symbol].GetHighestSubscriptionResolution().ToTimeSpan(),
+                    .RoundDownInTimeZone(algorithm.SubscriptionManager.GetHighestSubscriptionResolution(split.Symbol).ToTimeSpan(),
                                          security.Exchange.TimeZone,
                                          highestResolutionSubscription.DataTimeZone);
 
