@@ -141,7 +141,7 @@ namespace QuantConnect.Lean.Engine
 
             Results = results;
             Setup = setup;
-            DataFeed = dataFeed;
+            DataFeed = new DataManager(dataFeed);
             Transactions = transactions;
             RealTime = realTime;
             MapFileProvider = mapFileProvider;
