@@ -126,6 +126,7 @@ namespace QuantConnect.Tests.Engine
             }
 
             public bool IsActive { get; }
+            public ISubscriptionProvider SubscriptionProvider { get; }
             public IEnumerable<Subscription> Subscriptions { get; }
 
             public void Initialize(IAlgorithm algorithm,

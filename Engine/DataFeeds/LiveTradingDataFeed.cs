@@ -66,6 +66,10 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         private UniverseSelection _universeSelection;
         private DateTime _frontierUtc;
 
+        /// <summary>
+        /// Gets the subscription provider
+        /// </summary>
+        public ISubscriptionProvider SubscriptionProvider => _subscriptions;
 
         /// <summary>
         /// Gets all of the current subscriptions this data feed is processing

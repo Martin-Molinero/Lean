@@ -14,7 +14,6 @@
  *
 */
 
-using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using QuantConnect.Data;
@@ -22,7 +21,6 @@ using QuantConnect.Data.UniverseSelection;
 using QuantConnect.Interfaces;
 using QuantConnect.Lean.Engine.Results;
 using QuantConnect.Packets;
-using QuantConnect.Securities;
 
 namespace QuantConnect.Lean.Engine.DataFeeds
 {
@@ -32,6 +30,14 @@ namespace QuantConnect.Lean.Engine.DataFeeds
     [InheritedExport(typeof(IDataFeed))]
     public interface IDataFeed : IEnumerable<TimeSlice>
     {
+        /// <summary>
+        /// Gets the subscription provider
+        /// </summary>
+        ISubscriptionProvider SubscriptionProvider
+        {
+            get;
+        }
+
         /// <summary>
         /// Gets all of the current subscriptions this data feed is processing
         /// </summary>

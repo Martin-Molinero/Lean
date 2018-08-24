@@ -20,6 +20,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using QuantConnect.Data;
+using QuantConnect.Interfaces;
 using QuantConnect.Util;
 
 namespace QuantConnect.Lean.Engine.DataFeeds
@@ -27,7 +28,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
     /// <summary>
     /// Provides a collection for holding subscriptions.
     /// </summary>
-    public class SubscriptionCollection : IEnumerable<Subscription>
+    public class SubscriptionCollection : IEnumerable<Subscription>, ISubscriptionProvider
     {
         private readonly ConcurrentDictionary<SubscriptionDataConfig, Subscription> _subscriptions;
         private bool _sortingSubscriptionRequired;
@@ -137,6 +138,19 @@ namespace QuantConnect.Lean.Engine.DataFeeds
                 UpdateFillForwardResolution(FillForwardResolutionOperation.BeforeAdd, configuration);
             }
             return _fillForwardResolution;
+        }
+
+        /// <summary>
+        /// Gets all the current subscription that are being processed
+        /// </summary>
+        public IEnumerable<ISubscription> Subscriptions => _subscriptions.Select(kvp => kvp.Value);
+
+        /// <summary>
+        /// Gets all the current subscription that are being processed for a given Symbol
+        /// </summary>
+        public IEnumerable<ISubscription> GetSubscriptions(Symbol symbol)
+        {
+            return _subscriptions.Where(kvp => kvp.Value.Security.Symbol == symbol).Select(kvp => kvp.Value);
         }
 
         /// <summary>

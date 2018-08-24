@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using NodaTime;
 using QuantConnect.Data;
 using QuantConnect.Data.UniverseSelection;
+using QuantConnect.Interfaces;
 using QuantConnect.Securities;
 using QuantConnect.Util;
 
@@ -28,7 +29,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
     /// <summary>
     /// Represents the data required for a data feed to process a single subsciption
     /// </summary>
-    public class Subscription : IEnumerator<SubscriptionData>
+    public class Subscription : IEnumerator<SubscriptionData>, ISubscription
     {
         private bool _removedFromUniverse;
         private readonly IEnumerator<SubscriptionData> _enumerator;
@@ -41,12 +42,12 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         /// <summary>
         /// Gets the security this subscription points to
         /// </summary>
-        public readonly Security Security;
+        public Security Security { get; }
 
         /// <summary>
-        /// Gets the configuration for this subscritions
+        /// Gets the configuration for this subscription
         /// </summary>
-        public readonly SubscriptionDataConfig Configuration;
+        public SubscriptionDataConfig Configuration { get; }
 
         /// <summary>
         /// Gets the exchange time zone associated with this subscription

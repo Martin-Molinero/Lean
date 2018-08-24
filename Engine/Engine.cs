@@ -149,6 +149,8 @@ namespace QuantConnect.Lean.Engine
 
                     algorithm.HistoryProvider = historyProvider;
 
+                    algorithm.SubscriptionManager.SetSubscriptionProvider(_algorithmHandlers.DataFeed.SubscriptionProvider);
+
                     // initialize the default brokerage message handler
                     algorithm.BrokerageMessageHandler = factory.CreateBrokerageMessageHandler(algorithm, job, _systemHandlers.Api);
 

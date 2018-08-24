@@ -34,6 +34,7 @@ namespace QuantConnect.Data
     {
         private readonly IAlgorithmSettings _algorithmSettings;
         private readonly TimeKeeper _timeKeeper;
+        private ISubscriptionProvider _subscriptionProvider;
 
         /// There is no ConcurrentHashSet collection in .NET,
         /// so we use ConcurrentDictionary with byte value to minimize memory usage
@@ -247,5 +248,12 @@ namespace QuantConnect.Data
             return AvailableDataTypes[symbolSecurityType].Select(tickType => new Tuple<Type, TickType>(LeanData.GetDataType(resolution, tickType), tickType)).ToList();
         }
 
+        /// <summary>
+        /// Sets Subscription provider
+        /// </summary>
+        public void SetSubscriptionProvider(ISubscriptionProvider subscriptionProvider)
+        {
+            _subscriptionProvider = subscriptionProvider;
+        }
     }
 }

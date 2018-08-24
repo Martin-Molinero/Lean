@@ -179,6 +179,8 @@
     <Compile Include="Brokerages\GDAXBrokerageModel.cs" />
     <Compile Include="Chart.cs" />
     <Compile Include="ChartPoint.cs" />
+    <Compile Include="Interfaces\ISubscription.cs" />
+    <Compile Include="Interfaces\ISubscriptionProvider.cs" />
     <Compile Include="Python\BuyingPowerModelPythonWrapper.cs" />
     <Compile Include="Series.cs" />
     <Compile Include="Data\Custom\Intrinio\IntrinioConfig.cs" />

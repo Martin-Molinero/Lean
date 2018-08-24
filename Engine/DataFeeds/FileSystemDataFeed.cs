@@ -52,6 +52,11 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         private SubscriptionDataReaderSubscriptionEnumeratorFactory _subscriptionfactory;
 
         /// <summary>
+        /// Gets the subscription provider
+        /// </summary>
+        public ISubscriptionProvider SubscriptionProvider => _subscriptions;
+
+        /// <summary>
         /// Gets all of the current subscriptions this data feed is processing
         /// </summary>
         public IEnumerable<Subscription> Subscriptions
