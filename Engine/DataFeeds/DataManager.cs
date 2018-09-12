@@ -14,9 +14,11 @@
  *
 */
 
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using QuantConnect.Data;
 using QuantConnect.Interfaces;
 
@@ -25,12 +27,35 @@ namespace QuantConnect.Lean.Engine.DataFeeds
     /// <summary>
     /// DataManager will manage the subscriptions for both the DataFeeds and the SubscriptionManager
     /// </summary>
-    public class DataManager : IAlgorithmSubscriptionManager, IDataFeedSubscriptionManager
+    public class DataManager : IAlgorithmSubscriptionManager, IDataFeedSubscriptionManager, IEnumerable<TimeSlice>
     {
         /// There is no ConcurrentHashSet collection in .NET,
         /// so we use ConcurrentDictionary with byte value to minimize memory usage
         private readonly ConcurrentDictionary<SubscriptionDataConfig, byte> _subscriptionManagerSubscriptions
             = new ConcurrentDictionary<SubscriptionDataConfig, byte>();
+
+        private readonly Synchronizer _synchronizer;
+
+        /// <summary>
+        ///
+        /// </summary>
+        public UniverseSelection UniverseSelection { get; }
+
+        /// <summary>
+        /// </summary>
+        public ITimeProvider DataFeedFrontierTimeProvider => _synchronizer.TimeProvider;
+        /// <summary>
+        /// </summary>
+        public ITimeProvider DataFeedTimeProvider => _synchronizer;
+        /// <summary>
+        ///
+        /// </summary>
+        public DataManager(IAlgorithm algorithm, IDataFeed dataFeed)
+        {
+            UniverseSelection = new UniverseSelection(dataFeed, algorithm);
+            _synchronizer = new Synchronizer(UniverseSelection, algorithm, this, dataFeed, new CancellationTokenSource());
+
+        }
 
         #region IDataFeedSubscriptionManager
 
@@ -73,5 +98,21 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         }
 
         #endregion
+
+        /// <summary>
+        ///
+        /// </summary>
+        public IEnumerator<TimeSlice> GetEnumerator()
+        {
+            return _synchronizer.GetEnumerator();
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return _synchronizer.GetEnumerator();
+        }
     }
 }

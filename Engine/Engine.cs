@@ -97,7 +97,7 @@ namespace QuantConnect.Lean.Engine
                 Thread threadResults = null;
                 Thread threadRealTime = null;
                 Thread threadAlphas = null;
-
+                DataManager dataManager = null;
                 //-> Initialize messaging system
                 _systemHandlers.Notify.SetAuthentication(job);
 
@@ -123,7 +123,8 @@ namespace QuantConnect.Lean.Engine
                     IBrokerageFactory factory;
                     brokerage = _algorithmHandlers.Setup.CreateBrokerage(job, algorithm, out factory);
 
-                    var dataManager = new DataManager();
+                    // data feed is required due to IDataFeed.RemoveSubscription()
+                    dataManager = new DataManager(algorithm, _algorithmHandlers.DataFeed);
 
                     algorithm.SubscriptionManager.SetDataManager(dataManager);
 
@@ -276,7 +277,9 @@ namespace QuantConnect.Lean.Engine
                                 // -> Using this Data Feed,
                                 // -> Send Orders to this TransactionHandler,
                                 // -> Send Results to ResultHandler.
-                                algorithmManager.Run(job, algorithm, _algorithmHandlers.DataFeed, _algorithmHandlers.Transactions, _algorithmHandlers.Results, _algorithmHandlers.RealTime, _systemHandlers.LeanManager, _algorithmHandlers.Alphas, isolator.CancellationToken);
+
+                                // TODO maybe should not send entire dataManager over, or maybe two parameters? one for UniverseSelection other for IEnumerable<TimeSlice>
+                                algorithmManager.Run(job, algorithm, dataManager, _algorithmHandlers.Transactions, _algorithmHandlers.Results, _algorithmHandlers.RealTime, _systemHandlers.LeanManager, _algorithmHandlers.Alphas, isolator.CancellationToken);
                             }
                             catch (Exception err)
                             {

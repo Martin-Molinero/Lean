@@ -52,7 +52,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         // used to get current time
         private ITimeProvider _timeProvider;
         // used to keep time constant during a time sync iteration
-        private ManualTimeProvider _frontierTimeProvider;
+        private ITimeProvider _frontierTimeProvider;
         private IDataProvider _dataProvider;
         private SingleEntryDataCacheProvider _dataCacheProvider;
 
@@ -105,7 +105,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
             _dataProvider = dataProvider;
             _dataCacheProvider = new SingleEntryDataCacheProvider(dataProvider);
 
-            _frontierTimeProvider = new ManualTimeProvider(_timeProvider.GetUtcNow());
+            _frontierTimeProvider = subscriptionManager.DataFeedFrontierTimeProvider;
             _customExchange = new BaseDataExchange("CustomDataExchange") {SleepInterval = 10};
             // sleep is controlled on this exchange via the GetNextTicksEnumerator
             _exchange = new BaseDataExchange("DataQueueExchange"){SleepInterval = 0};
@@ -113,7 +113,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
             _subscriptions = subscriptionManager.DataFeedSubscriptions;
 
             _bridge = new BusyBlockingCollection<TimeSlice>();
-            _universeSelection = new UniverseSelection(this, algorithm);
+            _universeSelection = subscriptionManager.UniverseSelection;
 
             // run the exchanges
             Task.Run(() => _exchange.Start(_cancellationTokenSource.Token));
@@ -268,73 +268,73 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         /// </summary>
         public void Run()
         {
-            IsActive = true;
+        //    IsActive = true;
 
-            // we want to emit to the bridge minimally once a second since the data feed is
-            // the heartbeat of the application, so this value will contain a second after
-            // the last emit time, and if we pass this time, we'll emit even with no data
-            var nextEmit = DateTime.MinValue;
+        //    // we want to emit to the bridge minimally once a second since the data feed is
+        //    // the heartbeat of the application, so this value will contain a second after
+        //    // the last emit time, and if we pass this time, we'll emit even with no data
+        //    var nextEmit = DateTime.MinValue;
 
-            var syncer = new SubscriptionSynchronizer(_universeSelection, _algorithm.TimeZone, _algorithm.Portfolio.CashBook, _frontierTimeProvider);
-            syncer.SubscriptionFinished += (sender, subscription) =>
-            {
-                RemoveSubscription(subscription.Configuration);
-                Log.Debug($"LiveTradingDataFeed.SubscriptionFinished(): Finished subscription: {subscription.Configuration} at {_algorithm.UtcTime} UTC");
-            };
+        //    var syncer = new SubscriptionSynchronizer(_universeSelection, _algorithm.TimeZone, _algorithm.Portfolio.CashBook, _frontierTimeProvider);
+        //    syncer.SubscriptionFinished += (sender, subscription) =>
+        //    {
+        //        RemoveSubscription(subscription.Configuration);
+        //        Log.Debug($"LiveTradingDataFeed.SubscriptionFinished(): Finished subscription: {subscription.Configuration} at {_algorithm.UtcTime} UTC");
+        //    };
 
-            try
-            {
-                while (!_cancellationTokenSource.IsCancellationRequested)
-                {
-                    // perform sleeps to wake up on the second?
-                    _frontierUtc = _timeProvider.GetUtcNow();
-                    _frontierTimeProvider.SetCurrentTime(_frontierUtc);
+        //    try
+        //    {
+        //        while (!_cancellationTokenSource.IsCancellationRequested)
+        //        {
+        //            // perform sleeps to wake up on the second?
+        //            _frontierUtc = _timeProvider.GetUtcNow();
+        //            _frontierTimeProvider.SetCurrentTime(_frontierUtc);
 
-                    // always wait for other thread to sync up
-                    if (!_bridge.WaitHandle.WaitOne(Timeout.Infinite, _cancellationTokenSource.Token))
-                    {
-                        break;
-                    }
+        //            // always wait for other thread to sync up
+        //            if (!_bridge.WaitHandle.WaitOne(Timeout.Infinite, _cancellationTokenSource.Token))
+        //            {
+        //                break;
+        //            }
 
-                    var timeSlice = syncer.Sync(Subscriptions);
+        //            var timeSlice = syncer.Sync(Subscriptions);
 
-                    // check for cancellation
-                    if (_cancellationTokenSource.IsCancellationRequested) return;
+        //            // check for cancellation
+        //            if (_cancellationTokenSource.IsCancellationRequested) return;
 
-                    // emit on data or if we've elapsed a full second since last emit or there are security changes
-                    if (timeSlice.SecurityChanges != SecurityChanges.None || timeSlice.Data.Count != 0 || _frontierUtc >= nextEmit)
-                    {
-                        _bridge.Add(timeSlice, _cancellationTokenSource.Token);
+        //            // emit on data or if we've elapsed a full second since last emit or there are security changes
+        //            if (timeSlice.SecurityChanges != SecurityChanges.None || timeSlice.Data.Count != 0 || _frontierUtc >= nextEmit)
+        //            {
+        //                _bridge.Add(timeSlice, _cancellationTokenSource.Token);
 
-                        // force emitting every second
-                        nextEmit = _frontierUtc.RoundDown(Time.OneSecond).Add(Time.OneSecond);
-                    }
+        //                // force emitting every second
+        //                nextEmit = _frontierUtc.RoundDown(Time.OneSecond).Add(Time.OneSecond);
+        //            }
 
-                    // take a short nap
-                    Thread.Sleep(1);
-                }
-            }
-            catch (Exception err)
-            {
-                Log.Error(err);
-                _algorithm.RunTimeError = err;
-                _algorithm.Status = AlgorithmStatus.RuntimeError;
+        //            // take a short nap
+        //            Thread.Sleep(1);
+        //        }
+        //    }
+        //    catch (Exception err)
+        //    {
+        //        Log.Error(err);
+        //        _algorithm.RunTimeError = err;
+        //        _algorithm.Status = AlgorithmStatus.RuntimeError;
 
-                // send last empty packet list before terminating,
-                // so the algorithm manager has a chance to detect the runtime error
-                // and exit showing the correct error instead of a timeout
-                nextEmit = _frontierUtc.RoundDown(Time.OneSecond).Add(Time.OneSecond);
+        //        // send last empty packet list before terminating,
+        //        // so the algorithm manager has a chance to detect the runtime error
+        //        // and exit showing the correct error instead of a timeout
+        //        nextEmit = _frontierUtc.RoundDown(Time.OneSecond).Add(Time.OneSecond);
 
-                if (!_cancellationTokenSource.IsCancellationRequested)
-                {
-                    _bridge.Add(
-                        TimeSlice.Create(nextEmit, _algorithm.TimeZone, _algorithm.Portfolio.CashBook, new List<DataFeedPacket>(), SecurityChanges.None, new Dictionary<Universe, BaseDataCollection>()),
-                        _cancellationTokenSource.Token);
-                }
-            }
+        //        if (!_cancellationTokenSource.IsCancellationRequested)
+        //        {
+        //            _bridge.Add(
+        //                TimeSlice.Create(nextEmit, _algorithm.TimeZone, _algorithm.Portfolio.CashBook, new List<DataFeedPacket>(), SecurityChanges.None, new Dictionary<Universe, BaseDataCollection>()),
+        //                _cancellationTokenSource.Token);
+        //        }
+        //    }
 
-            Log.Trace("LiveTradingDataFeed.Run(): Exited thread.");
-            IsActive = false;
+        //    Log.Trace("LiveTradingDataFeed.Run(): Exited thread.");
+        //    IsActive = false;
         }
 
         /// <summary>

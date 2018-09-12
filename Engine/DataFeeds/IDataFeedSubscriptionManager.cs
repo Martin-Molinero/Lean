@@ -25,5 +25,20 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         /// Gets the data feed subscription collection
         /// </summary>
         SubscriptionCollection DataFeedSubscriptions { get; }
+
+        /// <summary>
+        ///
+        /// </summary>
+        ITimeProvider DataFeedFrontierTimeProvider { get; }
+
+        /// <summary>
+        ///
+        /// </summary>
+        ITimeProvider DataFeedTimeProvider { get; }
+
+        /// <summary>
+        ///
+        /// </summary>
+        UniverseSelection UniverseSelection { get; }
     }
 }

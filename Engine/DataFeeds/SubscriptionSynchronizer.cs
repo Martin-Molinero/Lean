@@ -25,12 +25,13 @@ namespace QuantConnect.Lean.Engine.DataFeeds
     /// <summary>
     /// Provides the ability to synchronize subscriptions into time slices
     /// </summary>
-    public class SubscriptionSynchronizer : ISubscriptionSynchronizer
+    public class SubscriptionSynchronizer : ISubscriptionSynchronizer, ITimeProvider
     {
         private readonly ITimeProvider _timeProvider;
         private readonly CashBook _cashBook;
         private readonly DateTimeZone _sliceTimeZone;
         private readonly UniverseSelection _universeSelection;
+        private readonly ManualTimeProvider _manualTimeProvider;
 
         /// <summary>
         /// Event fired when a subscription is finished
@@ -53,6 +54,8 @@ namespace QuantConnect.Lean.Engine.DataFeeds
             _universeSelection = universeSelection;
             _sliceTimeZone = sliceTimeZone;
             _cashBook = cashBook;
+            _manualTimeProvider = new ManualTimeProvider();
+            _manualTimeProvider.SetCurrentTimeUtc(_timeProvider.GetUtcNow());
         }
 
         /// <summary>
@@ -69,10 +72,11 @@ namespace QuantConnect.Lean.Engine.DataFeeds
             var universeDataForTimeSliceCreate = new Dictionary<Universe, BaseDataCollection>();
 
             var frontierUtc = _timeProvider.GetUtcNow();
-
+            _manualTimeProvider.SetCurrentTimeUtc(frontierUtc);
             SecurityChanges newChanges;
             do
             {
+
                 newChanges = SecurityChanges.None;
                 foreach (var subscription in subscriptions)
                 {
@@ -180,6 +184,11 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         {
             var handler = SubscriptionFinished;
             if (handler != null) handler(this, subscription);
+        }
+
+        public DateTime GetUtcNow()
+        {
+            return _manualTimeProvider.GetUtcNow();
         }
     }
 }
