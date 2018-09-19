@@ -280,14 +280,12 @@ namespace QuantConnect.Lean.Engine.DataFeeds
                 foreach (var request in universe.GetSubscriptionRequests(security, dateTimeUtc, algorithmEndDateUtc,
                                                                          _algorithm.SubscriptionManager.SubscriptionDataConfigService))
                 {
-                    // Just in case check its the same symbol, else AddData will throw.
-                    if (security.Symbol == request.Configuration.Symbol
+                    if (security.Symbol == request.Configuration.Symbol // Just in case check its the same symbol, else AddData will throw.
                         && !security.Subscriptions.Contains(request.Configuration))
                     {
-                        // this is required for retro compatibility with security.Subscriptions
+                        // for now this is required for retro compatibility with usages of security.Subscriptions
                         security.AddData(request.Configuration);
                     }
-                    // add the new subscriptions to the data feed. Using existing SubscriptionDataConfig instance, if any, so we include any consolidators there could be
                     _dataFeed.AddSubscription(request);
 
                     // only update our security changes if we actually added data
