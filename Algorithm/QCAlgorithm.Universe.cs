@@ -142,7 +142,15 @@ namespace QuantConnect.Algorithm
                 {
                     var security = kvp.Key;
                     var userDefinedUniverse = kvp.Value;
-                    userDefinedUniverse.Add(security.Symbol);
+                    foreach (var subscriptionDataConfig in security.Subscriptions)
+                    {
+                        // Depending on `security.Subscriptions` (that come from `CreateSecurity`=>`SubscriptionManager.Add()`)
+                        // (which will eventually be removed) is an intermediate step.
+                        // `AddToUserDefinedUniverse()` could eventually create the proper `SubscriptionDataConfig` and add them to the `SubscriptionManager`
+                        // where they will be consumed by the `Consolidators` and whoever. Why can't we do it know? Cause `SubscriptionManager.Add()` will only
+                        // accept the first `SubscriptionDataConfig`
+                        userDefinedUniverse.Add(subscriptionDataConfig);
+                    }
                 }
 
                 // finally add any pending universes, this will make them available to the data feed
@@ -479,7 +487,7 @@ namespace QuantConnect.Algorithm
                                 TimeSpan.Zero),
                             SecurityInitializer,
                             QuantConnect.Time.MaxTimeSpan,
-                            new List<Symbol> { security.Symbol }
+                            security.Subscriptions.ToList()
                         );
                         _pendingUniverseAdditions.Add(universe);
                     }
