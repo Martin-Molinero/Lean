@@ -89,6 +89,8 @@ namespace QuantConnect.Data.UniverseSelection
         /// <summary>
         /// Gets the instance responsible for initializing newly added securities
         /// </summary>
+        /// <obsolete>The SecurityInitializer won't be used</obsolete>
+        [Obsolete("The SecurityInitializer won't be used")]
         public ISecurityInitializer SecurityInitializer
         {
             get; private set;
@@ -198,6 +200,8 @@ namespace QuantConnect.Data.UniverseSelection
         /// <param name="marketHoursDatabase">The market hours database</param>
         /// <param name="symbolPropertiesDatabase">The symbol properties database</param>
         /// <returns>The newly initialized security object</returns>
+        /// <obsolete>The CreateSecurity won't be called</obsolete>
+        [Obsolete("The CreateSecurity won't be called")]
         public virtual Security CreateSecurity(Symbol symbol, IAlgorithm algorithm, MarketHoursDatabase marketHoursDatabase, SymbolPropertiesDatabase symbolPropertiesDatabase)
         {
             // by default invoke the create security method to handle security initialization

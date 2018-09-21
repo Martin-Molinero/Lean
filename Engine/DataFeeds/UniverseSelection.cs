@@ -240,7 +240,12 @@ namespace QuantConnect.Lean.Engine.DataFeeds
                 Security security;
                 if (!pendingAdditions.TryGetValue(symbol, out security) && !_algorithm.Securities.TryGetValue(symbol, out security))
                 {
-                    security = universe.CreateSecurity(symbol, _algorithm, _marketHoursDatabase, _symbolPropertiesDatabase);
+                    security = SecurityManager.CreateSecurity(_algorithm.Portfolio, _algorithm.SubscriptionManager,
+                                                              _marketHoursDatabase, _symbolPropertiesDatabase,
+                                                              universe.SecurityInitializer, symbol, universe.UniverseSettings.Resolution,
+                                                              universe.UniverseSettings.FillForward, universe.UniverseSettings.Leverage,
+                                                              universe.UniverseSettings.ExtendedMarketHours, false, false,
+                                                              _algorithm.LiveMode, symbol.ID.SecurityType == SecurityType.Option);
                     pendingAdditions.Add(symbol, security);
                 }
 
@@ -250,6 +255,8 @@ namespace QuantConnect.Lean.Engine.DataFeeds
                 {
                     // add the new subscriptions to the data feed
                     _dataFeed.AddSubscription(request);
+
+                    _algorithm.SubscriptionManager.Add(request.Configuration);
 
                     // only update our security changes if we actually added data
                     if (!request.IsUniverseSubscription)

@@ -17,7 +17,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
-using QuantConnect.Interfaces;
 using QuantConnect.Securities;
 using QuantConnect.Util;
 
@@ -42,6 +41,7 @@ namespace QuantConnect.Data.UniverseSelection
         private readonly HashSet<SubscriptionDataConfig> _removedSubscriptionDataConfigs = new HashSet<SubscriptionDataConfig>();
         private readonly UniverseSettings _universeSettings;
         private readonly Func<DateTime, IEnumerable<Symbol>> _selector;
+        private readonly MarketHoursDatabase _marketHoursDatabase = MarketHoursDatabase.FromDataFolder();
 
         /// <summary>
         /// Event fired when a symbol is added or removed from this universe
@@ -264,7 +264,27 @@ namespace QuantConnect.Data.UniverseSelection
             {
                 // explanation of why this is needed is in the definition of `_removedSubscriptionDataConfigs` above
                 result = _removedSubscriptionDataConfigs.Where(x => x.Symbol == security.Symbol).ToList();
-                _removedSubscriptionDataConfigs.RemoveWhere(x => x.Symbol == security.Symbol);
+                if (!result.Any())
+                {
+                    // create subscription data configs ourselves
+                    var marketHoursDbEntry = _marketHoursDatabase.GetEntry(security.Symbol.ID.Market, security.Symbol, security.Symbol.ID.SecurityType);
+                    var exchangeHours = marketHoursDbEntry.ExchangeHours;
+
+                    var types = SubscriptionManager.LookupSubscriptionConfigDataTypes(UniverseSettings.AvailableDataTypes, security.Symbol.SecurityType,
+                                                                                      UniverseSettings.Resolution, security.Symbol.IsCanonical());
+
+                    result = (from subscriptionDataType
+                            in types
+                            let dataType = subscriptionDataType.Item1
+                            let tickType = subscriptionDataType.Item2
+                            select new SubscriptionDataConfig(dataType, security.Symbol, UniverseSettings.Resolution, marketHoursDbEntry.DataTimeZone,
+                                                              exchangeHours.TimeZone, UniverseSettings.FillForward, UniverseSettings.ExtendedMarketHours,
+                                                              isInternalFeed: false, isCustom: false, isFilteredSubscription: true, tickType: tickType)).ToList();
+                }
+                else
+                {
+                    _removedSubscriptionDataConfigs.RemoveWhere(x => x.Symbol == security.Symbol);
+                }
             }
             return result.Select(config =>
                 new SubscriptionRequest(
@@ -276,32 +296,6 @@ namespace QuantConnect.Data.UniverseSelection
                     endTimeUtc: maximumEndTimeUtc
                 )
             );
-        }
-
-        /// <summary>
-        /// Creates and configures a security for the specified symbol
-        /// </summary>
-        /// <param name="symbol">The symbol of the security to be created</param>
-        /// <param name="algorithm">The algorithm instance</param>
-        /// <param name="marketHoursDatabase">The market hours database</param>
-        /// <param name="symbolPropertiesDatabase">The symbol properties database</param>
-        /// <returns>The newly initialized security object</returns>
-        public override Security CreateSecurity(Symbol symbol, IAlgorithm algorithm, MarketHoursDatabase marketHoursDatabase, SymbolPropertiesDatabase symbolPropertiesDatabase)
-        {
-            // This isn't required in the AddXXX case, because those calls always create the security and pass us the proper configuration
-            // Happens in the case we are sent the `_symbols` collection, see constructor
-            // Happens in the case of a Symbol selector
-
-            var security = SecurityManager.CreateSecurity(algorithm.Portfolio, algorithm.SubscriptionManager, marketHoursDatabase, symbolPropertiesDatabase,
-                SecurityInitializer, symbol, UniverseSettings.Resolution, UniverseSettings.FillForward, UniverseSettings.Leverage,
-                UniverseSettings.ExtendedMarketHours, false, false, algorithm.LiveMode, symbol.ID.SecurityType == SecurityType.Option);
-
-            foreach (var subscriptionDataConfig in security.Subscriptions)
-            {
-                _subscriptionDataConfigs.Add(subscriptionDataConfig);
-            }
-
-            return security;
         }
     }
 }

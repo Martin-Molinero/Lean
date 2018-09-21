@@ -135,11 +135,20 @@ namespace QuantConnect.Data
             //Create:
             var newConfig = new SubscriptionDataConfig(dataType, symbol, resolution, dataTimeZone, exchangeTimeZone, fillDataForward, extendedMarketHours, isInternalFeed, isCustomData, isFilteredSubscription: isFilteredSubscription, tickType: tickType);
 
+            Add(newConfig);
+
+            return newConfig;
+        }
+
+        /// <summary>
+        /// </summary>
+        public bool Add(SubscriptionDataConfig newConfig)
+        {
             //Add to subscription list: make sure we don't have this symbol:
             if (_subscriptionManager.SubscriptionManagerContainsKey(newConfig))
             {
                 Log.Trace("SubscriptionManager.Add(): subscription already added: " + newConfig);
-                return newConfig;
+                return false;
             }
 
             _subscriptionManager.SubscriptionManagerTryAdd(newConfig);
@@ -156,12 +165,12 @@ namespace QuantConnect.Data
             }
 
             // add the time zone to our time keeper
-            _timeKeeper.AddTimeZone(exchangeTimeZone);
+            _timeKeeper.AddTimeZone(newConfig.ExchangeTimeZone);
 
             // if is custom data, sets HasCustomData to true
-            HasCustomData = HasCustomData || isCustomData;
+            HasCustomData = HasCustomData || newConfig.IsCustomData;
 
-            return newConfig;
+            return true;
         }
 
         /// <summary>
@@ -215,7 +224,7 @@ namespace QuantConnect.Data
         /// <summary>
         /// Hard code the set of default available data feeds
         /// </summary>
-        public Dictionary<SecurityType, List<TickType>> DefaultDataTypes()
+        public static Dictionary<SecurityType, List<TickType>> DefaultDataTypes()
         {
             return new Dictionary<SecurityType, List<TickType>>()
             {
@@ -241,18 +250,28 @@ namespace QuantConnect.Data
         /// <summary>
         /// Get the data feed types for a given <see cref="SecurityType"/> <see cref="Resolution"/>
         /// </summary>
+        public List<Tuple<Type, TickType>> LookupSubscriptionConfigDataTypes(SecurityType symbolSecurityType, Resolution resolution, bool isCanonical)
+        {
+            return LookupSubscriptionConfigDataTypes(AvailableDataTypes, symbolSecurityType, resolution, isCanonical);
+        }
+
+        /// <summary>
+        /// Get the data feed types for a given <see cref="SecurityType"/> <see cref="Resolution"/>
+        /// </summary>
         /// <param name="symbolSecurityType">The <see cref="SecurityType"/> used to determine the types</param>
         /// <param name="resolution">The resolution of the data requested</param>
         /// <param name="isCanonical">Indicates whether the security is Canonical (future and options)</param>
+        /// <param name="availableDataTypes"></param>
         /// <returns>Types that should be added to the <see cref="SubscriptionDataConfig"/></returns>
-        public List<Tuple<Type, TickType>> LookupSubscriptionConfigDataTypes(SecurityType symbolSecurityType, Resolution resolution, bool isCanonical)
+        public static List<Tuple<Type, TickType>> LookupSubscriptionConfigDataTypes(Dictionary<SecurityType, List<TickType>> availableDataTypes,
+                                                                                    SecurityType symbolSecurityType, Resolution resolution, bool isCanonical)
         {
             if (isCanonical)
             {
                 return new List<Tuple<Type, TickType>> { new Tuple<Type, TickType>(typeof(ZipEntryName), TickType.Quote) };
             }
 
-            return AvailableDataTypes[symbolSecurityType].Select(tickType => new Tuple<Type, TickType>(LeanData.GetDataType(resolution, tickType), tickType)).ToList();
+            return availableDataTypes[symbolSecurityType].Select(tickType => new Tuple<Type, TickType>(LeanData.GetDataType(resolution, tickType), tickType)).ToList();
         }
 
         /// <summary>
