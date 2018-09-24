@@ -90,7 +90,7 @@ namespace QuantConnect.Data.UniverseSelection
         /// Gets the instance responsible for initializing newly added securities
         /// </summary>
         /// <obsolete>The SecurityInitializer won't be used</obsolete>
-        [Obsolete("The SecurityInitializer won't be used")]
+        [Obsolete("SecurityInitializer is obsolete and will not be used.")]
         public ISecurityInitializer SecurityInitializer
         {
             get; private set;
@@ -201,7 +201,7 @@ namespace QuantConnect.Data.UniverseSelection
         /// <param name="symbolPropertiesDatabase">The symbol properties database</param>
         /// <returns>The newly initialized security object</returns>
         /// <obsolete>The CreateSecurity won't be called</obsolete>
-        [Obsolete("The CreateSecurity won't be called")]
+        [Obsolete("CreateSecurity is obsolete and will not be called. The system will create the required Securities based on selected symbols")]
         public virtual Security CreateSecurity(Symbol symbol, IAlgorithm algorithm, MarketHoursDatabase marketHoursDatabase, SymbolPropertiesDatabase symbolPropertiesDatabase)
         {
             // by default invoke the create security method to handle security initialization
@@ -217,6 +217,7 @@ namespace QuantConnect.Data.UniverseSelection
         /// <param name="currentTimeUtc">The current time in utc. This is the frontier time of the algorithm</param>
         /// <param name="maximumEndTimeUtc">The max end time</param>
         /// <returns>All subscriptions required by this security</returns>
+        [Obsolete("This overload is obsolete and will not be called. It was not capable of creating new SubscriptionDataConfig due to lack of information")]
         public virtual IEnumerable<SubscriptionRequest> GetSubscriptionRequests(Security security, DateTime currentTimeUtc, DateTime maximumEndTimeUtc)
         {
             return security.Subscriptions.Select(config =>
@@ -229,6 +230,33 @@ namespace QuantConnect.Data.UniverseSelection
                     endTimeUtc: maximumEndTimeUtc
                     )
                 );
+        }
+
+
+        /// <summary>
+        /// Gets the subscription requests to be added for the specified security
+        /// </summary>
+        /// <param name="security">The security to get subscriptions for</param>
+        /// <param name="currentTimeUtc">The current time in utc. This is the frontier time of the algorithm</param>
+        /// <param name="maximumEndTimeUtc">The max end time</param>
+        /// <param name="availableDataTypes">The different <see cref="TickType"/> each <see cref="SecurityType"/> supports</param>
+        /// <param name="marketHoursDatabase">The market hours database instance</param>
+        /// <returns>All subscriptions required by this security</returns>
+        public virtual IEnumerable<SubscriptionRequest> GetSubscriptionRequests(Security security,
+                                                                                DateTime currentTimeUtc, DateTime maximumEndTimeUtc,
+                                                                                Dictionary<SecurityType, List<TickType>> availableDataTypes,
+                                                                                MarketHoursDatabase marketHoursDatabase)
+        {
+            return security.Subscriptions.Select(config =>
+                new SubscriptionRequest(
+                    isUniverseSubscription: false,
+                    universe: this,
+                    security: security,
+                    configuration: new SubscriptionDataConfig(config),
+                    startTimeUtc: currentTimeUtc,
+                    endTimeUtc: maximumEndTimeUtc
+                )
+            );
         }
 
         /// <summary>
@@ -287,6 +315,7 @@ namespace QuantConnect.Data.UniverseSelection
         /// Sets the security initializer, used to initialize/configure securities after creation
         /// </summary>
         /// <param name="securityInitializer">The security initializer</param>
+        [Obsolete("SecurityInitializer is obsolete and will not be used.")]
         public virtual void SetSecurityInitializer(ISecurityInitializer securityInitializer)
         {
             SecurityInitializer = securityInitializer;

@@ -22,6 +22,7 @@ using QuantConnect.Data.Consolidators;
 using QuantConnect.Data.Market;
 using QuantConnect.Interfaces;
 using QuantConnect.Logging;
+using QuantConnect.Securities;
 using QuantConnect.Util;
 
 namespace QuantConnect.Data
@@ -46,7 +47,7 @@ namespace QuantConnect.Data
         public bool HasCustomData { get; set; }
 
         /// <summary>
-        ///
+        /// The different <see cref="TickType"/> each <see cref="SecurityType"/> supports
         /// </summary>
         public Dictionary<SecurityType, List<TickType>> AvailableDataTypes { get; }
 
@@ -61,7 +62,7 @@ namespace QuantConnect.Data
             _timeKeeper = timeKeeper;
 
             // Initialize the default data feeds for each security type
-            AvailableDataTypes = DefaultDataTypes();
+            AvailableDataTypes = DataTypes.Default();
         }
 
         /// <summary>
@@ -141,7 +142,9 @@ namespace QuantConnect.Data
         }
 
         /// <summary>
+        /// Adds a <see cref="SubscriptionDataConfig"/>
         /// </summary>
+        /// <returns>True, if it was successfully added. False, if it already existed</returns>
         public bool Add(SubscriptionDataConfig newConfig)
         {
             //Add to subscription list: make sure we don't have this symbol:
@@ -222,24 +225,6 @@ namespace QuantConnect.Data
         }
 
         /// <summary>
-        /// Hard code the set of default available data feeds
-        /// </summary>
-        public static Dictionary<SecurityType, List<TickType>> DefaultDataTypes()
-        {
-            return new Dictionary<SecurityType, List<TickType>>()
-            {
-                {SecurityType.Base, new List<TickType>() { TickType.Trade } },
-                {SecurityType.Forex, new List<TickType>() { TickType.Quote } },
-                {SecurityType.Equity, new List<TickType>() { TickType.Trade } },
-                {SecurityType.Option, new List<TickType>() { TickType.Quote, TickType.Trade, TickType.OpenInterest } },
-                {SecurityType.Cfd, new List<TickType>() { TickType.Quote } },
-                {SecurityType.Future, new List<TickType>() { TickType.Quote, TickType.Trade, TickType.OpenInterest } },
-                {SecurityType.Commodity, new List<TickType>() { TickType.Trade } },
-                {SecurityType.Crypto, new List<TickType>() { TickType.Trade, TickType.Quote } },
-            };
-        }
-
-        /// <summary>
         /// Get the available data types for a security
         /// </summary>
         public IReadOnlyList<TickType> GetDataTypesForSecurity(SecurityType securityType)
@@ -252,26 +237,7 @@ namespace QuantConnect.Data
         /// </summary>
         public List<Tuple<Type, TickType>> LookupSubscriptionConfigDataTypes(SecurityType symbolSecurityType, Resolution resolution, bool isCanonical)
         {
-            return LookupSubscriptionConfigDataTypes(AvailableDataTypes, symbolSecurityType, resolution, isCanonical);
-        }
-
-        /// <summary>
-        /// Get the data feed types for a given <see cref="SecurityType"/> <see cref="Resolution"/>
-        /// </summary>
-        /// <param name="symbolSecurityType">The <see cref="SecurityType"/> used to determine the types</param>
-        /// <param name="resolution">The resolution of the data requested</param>
-        /// <param name="isCanonical">Indicates whether the security is Canonical (future and options)</param>
-        /// <param name="availableDataTypes"></param>
-        /// <returns>Types that should be added to the <see cref="SubscriptionDataConfig"/></returns>
-        public static List<Tuple<Type, TickType>> LookupSubscriptionConfigDataTypes(Dictionary<SecurityType, List<TickType>> availableDataTypes,
-                                                                                    SecurityType symbolSecurityType, Resolution resolution, bool isCanonical)
-        {
-            if (isCanonical)
-            {
-                return new List<Tuple<Type, TickType>> { new Tuple<Type, TickType>(typeof(ZipEntryName), TickType.Quote) };
-            }
-
-            return availableDataTypes[symbolSecurityType].Select(tickType => new Tuple<Type, TickType>(LeanData.GetDataType(resolution, tickType), tickType)).ToList();
+            return DataTypes.LookupSubscriptionConfigDataTypes(AvailableDataTypes, symbolSecurityType, resolution, isCanonical);
         }
 
         /// <summary>
@@ -280,6 +246,14 @@ namespace QuantConnect.Data
         public void SetDataManager(IAlgorithmSubscriptionManager subscriptionManager)
         {
             _subscriptionManager = subscriptionManager;
+        }
+
+        /// <summary>
+        /// Returns true if the configuration is already present
+        /// </summary>
+        public bool ContainsSubscriptionDataConfig(SubscriptionDataConfig subscriptionDataConfig)
+        {
+            return _subscriptionManager.SubscriptionManagerContainsKey(subscriptionDataConfig);
         }
     }
 }

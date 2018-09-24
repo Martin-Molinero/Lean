@@ -33,15 +33,14 @@ namespace QuantConnect.Data.UniverseSelection
     {
         private readonly TimeSpan _interval;
         private readonly HashSet<SubscriptionDataConfig> _subscriptionDataConfigs = new HashSet<SubscriptionDataConfig>();
-        private readonly HashSet<Symbol> _symbols;
-        // Having this collection is awful. Why do we need it? Because `UniverseSelection.RemoveSecurityFromUniverse()`
+        private readonly HashSet<Symbol> _symbols = new HashSet<Symbol>();
+        // Having this collection is ugly. Why do we need it? Because `UniverseSelection.RemoveSecurityFromUniverse()`
         // will query us at `this.GetSubscriptionRequests()` to get the `SubscriptionDataConfig` and remove it from the DF
         // and we can't keep the `SubscriptionDataConfig` in the collection `_subscriptionDataConfigs` because `UniverseSelection` needs the diff
         // between calling the selector and the members
         private readonly HashSet<SubscriptionDataConfig> _removedSubscriptionDataConfigs = new HashSet<SubscriptionDataConfig>();
         private readonly UniverseSettings _universeSettings;
         private readonly Func<DateTime, IEnumerable<Symbol>> _selector;
-        private readonly MarketHoursDatabase _marketHoursDatabase = MarketHoursDatabase.FromDataFolder();
 
         /// <summary>
         /// Event fired when a symbol is added or removed from this universe
@@ -78,7 +77,7 @@ namespace QuantConnect.Data.UniverseSelection
             _interval = interval;
             _subscriptionDataConfigs = subscriptionDataConfigs.ToHashSet();
             _universeSettings = universeSettings;
-            _selector = time => _subscriptionDataConfigs.Select(x => x.Symbol);
+            _selector = time => _subscriptionDataConfigs.Select(x => x.Symbol).Union(_symbols);
         }
 
         /// <summary>
@@ -95,11 +94,6 @@ namespace QuantConnect.Data.UniverseSelection
             _interval = interval;
             _symbols = symbols.ToHashSet();
             _universeSettings = universeSettings;
-            // This case is a tricky one, because if `this.CreateSecurity()` isn't called we wont get the SubscriptionDataConfigs for the `_symbols`.
-            // This can be solved if we oblige the user to always send in `SubscriptionDataConfigs`, as done in the constructor above, BUT its good for retro compatibility
-            // Also this is used by the `ManualUniverseSelectionModel` creating a `ManualUniverse`, in this case we could create the `SubscriptionDataConfigs` correctly
-            // but I think calling `UserDefinedUniverse.CreateSecurity()` would be better since would add the configurations to the SubscriptionManager too,
-            // which is required for the consolidators (haven't had enough time to test the last idea)
             _selector = time => _subscriptionDataConfigs.Select(x => x.Symbol).Union(_symbols);
         }
 
@@ -176,9 +170,24 @@ namespace QuantConnect.Data.UniverseSelection
         }
 
         /// <summary>
-        /// Adds the specified subscriptionDataConfig to this universe
+        /// Adds the specified <see cref="Symbol"/> to this universe
         /// </summary>
-        /// <param name="subscriptionDataConfig"></param>
+        /// <param name="symbol">The symbol to be added to this universe</param>
+        /// <returns>True if the symbol was added, false if it was already present</returns>
+        public bool Add(Symbol symbol)
+        {
+            if (_symbols.Add(symbol))
+            {
+                OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, symbol));
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Adds the specified <see cref="SubscriptionDataConfig"/> to this universe
+        /// </summary>
+        /// <param name="subscriptionDataConfig">The subscription data configuration to be added to this universe</param>
         /// <returns>True if the subscriptionDataConfig was added, false if it was already present</returns>
         public bool Add(SubscriptionDataConfig subscriptionDataConfig)
         {
@@ -191,15 +200,16 @@ namespace QuantConnect.Data.UniverseSelection
         }
 
         /// <summary>
-        /// Removes the specified symbol from this universe
+        /// Removes the specified <see cref="Symbol"/> from this universe
         /// </summary>
-        /// <param name="symbol"></param>
+        /// <param name="symbol">The symbol to be removed</param>
         /// <returns>True if the symbol was removed, false if the symbol was not present</returns>
         public bool Remove(Symbol symbol)
         {
             var toBeRemoved = _subscriptionDataConfigs.Where(x => x.Symbol == symbol).ToList();
-            if (toBeRemoved.Any()
-                || _symbols != null && _symbols.Remove(symbol))
+            var removedSymbol = _symbols.Remove(symbol);
+
+            if (toBeRemoved.Any() || removedSymbol)
             {
                 _subscriptionDataConfigs.RemoveWhere(x => x.Symbol == symbol);
                 _removedSubscriptionDataConfigs.UnionWith(toBeRemoved);
@@ -256,8 +266,17 @@ namespace QuantConnect.Data.UniverseSelection
         }
 
         /// <summary>
+        /// Gets the subscription requests to be added for the specified security
         /// </summary>
-        public override IEnumerable<SubscriptionRequest> GetSubscriptionRequests(Security security, DateTime currentTimeUtc, DateTime maximumEndTimeUtc)
+        /// <param name="security">The security to get subscriptions for</param>
+        /// <param name="currentTimeUtc">The current time in utc. This is the frontier time of the algorithm</param>
+        /// <param name="maximumEndTimeUtc">The max end time</param>
+        /// <param name="availableDataTypes">The different <see cref="TickType"/> each <see cref="SecurityType"/> supports</param>
+        /// <param name="marketHoursDatabase">The market hours database instance</param>
+        /// <returns>All subscriptions required by this security</returns>
+        public override IEnumerable<SubscriptionRequest> GetSubscriptionRequests(Security security, DateTime currentTimeUtc, DateTime maximumEndTimeUtc,
+                                                                                 Dictionary<SecurityType, List<TickType>> availableDataTypes,
+                                                                                 MarketHoursDatabase marketHoursDatabase)
         {
             var result = _subscriptionDataConfigs.Where(x => x.Symbol == security.Symbol).ToList();
             if (!result.Any())
@@ -267,19 +286,11 @@ namespace QuantConnect.Data.UniverseSelection
                 if (!result.Any())
                 {
                     // create subscription data configs ourselves
-                    var marketHoursDbEntry = _marketHoursDatabase.GetEntry(security.Symbol.ID.Market, security.Symbol, security.Symbol.ID.SecurityType);
-                    var exchangeHours = marketHoursDbEntry.ExchangeHours;
-
-                    var types = SubscriptionManager.LookupSubscriptionConfigDataTypes(UniverseSettings.AvailableDataTypes, security.Symbol.SecurityType,
-                                                                                      UniverseSettings.Resolution, security.Symbol.IsCanonical());
-
-                    result = (from subscriptionDataType
-                            in types
-                            let dataType = subscriptionDataType.Item1
-                            let tickType = subscriptionDataType.Item2
-                            select new SubscriptionDataConfig(dataType, security.Symbol, UniverseSettings.Resolution, marketHoursDbEntry.DataTimeZone,
-                                                              exchangeHours.TimeZone, UniverseSettings.FillForward, UniverseSettings.ExtendedMarketHours,
-                                                              isInternalFeed: false, isCustom: false, isFilteredSubscription: true, tickType: tickType)).ToList();
+                    result = SubscriptionDataConfig.CreateSubscriptionDataConfig(marketHoursDatabase, availableDataTypes, UniverseSettings.Resolution,
+                                                                                security.Symbol, UniverseSettings.FillForward, UniverseSettings.ExtendedMarketHours,
+                                                                                Configuration.IsFilteredSubscription);
+                    // add the configs we created, which we didn't have
+                    _subscriptionDataConfigs.UnionWith(result);
                 }
                 else
                 {
