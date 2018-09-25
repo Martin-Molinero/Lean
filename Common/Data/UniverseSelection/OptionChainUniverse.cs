@@ -30,7 +30,6 @@ namespace QuantConnect.Data.UniverseSelection
     public class OptionChainUniverse : Universe
     {
         private BaseData _underlying;
-        private readonly Option _option;
         private readonly UniverseSettings _universeSettings;
         private readonly bool _liveMode;
         // as an array to make it easy to prepend to selected symbols
@@ -55,11 +54,16 @@ namespace QuantConnect.Data.UniverseSelection
                                    bool liveMode)
             : base(option.SubscriptionDataConfig, securityInitializer)
         {
-            _option = option;
-            _underlyingSymbol = new[] { _option.Symbol.Underlying };
+            Option = option;
+            _underlyingSymbol = new[] { Option.Symbol.Underlying };
             _universeSettings = universeSettings;
             _liveMode = liveMode;
         }
+
+        /// <summary>
+        /// The canonical option chain security
+        /// </summary>
+        public readonly Option Option;
 
         /// <summary>
         /// Gets the settings used for subscriptons added for this universe
@@ -97,7 +101,7 @@ namespace QuantConnect.Data.UniverseSelection
             }
 
             var availableContracts = optionsUniverseDataCollection.Data.Select(x => x.Symbol);
-            var results = _option.ContractFilter.Filter(new OptionFilterUniverse(availableContracts, _underlying));
+            var results = Option.ContractFilter.Filter(new OptionFilterUniverse(availableContracts, _underlying));
 
             // if results are not dynamic, we cache them and won't call filtering till the end of the day
             if (!results.IsDynamic)
@@ -163,6 +167,7 @@ namespace QuantConnect.Data.UniverseSelection
         /// <param name="marketHoursDatabase">The market hours database</param>
         /// <param name="symbolPropertiesDatabase">The symbol properties database</param>
         /// <returns>The newly initialized security object</returns>
+        [Obsolete("CreateSecurity is obsolete and will not be called. The system will create the required Securities based on selected symbols")]
         public override Security CreateSecurity(Symbol symbol, IAlgorithm algorithm, MarketHoursDatabase marketHoursDatabase, SymbolPropertiesDatabase symbolPropertiesDatabase)
         {
             // create the underlying w/ raw mode
@@ -170,14 +175,14 @@ namespace QuantConnect.Data.UniverseSelection
             {
                 var underlying = base.CreateSecurity(symbol, algorithm, marketHoursDatabase, symbolPropertiesDatabase);
                 underlying.SetDataNormalizationMode(DataNormalizationMode.Raw);
-                _option.Underlying = underlying;
+                Option.Underlying = underlying;
                 return underlying;
             }
 
             // set the underlying security and pricing model from the canonical security
             var option = (Option) base.CreateSecurity(symbol, algorithm, marketHoursDatabase, symbolPropertiesDatabase);
-            option.Underlying = _option.Underlying;
-            option.PriceModel = _option.PriceModel;
+            option.Underlying = Option.Underlying;
+            option.PriceModel = Option.PriceModel;
             return option;
         }
 

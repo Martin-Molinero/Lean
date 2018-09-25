@@ -37,7 +37,9 @@ namespace QuantConnect.Algorithm.Framework.Selection
         {
         }
 
-        public override IEnumerable<SubscriptionRequest> GetSubscriptionRequests(Security security, DateTime currentTimeUtc, DateTime maximumEndTimeUtc)
+        public override IEnumerable<SubscriptionRequest> GetSubscriptionRequests(Security security, DateTime currentTimeUtc, DateTime maximumEndTimeUtc,
+                                                                                Dictionary<SecurityType, List<TickType>> availableDataTypes,
+                                                                                MarketHoursDatabase marketHoursDatabase)
         {
             return security.Subscriptions.Select(config =>
                 new SubscriptionRequest(

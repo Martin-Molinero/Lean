@@ -16,8 +16,10 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using NodaTime;
+using QuantConnect.Data.Auxiliary;
 using QuantConnect.Data.Consolidators;
 using QuantConnect.Securities;
 using QuantConnect.Util;
@@ -368,6 +370,35 @@ namespace QuantConnect.Data
         public static bool operator !=(SubscriptionDataConfig left, SubscriptionDataConfig right)
         {
             return !Equals(left, right);
+        }
+
+        /// <summary>
+        /// Creates a list of <see cref="SubscriptionDataConfig"/> for a given symbol and configuration
+        /// </summary>
+        public static List<SubscriptionDataConfig> CreateSubscriptionDataConfig(MarketHoursDatabase marketHoursDatabase,
+                                                                                Dictionary<SecurityType, List<TickType>> dataTypes,
+                                                                                Resolution resolution, Symbol symbol,
+                                                                                bool fillForward, bool extendedMarketHours, bool isFilteredSubscription = true,
+                                                                                bool isInternalFeed = false, bool isCustomData = false)
+        {
+            var marketHoursDbEntry = marketHoursDatabase.GetEntry(symbol.ID.Market, symbol, symbol.ID.SecurityType);
+            var exchangeHours = marketHoursDbEntry.ExchangeHours;
+
+            var types = DataTypes.LookupSubscriptionConfigDataTypes(dataTypes, symbol.SecurityType,
+                                                                    resolution, symbol.IsCanonical());
+
+            var dataNormalizationMode = symbol.ID.SecurityType == SecurityType.Option || symbol.ID.SecurityType == SecurityType.Future
+                                        ? DataNormalizationMode.Raw : DataNormalizationMode.Adjusted;
+
+            var result = (from subscriptionDataType in types
+                let dataType = subscriptionDataType.Item1
+                let tickType = subscriptionDataType.Item2
+                select new SubscriptionDataConfig(dataType, symbol, resolution, marketHoursDbEntry.DataTimeZone,
+                    exchangeHours.TimeZone, fillForward, extendedMarketHours,
+                    isInternalFeed: isInternalFeed, isCustom: isCustomData,
+                    isFilteredSubscription: isFilteredSubscription, tickType: tickType,
+                    dataNormalizationMode: dataNormalizationMode)).ToList();
+            return result;
         }
 
         /// <summary>
