@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Linq;
 using QuantConnect.Data;
 using QuantConnect.Data.UniverseSelection;
+using QuantConnect.Interfaces;
 using QuantConnect.Securities;
 
 namespace QuantConnect.Algorithm.Framework.Selection
@@ -28,6 +29,7 @@ namespace QuantConnect.Algorithm.Framework.Selection
     /// </summary>
     public class ManualUniverse : UserDefinedUniverse
     {
+        /// <inheritdoc />
         public ManualUniverse(SubscriptionDataConfig configuration,
             UniverseSettings universeSettings,
             ISecurityInitializer securityInitializer,
@@ -37,7 +39,9 @@ namespace QuantConnect.Algorithm.Framework.Selection
         {
         }
 
-        public override IEnumerable<SubscriptionRequest> GetSubscriptionRequests(Security security, DateTime currentTimeUtc, DateTime maximumEndTimeUtc)
+        /// <inheritdoc />
+        public override IEnumerable<SubscriptionRequest> GetSubscriptionRequests(Security security, DateTime currentTimeUtc, DateTime maximumEndTimeUtc,
+                                                                                ISubscriptionDataConfigService subscriptionService)
         {
             return security.Subscriptions.Select(config =>
                 new SubscriptionRequest(

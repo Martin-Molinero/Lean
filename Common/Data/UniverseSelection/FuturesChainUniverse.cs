@@ -32,7 +32,6 @@ namespace QuantConnect.Data.UniverseSelection
     {
         private static readonly IReadOnlyList<TickType> dataTypes = new[] { TickType.Quote, TickType.Trade, TickType.OpenInterest };
 
-        private readonly Future _future;
         private readonly UniverseSettings _universeSettings;
         private SubscriptionManager _subscriptionManager;
 
@@ -52,10 +51,15 @@ namespace QuantConnect.Data.UniverseSelection
                                     ISecurityInitializer securityInitializer = null)
             : base(future.SubscriptionDataConfig, securityInitializer)
         {
-            _future = future;
+            Future = future;
             _universeSettings = universeSettings;
             _subscriptionManager = subscriptionManager;
         }
+
+        /// <summary>
+        /// The canonical future chain security
+        /// </summary>
+        public readonly Future Future;
 
         /// <summary>
         /// Gets the settings used for subscriptons added for this universe
@@ -87,7 +91,7 @@ namespace QuantConnect.Data.UniverseSelection
             }
 
             var availableContracts = futuresUniverseDataCollection.Data.Select(x => x.Symbol);
-            var results = _future.ContractFilter.Filter(new FutureFilterUniverse(availableContracts, underlying));
+            var results = Future.ContractFilter.Filter(new FutureFilterUniverse(availableContracts, underlying));
 
             // if results are not dynamic, we cache them and won't call filtering till the end of the day
             if (!results.IsDynamic)
@@ -110,11 +114,12 @@ namespace QuantConnect.Data.UniverseSelection
         /// <param name="marketHoursDatabase">The market hours database</param>
         /// <param name="symbolPropertiesDatabase">The symbol properties database</param>
         /// <returns>The newly initialized security object</returns>
+        [Obsolete("CreateSecurity is obsolete and will not be called. The system will create the required Securities based on selected symbols")]
         public override Security CreateSecurity(Symbol symbol, IAlgorithm algorithm, MarketHoursDatabase marketHoursDatabase, SymbolPropertiesDatabase symbolPropertiesDatabase)
         {
             // set the underlying security and pricing model from the canonical security
             var future = (Future)base.CreateSecurity(symbol, algorithm, marketHoursDatabase, symbolPropertiesDatabase);
-            future.Underlying = _future.Underlying;
+            future.Underlying = Future.Underlying;
             return future;
         }
 
