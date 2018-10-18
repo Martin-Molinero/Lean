@@ -69,7 +69,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         }
 
         /// <inheritdoc />
-        public bool RemoveSubscription(SubscriptionDataConfig configuration)
+        public bool RemoveSubscription(SubscriptionDataConfig configuration, Universe universe = null)
         {
             throw new NotImplementedException("Unexpected usage of null data feed implementation.");
         }

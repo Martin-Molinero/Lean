@@ -69,8 +69,10 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         /// Removes the subscription from the data feed, if it exists
         /// </summary>
         /// <param name="configuration">The configuration of the subscription to remove</param>
+        /// <param name="universe">Universe requesting to remove <see cref="Subscription"/>.
+        /// Default value, null, will remove all universes</param>
         /// <returns>True if the subscription was successfully removed, false otherwise</returns>
-        bool RemoveSubscription(SubscriptionDataConfig configuration);
+        bool RemoveSubscription(SubscriptionDataConfig configuration, Universe universe = null);
 
         /// <summary>
         /// External controller calls to signal a terminate of the thread.

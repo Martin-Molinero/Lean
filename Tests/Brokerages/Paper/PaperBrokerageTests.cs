@@ -162,7 +162,7 @@ namespace QuantConnect.Tests.Brokerages.Paper
                 throw new System.NotImplementedException();
             }
 
-            public bool RemoveSubscription(SubscriptionDataConfig configuration)
+            public bool RemoveSubscription(SubscriptionDataConfig configuration, Universe universe = null)
             {
                 throw new System.NotImplementedException();
             }

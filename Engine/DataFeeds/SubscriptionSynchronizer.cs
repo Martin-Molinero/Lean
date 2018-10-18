@@ -16,7 +16,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using NodaTime;
+using QuantConnect.Data;
 using QuantConnect.Data.UniverseSelection;
 using QuantConnect.Securities;
 
@@ -34,9 +36,14 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         private ManualTimeProvider _frontierTimeProvider;
 
         /// <summary>
-        /// Event fired when a subscription is finished
+        /// Event fired when a <see cref="Subscription"/> is finished
         /// </summary>
         public event EventHandler<Subscription> SubscriptionFinished;
+
+        /// <summary>
+        /// Event fired when a <see cref="Universe"/> requests to remove a <see cref="Subscription"/>
+        /// </summary>
+        public event EventHandler<RemoveSubscriptionRequest> RemoveSubscriptionRequested;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionSynchronizer"/> class
@@ -86,6 +93,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         /// <param name="subscriptions">The subscriptions to sync</param>
         public TimeSlice Sync(IEnumerable<Subscription> subscriptions)
         {
+            var delayedSubscriptionFinished = false;
             var changes = SecurityChanges.None;
             var data = new List<DataFeedPacket>();
             // NOTE: Tight coupling in UniverseSelection.ApplyUniverseSelection
@@ -125,7 +133,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
 
                         if (!subscription.MoveNext())
                         {
-                            OnSubscriptionFinished(subscription);
+                            delayedSubscriptionFinished = true;
                             break;
                         }
                     }
@@ -147,7 +155,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
                                 : packetBaseDataCollection.Data;
 
                             BaseDataCollection collection;
-                            if (universeData.TryGetValue(subscription.Universe, out collection))
+                            if (universeData.TryGetValue(subscription.Universe.First(), out collection))
                             {
                                 collection.Data.AddRange(packetData);
                             }
@@ -167,16 +175,27 @@ namespace QuantConnect.Lean.Engine.DataFeeds
                                     collection = new BaseDataCollection(frontierUtc, subscription.Configuration.Symbol, packetData);
                                 }
 
-                                universeData[subscription.Universe] = collection;
+                                universeData[subscription.Universe.First()] = collection;
                             }
                         }
                     }
 
-                    // remove subscription for universe data if disposal requested AFTER time sync
-                    // this ensures we get any security changes from removing the universe and its children
-                    if (subscription.IsUniverseSelectionSubscription && subscription.Universe.DisposeRequested)
+                    if (delayedSubscriptionFinished)
                     {
+                        delayedSubscriptionFinished = false;
+                        // we need to do this after all usages of subscription.Universe
                         OnSubscriptionFinished(subscription);
+                    }
+                    else if (subscription.IsUniverseSelectionSubscription
+                        && subscription.Universe.First().DisposeRequested)
+                    {
+                        // remove subscription for universe data if disposal requested AFTER time sync
+                        // this ensures we get any security changes from removing the universe and its children
+                        OnRemoveSubscriptionRequested(new RemoveSubscriptionRequest
+                        {
+                            SubscriptionDataConfig = subscription.Configuration,
+                            Universe = subscription.Universe.First()
+                        });
                     }
                 }
 
@@ -213,6 +232,31 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         public DateTime GetUtcNow()
         {
             return _frontierTimeProvider.GetUtcNow();
+        }
+        
+        /// Event invocator for the <see cref="RemoveSubscriptionRequest"/> event
+        /// </summary>
+        protected virtual void OnRemoveSubscriptionRequested(RemoveSubscriptionRequest removeSubscriptionRequest)
+        {
+            var handler = RemoveSubscriptionRequested;
+            if (handler != null) handler(this, removeSubscriptionRequest);
+        }
+
+        /// <summary>
+        /// Helper class used to hold the arguments for a <see cref="Universe"/>
+        /// requesting to remove a <see cref="Subscription"/>
+        /// </summary>
+        public class RemoveSubscriptionRequest : EventArgs
+        {
+            /// <summary>
+            /// The universe requesting to remove the <see cref="Subscription"/>
+            /// </summary>
+            public Universe Universe { get; set; }
+
+            /// <summary>
+            /// The configuration of the <see cref="Subscription"/> to remove
+            /// </summary>
+            public SubscriptionDataConfig SubscriptionDataConfig { get; set; }
         }
     }
 }

@@ -38,7 +38,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         private readonly IDataFeed _dataFeed;
         private readonly IAlgorithm _algorithm;
         private readonly ISecurityService _securityService;
-        private readonly HashSet<Security> _pendingRemovals = new HashSet<Security>();
+        private readonly Dictionary<Universe, List<Security>> _pendingRemovals = new Dictionary<Universe, List<Security>>();
         private readonly Dictionary<DateTime, Dictionary<Symbol, Security>> _pendingSecurityAdditions = new Dictionary<DateTime, Dictionary<Symbol, Security>>();
 
         /// <summary>
@@ -183,16 +183,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
             var additions = new List<Security>();
             var removals = new List<Security>();
 
-            // remove previously deselected members which were kept in the universe because of holdings or open orders
-            foreach (var member in _pendingRemovals.ToList())
-            {
-                if (IsSafeToRemove(member))
-                {
-                    RemoveSecurityFromUniverse(universe, member, removals, dateTimeUtc, algorithmEndDateUtc);
-
-                    _pendingRemovals.Remove(member);
-                }
-            }
+            CheckPendingRemovals(removals, dateTimeUtc, algorithmEndDateUtc, selections, universe);
 
             // determine which data subscriptions need to be removed from this universe
             foreach (var member in universe.Members.Values)
@@ -214,7 +205,17 @@ namespace QuantConnect.Lean.Engine.DataFeeds
                 }
                 else
                 {
-                    _pendingRemovals.Add(member);
+                    if (_pendingRemovals.ContainsKey(universe))
+                    {
+                        if (!_pendingRemovals[universe].Contains(member))
+                        {
+                            _pendingRemovals[universe].Add(member);
+                        }
+                    }
+                    else
+                    {
+                        _pendingRemovals.Add(universe, new List<Security> { member });
+                    }
                 }
             }
 
@@ -332,7 +333,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
                 }
                 else
                 {
-                    _dataFeed.RemoveSubscription(subscription.Configuration);
+                    _dataFeed.RemoveSubscription(subscription.Configuration, universe);
                 }
             }
 
@@ -384,6 +385,46 @@ namespace QuantConnect.Lean.Engine.DataFeeds
                 // set the underlying security and pricing model from the canonical security
                 var future = (Future)security;
                 future.Underlying = futureChainUniverse.Future.Underlying;
+            }
+        }
+
+        /// <summary>
+        /// Helper method used to check, and execute if possible, pending security
+        /// removals for the different universes
+        /// </summary>
+        private void CheckPendingRemovals(
+            List<Security> removals,
+            DateTime dateTimeUtc,
+            DateTime algorithmEndDateUtc,
+            HashSet<Symbol> selectedSymbols,
+            Universe currentUniverse)
+        {
+            // remove previously deselected members which were kept in the universe because of holdings or open orders
+            foreach (var kvp in _pendingRemovals.ToList())
+            {
+                var universeRemoving = kvp.Key;
+                foreach (var security in kvp.Value.ToList())
+                {
+                    var isSafeToRemove = IsSafeToRemove(security);
+                    if (isSafeToRemove
+                        ||
+                        // if we are re selecting it we remove it as a pending removal
+                        // else we might remove it when we do not want to do so
+                        universeRemoving == currentUniverse
+                        && selectedSymbols.Contains(security.Symbol))
+                    {
+                        if (isSafeToRemove)
+                        {
+                            RemoveSecurityFromUniverse(universeRemoving, security, removals, dateTimeUtc, algorithmEndDateUtc);
+                        }
+
+                        _pendingRemovals[universeRemoving].Remove(security);
+                        if (!_pendingRemovals[universeRemoving].Any())
+                        {
+                            _pendingRemovals.Remove(universeRemoving);
+                        }
+                    }
+                }
             }
         }
     }

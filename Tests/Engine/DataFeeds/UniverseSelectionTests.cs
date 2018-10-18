@@ -93,7 +93,7 @@ namespace QuantConnect.Tests.Engine.DataFeeds
                 return true;
             }
 
-            public bool RemoveSubscription(SubscriptionDataConfig configuration)
+            public bool RemoveSubscription(SubscriptionDataConfig configuration, Universe universe = null)
             {
                 return true;
             }

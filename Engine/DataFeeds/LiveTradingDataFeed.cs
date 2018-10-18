@@ -147,7 +147,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
                     case NotifyCollectionChangedAction.Remove:
                         foreach (var universe in args.OldItems.OfType<Universe>())
                         {
-                            RemoveSubscription(universe.Configuration);
+                            RemoveSubscription(universe.Configuration, universe);
                         }
                         break;
 
@@ -164,14 +164,15 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         /// <returns>True if the subscription was created and added successfully, false otherwise</returns>
         public bool AddSubscription(SubscriptionRequest request)
         {
-            if (_subscriptions.Contains(request.Configuration))
+            Subscription subscription;
+            if (_subscriptions.TryGetValue(request.Configuration, out subscription))
             {
                 // duplicate subscription request
-                return false;
+                return subscription.AddSubscriptionRequest(request);
             }
 
             // create and add the subscription to our collection
-            var subscription = request.IsUniverseSubscription
+            subscription = request.IsUniverseSubscription
                 ? CreateUniverseSubscription(request)
                 : CreateSubscription(request);
 
@@ -199,8 +200,10 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         /// Removes the subscription from the data feed, if it exists
         /// </summary>
         /// <param name="configuration">The configuration of the subscription to remove</param>
+        /// <param name="universe">Universe requesting to remove <see cref="Subscription"/>.
+        /// Default value, null, will remove all universes</param>
         /// <returns>True if the subscription was successfully removed, false otherwise</returns>
-        public bool RemoveSubscription(SubscriptionDataConfig configuration)
+        public bool RemoveSubscription(SubscriptionDataConfig configuration, Universe universe = null)
         {
             // remove the subscription from our collection
             Subscription subscription;
@@ -211,41 +214,46 @@ namespace QuantConnect.Lean.Engine.DataFeeds
 
             // don't remove universe subscriptions immediately, instead mark them as disposed
             // so we can turn the crank one more time to ensure we emit security changes properly
-            if (subscription.IsUniverseSelectionSubscription && subscription.Universe.DisposeRequested)
+            if (subscription.IsUniverseSelectionSubscription && subscription.Universe.First().DisposeRequested)
             {
                 // subscription syncer will dispose the universe AFTER we've run selection a final time
                 // and then will invoke SubscriptionFinished which will remove the universe subscription
                 return false;
             }
 
-            if (!_subscriptions.TryRemove(configuration, out subscription))
-            {
-                Log.Error($"LiveTradingDataFeed.RemoveSubscription(): Unable to remove: {configuration}");
-                return false;
-            }
+            var removedUniverses = subscription.RemoveSubscriptionRequest(universe);
 
-            var security = subscription.Security;
-
-            // remove the subscriptions
-            if (subscription.Configuration.IsCustomData)
+            if (!subscription.HasSubscriptionRequests)
             {
-                _customExchange.RemoveEnumerator(security.Symbol);
-                _customExchange.RemoveDataHandler(security.Symbol);
-            }
-            else
-            {
-                _dataQueueHandler.Unsubscribe(_job, new[] { security.Symbol });
-                _exchange.RemoveDataHandler(security.Symbol);
-            }
+                if (!_subscriptions.TryRemove(configuration, out subscription))
+                {
+                    Log.Error($"LiveTradingDataFeed.RemoveSubscription(): Unable to remove: {configuration}");
+                    return false;
+                }
 
-            // if the security is no longer a member of the universe, then mark the subscription properly
-            if (subscription.Universe != null && !subscription.Universe.Members.ContainsKey(configuration.Symbol))
-            {
-                subscription.MarkAsRemovedFromUniverse();
-            }
-            subscription.Dispose();
+                var security = subscription.Security;
 
-            Log.Trace("LiveTradingDataFeed.RemoveSubscription(): Removed " + configuration);
+                // remove the subscriptions
+                if (subscription.Configuration.IsCustomData)
+                {
+                    _customExchange.RemoveEnumerator(security.Symbol);
+                    _customExchange.RemoveDataHandler(security.Symbol);
+                }
+                else
+                {
+                    _dataQueueHandler.Unsubscribe(_job, new[] { security.Symbol });
+                    _exchange.RemoveDataHandler(security.Symbol);
+                }
+
+                // if the security is no longer a member of the universe, then mark the subscription properly
+                if (!removedUniverses.Any(x => x.Members.ContainsKey(configuration.Symbol)))
+                {
+                    subscription.MarkAsRemovedFromUniverse();
+                }
+                subscription.Dispose();
+
+                Log.Trace("LiveTradingDataFeed.RemoveSubscription(): Removed " + configuration);
+            }
 
             return true;
         }
@@ -431,7 +439,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
                 enumerator = new FrontierAwareEnumerator(enumerator, _frontierTimeProvider, timeZoneOffsetProvider);
 
                 var subscriptionDataEnumerator = SubscriptionData.Enumerator(request.Configuration, request.Security, timeZoneOffsetProvider, enumerator);
-                subscription = new Subscription(request.Universe, request.Security, request.Configuration, subscriptionDataEnumerator, timeZoneOffsetProvider, request.StartTimeUtc, request.EndTimeUtc, false);
+                subscription = new Subscription(request, subscriptionDataEnumerator, timeZoneOffsetProvider);
             }
             catch (Exception err)
             {
@@ -571,7 +579,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
 
             // create the subscription
             var subscriptionDataEnumerator = SubscriptionData.Enumerator(request.Configuration, request.Security, tzOffsetProvider, enumerator);
-            var subscription = new Subscription(request.Universe, request.Security, config, subscriptionDataEnumerator, tzOffsetProvider, request.StartTimeUtc, request.EndTimeUtc, true);
+            var subscription = new Subscription(request, subscriptionDataEnumerator, tzOffsetProvider);
 
             return subscription;
         }

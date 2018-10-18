@@ -125,7 +125,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
                     case NotifyCollectionChangedAction.Remove:
                         foreach (var universe in args.OldItems.OfType<Universe>())
                         {
-                            RemoveSubscription(universe.Configuration);
+                            RemoveSubscription(universe.Configuration, universe);
                         }
                         break;
 
@@ -151,7 +151,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
 
             var enqueueable = new EnqueueableEnumerator<SubscriptionData>(true);
             var timeZoneOffsetProvider = new TimeZoneOffsetProvider(request.Security.Exchange.TimeZone, request.StartTimeUtc, request.EndTimeUtc);
-            var subscription = new Subscription(request.Universe, request.Security, request.Configuration, enqueueable, timeZoneOffsetProvider, request.StartTimeUtc, request.EndTimeUtc, false);
+            var subscription = new Subscription(request, enqueueable, timeZoneOffsetProvider);
 
             // add this enumerator to our exchange
             ScheduleEnumerator(subscription, enumerator, enqueueable, GetLowerThreshold(request.Configuration.Resolution), GetUpperThreshold(request.Configuration.Resolution));
@@ -219,13 +219,14 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         /// <returns>True if the subscription was created and added successfully, false otherwise</returns>
         public bool AddSubscription(SubscriptionRequest request)
         {
-            if (_subscriptions.Contains(request.Configuration))
+            Subscription subscription;
+            if (_subscriptions.TryGetValue(request.Configuration, out subscription))
             {
                 // duplicate subscription request
-                return false;
+                return subscription.AddSubscriptionRequest(request);
             }
 
-            var subscription = request.IsUniverseSubscription
+            subscription = request.IsUniverseSubscription
                 ? CreateUniverseSubscription(request)
                 : CreateSubscription(request);
 
@@ -245,8 +246,10 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         /// Removes the subscription from the data feed, if it exists
         /// </summary>
         /// <param name="configuration">The configuration of the subscription to remove</param>
+        /// <param name="universe">Universe requesting to remove <see cref="Subscription"/>.
+        /// Default value, null, will remove all universes</param>
         /// <returns>True if the subscription was successfully removed, false otherwise</returns>
-        public bool RemoveSubscription(SubscriptionDataConfig configuration)
+        public bool RemoveSubscription(SubscriptionDataConfig configuration, Universe universe = null)
         {
             // remove the subscription from our collection, if it exists
             Subscription subscription;
@@ -255,28 +258,32 @@ namespace QuantConnect.Lean.Engine.DataFeeds
             {
                 // don't remove universe subscriptions immediately, instead mark them as disposed
                 // so we can turn the crank one more time to ensure we emit security changes properly
-                if (subscription.IsUniverseSelectionSubscription && subscription.Universe.DisposeRequested)
+                if (subscription.IsUniverseSelectionSubscription && subscription.Universe.First().DisposeRequested)
                 {
                     // subscription syncer will dispose the universe AFTER we've run selection a final time
                     // and then will invoke SubscriptionFinished which will remove the universe subscription
                     return false;
                 }
 
-                if (!_subscriptions.TryRemove(configuration, out subscription))
+                var removedUniverses = subscription.RemoveSubscriptionRequest(universe);
+                if (!subscription.HasSubscriptionRequests)
                 {
-                    Log.Error("FileSystemDataFeed.RemoveSubscription(): Unable to remove: " + configuration);
-                    return false;
-                }
+                    if (!_subscriptions.TryRemove(configuration, out subscription))
+                    {
+                        Log.Error("FileSystemDataFeed.RemoveSubscription(): Unable to remove: " + configuration);
+                        return false;
+                    }
 
-                // if the security is no longer a member of the universe, then mark the subscription properly
-                // universe may be null for internal currency conversion feeds
-                // TODO : Put currency feeds in their own internal universe
-                if (subscription.Universe != null && !subscription.Universe.Members.ContainsKey(configuration.Symbol))
-                {
-                    subscription.MarkAsRemovedFromUniverse();
+                    // if the security is no longer a member of the universe, then mark the subscription properly
+                    // universe may be null for internal currency conversion feeds
+                    // TODO : Put currency feeds in their own internal universe
+                    if (!removedUniverses.Any(x => x.Members.ContainsKey(configuration.Symbol)))
+                    {
+                        subscription.MarkAsRemovedFromUniverse();
+                    }
+                    subscription.Dispose();
+                    Log.Debug("FileSystemDataFeed.RemoveSubscription(): Removed " + configuration);
                 }
-                subscription.Dispose();
-                Log.Debug("FileSystemDataFeed.RemoveSubscription(): Removed " + configuration);
             }
 
             return true;
@@ -337,7 +344,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
 
             var enqueueable = new EnqueueableEnumerator<SubscriptionData>(true);
             var timeZoneOffsetProvider = new TimeZoneOffsetProvider(request.Security.Exchange.TimeZone, request.StartTimeUtc, request.EndTimeUtc);
-            var subscription = new Subscription(request.Universe, request.Security, config, enqueueable, timeZoneOffsetProvider, request.StartTimeUtc, request.EndTimeUtc, true);
+            var subscription = new Subscription(request, enqueueable, timeZoneOffsetProvider);
 
             // add this enumerator to our exchange
             ScheduleEnumerator(subscription, enumerator, enqueueable, lowerThreshold, upperThreshold, firstLoopCount);
