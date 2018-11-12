@@ -97,6 +97,7 @@ namespace QuantConnect.Tests.Brokerages.Paper
             var synchronizer = new NullSynchronizer(algorithm, dividend);
 
             algorithm.SubscriptionManager.SetDataManager(dataManager);
+            algorithm.UniverseManager.SetDataManager(dataManager);
             algorithm.AddSecurities(equities: new List<string> {"SPY"});
             algorithm.Securities[Symbols.SPY].Holdings.SetHoldings(100m, 1);
             algorithm.PostInitialize();

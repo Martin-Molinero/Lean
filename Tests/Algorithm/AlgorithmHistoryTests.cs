@@ -34,7 +34,7 @@ namespace QuantConnect.Tests.Algorithm
         public void Setup()
         {
             _algorithm = new QCAlgorithm();
-            _algorithm.SubscriptionManager.SetDataManager(new DataManagerStub(_algorithm));
+            var dataManager = new DataManagerStub(_algorithm);
             _algorithm.HistoryProvider = _testHistoryProvider = new TestHistoryProvider();
         }
 

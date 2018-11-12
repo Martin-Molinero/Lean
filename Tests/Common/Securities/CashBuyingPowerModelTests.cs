@@ -48,7 +48,7 @@ namespace QuantConnect.Tests.Common.Securities
         public void Initialize()
         {
             _algorithm = new QCAlgorithm();
-            _algorithm.SubscriptionManager.SetDataManager(new DataManagerStub(_algorithm));
+            var dataManager = new DataManagerStub(_algorithm);
             _portfolio = _algorithm.Portfolio;
             _portfolio.CashBook.Add("EUR", 0, 1.20m);
             _portfolio.CashBook.Add("BTC", 0, 15000m);

@@ -63,6 +63,7 @@ namespace QuantConnect.Tests.Engine.DataFeeds
                 algorithm.TimeKeeper,
                 marketHoursDatabase);
             algorithm.SubscriptionManager.SetDataManager(dataManager);
+            algorithm.UniverseManager.SetDataManager(dataManager);
 
             algorithm.Initialize();
             algorithm.PostInitialize();

@@ -36,7 +36,7 @@ namespace QuantConnect.Tests.Algorithm.Framework
         {
             var eventFired = false;
             var algo = new QCAlgorithmFramework();
-            algo.SubscriptionManager.SetDataManager(new DataManagerStub(algo));
+            var dataManager = new DataManagerStub(algo);
             algo.Transactions.SetOrderProcessor(new FakeOrderProcessor());
             algo.InsightsGenerated += (algorithm, data) =>
             {

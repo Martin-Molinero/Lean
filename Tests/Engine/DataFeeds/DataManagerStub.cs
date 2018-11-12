@@ -87,6 +87,8 @@ namespace QuantConnect.Tests.Engine.DataFeeds
             SecurityService = securityService;
             algorithm.Securities.SetSecurityService(securityService);
             Algorithm = algorithm;
+            Algorithm.UniverseManager.SetDataManager(this);
+            Algorithm.SubscriptionManager.SetDataManager(this);
         }
     }
 }

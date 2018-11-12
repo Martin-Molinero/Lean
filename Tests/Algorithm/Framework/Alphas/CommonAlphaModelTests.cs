@@ -47,7 +47,7 @@ namespace QuantConnect.Tests.Algorithm.Framework.Alphas
             _algorithm = new QCAlgorithmFramework();
             _algorithm.PortfolioConstruction = new NullPortfolioConstructionModel();
             _algorithm.HistoryProvider = new SineHistoryProvider(_algorithm.Securities);
-            _algorithm.SubscriptionManager.SetDataManager(new DataManagerStub(_algorithm));
+            var dataManager = new DataManagerStub(_algorithm);
             InitializeAlgorithm(_algorithm);
         }
 

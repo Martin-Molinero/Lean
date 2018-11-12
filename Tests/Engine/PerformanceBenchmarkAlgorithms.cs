@@ -51,7 +51,7 @@ namespace QuantConnect.Tests.Engine
         {
             public SingleSecurity_Second_BenchmarkTest()
             {
-                SubscriptionManager.SetDataManager(new DataManagerStub(this, new MockDataFeed()));
+                var dataManager = new DataManagerStub(this, new MockDataFeed());
             }
 
             public override void Initialize()

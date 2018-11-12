@@ -32,7 +32,10 @@ namespace QuantConnect.Lean.Engine.DataFeeds
     /// <summary>
     /// DataManager will manage the subscriptions for both the DataFeeds and the SubscriptionManager
     /// </summary>
-    public class DataManager : IAlgorithmSubscriptionManager, IDataFeedSubscriptionManager, IDataManager
+    public class DataManager : IAlgorithmSubscriptionManager,
+        IDataFeedSubscriptionManager,
+        IDataManager,
+        IUniverseManager
     {
         private readonly IAlgorithmSettings _algorithmSettings;
         private readonly IDataFeed _dataFeed;
@@ -52,7 +55,8 @@ namespace QuantConnect.Lean.Engine.DataFeeds
             UniverseSelection universeSelection,
             IAlgorithm algorithm,
             ITimeKeeper timeKeeper,
-            MarketHoursDatabase marketHoursDatabase)
+            MarketHoursDatabase marketHoursDatabase
+            )
         {
             _dataFeed = dataFeed;
             UniverseSelection = universeSelection;
@@ -61,6 +65,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
             AvailableDataTypes = SubscriptionManager.DefaultDataTypes();
             _timeKeeper = timeKeeper;
             _marketHoursDatabase = marketHoursDatabase;
+            Universes = new ConcurrentDictionary<Symbol, Universe>();
 
             var liveStart = DateTime.UtcNow;
             // wire ourselves up to receive notifications when universes are added/removed
@@ -407,6 +412,15 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         /// Get the universe selection instance
         /// </summary>
         public UniverseSelection UniverseSelection { get; }
+
+        #endregion
+
+        #region IUniverseManager
+
+        /// <summary>
+        /// Gets the universe container
+        /// </summary>
+        public ConcurrentDictionary<Symbol, Universe> Universes { get; }
 
         #endregion
     }

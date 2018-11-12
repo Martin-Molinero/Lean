@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using QuantConnect.Data.UniverseSelection;
+using QuantConnect.Interfaces;
 using QuantConnect.Util;
 
 namespace QuantConnect.Securities
@@ -29,7 +30,8 @@ namespace QuantConnect.Securities
     /// </summary>
     public class UniverseManager : IDictionary<Symbol, Universe>, INotifyCollectionChanged
     {
-        private readonly ConcurrentDictionary<Symbol, Universe> _universes;
+        private IUniverseManager _universeManager;
+        private ConcurrentDictionary<Symbol, Universe> _universes => _universeManager.Universes;
 
         /// <summary>
         /// Event fired when a universe is added or removed
@@ -45,11 +47,11 @@ namespace QuantConnect.Securities
             .DistinctBy(s => s.Symbol).ToDictionary(s => s.Symbol);
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="UniverseManager"/> class
+        /// Sets the <see cref="IUniverseManager"/>
         /// </summary>
-        public UniverseManager()
+        public void SetDataManager(IUniverseManager universeManager)
         {
-            _universes = new ConcurrentDictionary<Symbol, Universe>();
+            _universeManager = universeManager;
         }
 
         #region IDictionary implementation

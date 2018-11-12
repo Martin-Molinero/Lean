@@ -37,7 +37,7 @@ namespace QuantConnect.Tests.Algorithm
         public void Setup()
         {
             _algorithm = new QCAlgorithm();
-            _algorithm.SubscriptionManager.SetDataManager(new DataManagerStub(_algorithm));
+            var dataManager = new DataManagerStub(_algorithm);
             _spy = _algorithm.AddEquity("SPY").Symbol;
 
             _indicatorTestsTypes =
@@ -171,6 +171,7 @@ securityService =  SecurityService(algo.Portfolio.CashBook, marketHoursDatabase,
 algo.Securities.SetSecurityService(securityService)
 dataManager = DataManager(None, UniverseSelection(algo, securityService), algo, algo.TimeKeeper, marketHoursDatabase)
 algo.SubscriptionManager.SetDataManager(dataManager)
+algo.UniverseManager.SetDataManager(dataManager)
 
 
 forex = algo.AddForex('EURUSD', Resolution.Daily)

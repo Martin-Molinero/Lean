@@ -31,7 +31,7 @@ namespace QuantConnect.Tests.Algorithm
         {
             bool eventHandlerFired = false;
             var algorithm = new QCAlgorithm();
-            algorithm.SubscriptionManager.SetDataManager(new DataManagerStub(algorithm));
+            var dataManager = new DataManagerStub(algorithm);
             var security = algorithm.AddEquity("SPY");
             var consolidator = new IdentityDataConsolidator<BaseData>();
             consolidator.DataConsolidated += (sender, consolidated) => eventHandlerFired = true;

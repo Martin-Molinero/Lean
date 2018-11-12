@@ -38,7 +38,7 @@ namespace QuantConnect.Tests.Algorithm
         public void SetHoldingsTakesIntoAccountPendingMarketOrders()
         {
             var algorithm = new QCAlgorithm();
-            algorithm.SubscriptionManager.SetDataManager(new DataManagerStub(algorithm));
+            var dataManager = new DataManagerStub(algorithm);
             var security = algorithm.AddEquity("SPY");
             security.Exchange = new SecurityExchange(SecurityExchangeHours.AlwaysOpen(TimeZones.NewYork));
             security.SetMarketPrice(new Tick { Value = 270m });

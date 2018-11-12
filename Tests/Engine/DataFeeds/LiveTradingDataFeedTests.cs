@@ -526,11 +526,6 @@ namespace QuantConnect.Tests.Engine.DataFeeds
         public void HandlesCoarseFundamentalData()
         {
             Symbol symbol = CoarseFundamental.CreateUniverseSymbol(Market.USA);
-            _algorithm.AddUniverse(new FuncUniverse(
-                new SubscriptionDataConfig(typeof(CoarseFundamental), symbol, Resolution.Daily, TimeZones.NewYork, TimeZones.NewYork, false, false, false),
-                new UniverseSettings(Resolution.Second, 1, true, false, TimeSpan.Zero), SecurityInitializer.Null,
-                coarse => coarse.Take(10).Select(x => x.Symbol)
-                ));
 
             var lck = new object();
             BaseDataCollection list = null;
@@ -571,6 +566,11 @@ namespace QuantConnect.Tests.Engine.DataFeeds
                 return Enumerable.Empty<BaseData>();
             });
 
+            _algorithm.AddUniverse(new FuncUniverse(
+                new SubscriptionDataConfig(typeof(CoarseFundamental), symbol, Resolution.Daily, TimeZones.NewYork, TimeZones.NewYork, false, false, false),
+                new UniverseSettings(Resolution.Second, 1, true, false, TimeSpan.Zero), SecurityInitializer.Null,
+                coarse => coarse.Take(10).Select(x => x.Symbol)
+            ));
 
             ConsumeBridge(feed, TimeSpan.FromSeconds(5), ts =>
             {
@@ -609,6 +609,7 @@ namespace QuantConnect.Tests.Engine.DataFeeds
                 algorithm.TimeKeeper,
                 marketHoursDatabase);
             algorithm.SubscriptionManager.SetDataManager(dataManager);
+            algorithm.UniverseManager.SetDataManager(dataManager);
             var synchronizer = new TestableSynchronizer(_algorithm, dataManager, true);
             algorithm.AddSecurities(Resolution.Tick, Enumerable.Range(0, 20).Select(x => x.ToString()).ToList());
             var getNextTicksFunction = Enumerable.Range(0, 20).Select(x => new Tick { Symbol = SymbolCache.GetSymbol(x.ToString()) }).ToList();
@@ -689,6 +690,7 @@ namespace QuantConnect.Tests.Engine.DataFeeds
                 _algorithm.TimeKeeper,
                 marketHoursDatabase);
             _algorithm.SubscriptionManager.SetDataManager(_dataManager);
+            _algorithm.UniverseManager.SetDataManager(_dataManager);
             _algorithm.AddSecurities(resolution, equities, forex);
             _synchronizer = new TestableSynchronizer(_algorithm, _dataManager, true, _manualTimeProvider);
 

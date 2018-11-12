@@ -25,7 +25,7 @@ namespace QuantConnect.Tests.Algorithm
         public void Setup()
         {
             _algo = new QCAlgorithm();
-            _algo.SubscriptionManager.SetDataManager(new DataManagerStub(_algo));
+            var dataManager = new DataManagerStub(_algo);
             SymbolCache.TryRemove(ForexSym);
             SymbolCache.TryRemove(Sym);
         }

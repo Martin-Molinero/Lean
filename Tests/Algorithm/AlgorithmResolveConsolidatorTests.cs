@@ -27,7 +27,7 @@ namespace QuantConnect.Tests.Algorithm
         public void TradeBarToTradeBar()
         {
             var algorithm = new QCAlgorithm();
-            algorithm.SubscriptionManager.SetDataManager(new DataManagerStub(algorithm));
+            var dataManager = new DataManagerStub(algorithm);
             var security = algorithm.AddEquity("SPY");
             var consolidator = algorithm.ResolveConsolidator("SPY", Resolution.Minute);
 

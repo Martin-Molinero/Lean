@@ -429,7 +429,7 @@ namespace QuantConnect.Tests.Algorithm
         private QCAlgorithm GetAlgorithm()
         {
             var algorithm = new QCAlgorithm();
-            algorithm.SubscriptionManager.SetDataManager(new DataManagerStub(algorithm));
+            var dataManager = new DataManagerStub(algorithm);
             return algorithm;
         }
     }

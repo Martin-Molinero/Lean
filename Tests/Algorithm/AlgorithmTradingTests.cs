@@ -1069,7 +1069,7 @@ namespace QuantConnect.Tests.Algorithm
         public void SetHoldings_Long_RoundOff()
         {
             var algo = new QCAlgorithm();
-            algo.SubscriptionManager.SetDataManager(new DataManagerStub(algo));
+            var dataManager = new DataManagerStub(algo);
             algo.AddSecurity(SecurityType.Forex, "EURUSD");
             algo.SetCash(100000);
             algo.SetCash("BTC", 0, 8000);
@@ -1095,7 +1095,7 @@ namespace QuantConnect.Tests.Algorithm
         public void SetHoldings_Short_RoundOff()
         {
             var algo = new QCAlgorithm();
-            algo.SubscriptionManager.SetDataManager(new DataManagerStub(algo));
+            var dataManager = new DataManagerStub(algo);
             algo.AddSecurity(SecurityType.Forex, "EURUSD");
             algo.SetCash(100000);
             algo.SetBrokerageModel(BrokerageName.FxcmBrokerage);
@@ -1325,7 +1325,7 @@ namespace QuantConnect.Tests.Algorithm
         {
             //Initialize algorithm
             var algo = new QCAlgorithm();
-            algo.SubscriptionManager.SetDataManager(new DataManagerStub(algo));
+            var dataManager = new DataManagerStub(algo);
             algo.AddSecurity(SecurityType.Equity, "MSFT");
             algo.SetCash(100000);
             algo.SetFinishedWarmingUp();

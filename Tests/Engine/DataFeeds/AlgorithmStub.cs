@@ -36,6 +36,7 @@ namespace QuantConnect.Tests.Engine.DataFeeds
             {
                 DataManager = new DataManagerStub(this);
                 SubscriptionManager.SetDataManager(DataManager);
+                UniverseManager.SetDataManager(DataManager);
             }
         }
 

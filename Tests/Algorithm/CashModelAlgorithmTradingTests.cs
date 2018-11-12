@@ -670,7 +670,7 @@ namespace QuantConnect.Tests.Algorithm
             SymbolCache.Clear();
             // Initialize algorithm
             var algo = new QCAlgorithm();
-            algo.SubscriptionManager.SetDataManager(new DataManagerStub(algo));
+            var dataManager = new DataManagerStub(algo);
             algo.SetCash(100000);
             algo.SetBrokerageModel(BrokerageName.GDAX, AccountType.Cash);
             algo.Transactions.SetOrderProcessor(new FakeOrderProcessor());

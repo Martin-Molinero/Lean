@@ -71,12 +71,15 @@ namespace QuantConnect.Jupyter
                 var symbolPropertiesDataBase = SymbolPropertiesDatabase.FromDataFolder();
                 var securityService = new SecurityService(Portfolio.CashBook, MarketHoursDatabase, symbolPropertiesDataBase, this);
                 Securities.SetSecurityService(securityService);
-                SubscriptionManager.SetDataManager(
-                    new DataManager(new NullDataFeed(),
+                var dataManager = new DataManager(
+                        new NullDataFeed(),
                         new UniverseSelection(this, securityService),
                         this,
                         TimeKeeper,
-                        MarketHoursDatabase));
+                        MarketHoursDatabase
+                    );
+                SubscriptionManager.SetDataManager(dataManager);
+                UniverseManager.SetDataManager(dataManager);
 
                 var mapFileProvider = algorithmHandlers.MapFileProvider;
                 HistoryProvider = composer.GetExportedValueByTypeName<IHistoryProvider>(Config.Get("history-provider", "SubscriptionDataReaderHistoryProvider"));

@@ -97,7 +97,7 @@ namespace QuantConnect.Tests.Algorithm.Framework.Execution
             var algorithm = new QCAlgorithmFramework();
             algorithm.SetPandasConverter();
             algorithm.SetHistoryProvider(historyProvider.Object);
-            algorithm.SubscriptionManager.SetDataManager(new DataManagerStub(algorithm));
+            var dataManager = new DataManagerStub(algorithm);
             algorithm.SetDateTime(time.AddMinutes(5));
 
             var security = algorithm.AddEquity(Symbols.AAPL.Value);

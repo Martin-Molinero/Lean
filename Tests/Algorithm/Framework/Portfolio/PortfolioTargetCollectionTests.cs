@@ -217,7 +217,7 @@ namespace QuantConnect.Tests.Algorithm.Framework.Portfolio
         {
             public FakeAlgorithm()
             {
-                SubscriptionManager.SetDataManager(new DataManagerStub(this));
+                var dataManager = new DataManagerStub(this);
             }
         }
     }

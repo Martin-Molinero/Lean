@@ -124,7 +124,7 @@ namespace QuantConnect.Tests.Algorithm
 
         private FakeOrderProcessor InitializeAndGetFakeOrderProcessor(QCAlgorithm algo)
         {
-            algo.SubscriptionManager.SetDataManager(new DataManagerStub(algo));
+            var dataManager = new DataManagerStub(algo);
             algo.SetFinishedWarmingUp();
             algo.SetCash(100000);
             algo.AddEquity("SPY");

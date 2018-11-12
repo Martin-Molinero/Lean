@@ -27,7 +27,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using QuantConnect.Orders.Fees;
-using QuantConnect.Tests.Common.Securities;
 using QuantConnect.Tests.Engine.DataFeeds;
 
 namespace QuantConnect.Tests.Algorithm.Framework.Portfolio
@@ -42,7 +41,7 @@ namespace QuantConnect.Tests.Algorithm.Framework.Portfolio
         public void SetUp()
         {
             _algorithm = new QCAlgorithmFramework();
-            _algorithm.SubscriptionManager.SetDataManager(new DataManagerStub(_algorithm));
+            var dataManager = new DataManagerStub(_algorithm);
 
             var prices = new Dictionary<Symbol, decimal>
             {
@@ -315,7 +314,7 @@ namespace QuantConnect.Tests.Algorithm.Framework.Portfolio
         public void DoesNotReturnTargetsIfSecurityPriceIsZero(Language language)
         {
             var algorithm = new QCAlgorithmFramework();
-            algorithm.SubscriptionManager.SetDataManager(new DataManagerStub(algorithm));
+            var dataManager = new DataManagerStub(algorithm);
             algorithm.AddEquity(Symbols.SPY.Value);
             algorithm.SetDateTime(DateTime.MinValue.ConvertToUtc(_algorithm.TimeZone));
 

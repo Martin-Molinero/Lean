@@ -99,7 +99,7 @@ namespace QuantConnect.Tests.Algorithm.Framework.Execution
                         })));
 
             var algorithm = new QCAlgorithmFramework();
-            algorithm.SubscriptionManager.SetDataManager(new DataManagerStub(algorithm));
+            var dataManager = new DataManagerStub(algorithm);
             algorithm.SetPandasConverter();
             algorithm.SetHistoryProvider(historyProvider.Object);
             algorithm.SetDateTime(time.AddMinutes(5));

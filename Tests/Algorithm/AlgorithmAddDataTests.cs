@@ -44,7 +44,7 @@ namespace QuantConnect.Tests.Algorithm
         {
             Config.Set("security-data-feeds", "{ Forex: [\"Trade\"] }");
             var algo = new QCAlgorithm();
-            algo.SubscriptionManager.SetDataManager(new DataManagerStub(algo));
+            var dataManager = new DataManagerStub(algo);
 
             // forex defult - should be tradebar
             var forexTrade = algo.AddForex("EURUSD");
@@ -72,7 +72,7 @@ namespace QuantConnect.Tests.Algorithm
         public void DefaultDataFeeds_AreAdded_Successfully()
         {
             var algo = new QCAlgorithm();
-            algo.SubscriptionManager.SetDataManager(new DataManagerStub(algo));
+            var dataManager = new DataManagerStub(algo);
 
             // forex
             var forex = algo.AddSecurity(SecurityType.Forex, "eurusd");
@@ -111,7 +111,7 @@ namespace QuantConnect.Tests.Algorithm
         public void CustomDataTypes_AreAddedToSubscriptions_Successfully()
         {
             var qcAlgorithm = new QCAlgorithm();
-            qcAlgorithm.SubscriptionManager.SetDataManager(new DataManagerStub(qcAlgorithm));
+            var dataManager = new DataManagerStub(qcAlgorithm);
 
             // Add a bitcoin subscription
             qcAlgorithm.AddData<Bitcoin>("BTC");
@@ -128,7 +128,7 @@ namespace QuantConnect.Tests.Algorithm
         public void OnEndOfTimeStepSeedsUnderlyingSecuritiesThatHaveNoData()
         {
             var qcAlgorithm = new QCAlgorithm();
-            qcAlgorithm.SubscriptionManager.SetDataManager(new DataManagerStub(qcAlgorithm, new MockDataFeed()));
+            var dataManager = new DataManagerStub(qcAlgorithm, new MockDataFeed());
             qcAlgorithm.SetLiveMode(true);
             var testHistoryProvider = new TestHistoryProvider();
             qcAlgorithm.HistoryProvider = testHistoryProvider;
@@ -150,7 +150,7 @@ namespace QuantConnect.Tests.Algorithm
         public void OnEndOfTimeStepDoesNotThrowWhenSeedsSameUnderlyingForTwoSecurities()
         {
             var qcAlgorithm = new QCAlgorithm();
-            qcAlgorithm.SubscriptionManager.SetDataManager(new DataManagerStub(qcAlgorithm, new MockDataFeed()));
+            var dataManager = new DataManagerStub(qcAlgorithm, new MockDataFeed());
             qcAlgorithm.SetLiveMode(true);
             var testHistoryProvider = new TestHistoryProvider();
             qcAlgorithm.HistoryProvider = testHistoryProvider;
@@ -175,7 +175,7 @@ namespace QuantConnect.Tests.Algorithm
         public void PythonCustomDataTypes_AreAddedToSubscriptions_Successfully()
         {
             var qcAlgorithm = new AlgorithmPythonWrapper("Test_CustomDataAlgorithm");
-            qcAlgorithm.SubscriptionManager.SetDataManager(new DataManagerStub(qcAlgorithm));
+            var dataManager = new DataManagerStub(qcAlgorithm);
 
             // Initialize contains the statements:
             // self.AddData(Nifty, "NIFTY")
@@ -199,7 +199,7 @@ namespace QuantConnect.Tests.Algorithm
         public void PythonCustomDataTypes_AreAddedToConsolidator_Successfully()
         {
             var qcAlgorithm = new AlgorithmPythonWrapper("Test_CustomDataAlgorithm");
-            qcAlgorithm.SubscriptionManager.SetDataManager(new DataManagerStub(qcAlgorithm));
+            var dataManager = new DataManagerStub(qcAlgorithm);
 
             // Initialize contains the statements:
             // self.AddData(Nifty, "NIFTY")
