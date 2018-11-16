@@ -20,6 +20,7 @@ using QuantConnect.Data;
 using QuantConnect.Interfaces;
 using QuantConnect.Lean.Engine.DataFeeds.Transport;
 using QuantConnect.Util;
+using CWrapper;
 
 namespace QuantConnect.Lean.Engine.DataFeeds
 {
@@ -177,7 +178,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         private IStreamReader HandleLocalFileSource(SubscriptionDataSource source)
         {
             // handles zip or text files
-            return new LocalFileSubscriptionStreamReader(_dataCacheProvider, source.Source);
+            return new LocalFileSubscriptionStreamReaderCLR(source.Source);
         }
 
         /// <summary>

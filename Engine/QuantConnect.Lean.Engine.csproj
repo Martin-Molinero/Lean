@@ -92,6 +92,7 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>false</Prefer32Bit>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <OutputPath>bin\Release\</OutputPath>
@@ -298,6 +299,10 @@
     <ProjectReference Include="..\Logging\QuantConnect.Logging.csproj">
       <Project>{01911409-86be-4e7d-9947-df714138610d}</Project>
       <Name>QuantConnect.Logging</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\QuantConnectCLR\QuantConnectCLR.vcxproj">
+      <Project>{9089edc6-9d14-40b0-8b33-a3d818f57e97}</Project>
+      <Name>QuantConnectCLR</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
