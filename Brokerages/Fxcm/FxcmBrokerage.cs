@@ -42,6 +42,7 @@ namespace QuantConnect.Brokerages.Fxcm
     {
         private readonly IOrderProvider _orderProvider;
         private readonly ISecurityProvider _securityProvider;
+        private readonly ICurrencyConverter _currencyConverter;
         private readonly string _server;
         private readonly string _terminal;
         private readonly string _userName;
@@ -89,7 +90,14 @@ namespace QuantConnect.Brokerages.Fxcm
         /// <param name="userName">The user name (login id)</param>
         /// <param name="password">The user password</param>
         /// <param name="accountId">The account id</param>
-        public FxcmBrokerage(IOrderProvider orderProvider, ISecurityProvider securityProvider, string server, string terminal, string userName, string password, string accountId)
+        public FxcmBrokerage(IOrderProvider orderProvider,
+            ISecurityProvider securityProvider,
+            string server,
+            string terminal,
+            string userName,
+            string password,
+            string accountId,
+            ICurrencyConverter currencyConverter)
             : base("FXCM Brokerage")
         {
             _orderProvider = orderProvider;
@@ -99,6 +107,7 @@ namespace QuantConnect.Brokerages.Fxcm
             _userName = userName;
             _password = password;
             _accountId = accountId;
+            _currencyConverter = currencyConverter;
 
             HistoryResponseTimeout = 5000;
             MaximumHistoryRetryAttempts = 1;

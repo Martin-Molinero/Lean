@@ -1,4 +1,4 @@
-/*
+﻿/*
  * QUANTCONNECT.COM - Democratizing Finance, Empowering Individuals.
  * Lean Algorithmic Trading Engine v2.0. Copyright 2014 QuantConnect Corporation.
  *
@@ -12,20 +12,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
-
+using QuantConnect.Securities;
 namespace QuantConnect.Orders.Fees
 {
     /// <summary>
-    /// Represents a model the simulates order fees
+    /// Defines the result for <see cref="IFeeModel.GetOrderFee"/>
     /// </summary>
-    public interface IFeeModel
+    public class OrderFee
     {
         /// <summary>
-        /// Gets the order fee associated with the specified order. This returns the cost
-        /// of the transaction in the account currency
+        /// Gets the order fee
         /// </summary>
-        /// <param name="context">A context object containing the security and order</param>
-        /// <returns>The cost of the order in units of the account currency</returns>
-        OrderFee GetOrderFee(OrderFeeContext context);
+        public CashAmount Value { get; }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="OrderFee"/> class
+        /// </summary>
+        /// <param name="orderFee">The order fee</param>
+        public OrderFee(CashAmount orderFee)
+        {
+            Value = orderFee;
+        }
     }
 }

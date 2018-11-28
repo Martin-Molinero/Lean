@@ -123,13 +123,13 @@ namespace QuantConnect.Algorithm.CSharp
                 _algorithm = algorithm;
             }
 
-            public decimal GetOrderFee(Security security, Order order)
+            public OrderFee GetOrderFee(OrderFeeContext context)
             {
                 // custom fee math
-                var fee = Math.Max(1m, security.Price*order.AbsoluteQuantity*0.00001m);
+                var fee = Math.Max(1m, context.Security.Price* context.Order.AbsoluteQuantity*0.00001m);
 
                 _algorithm.Log("CustomFeeModel: " + fee);
-                return fee;
+                return new OrderFee(new CashAmount(fee, context.CurrencyConverter.GetAccountCurrency(), context.CurrencyConverter));
             }
         }
 

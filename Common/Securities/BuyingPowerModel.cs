@@ -16,6 +16,7 @@
 using System;
 using QuantConnect.Logging;
 using QuantConnect.Orders;
+using QuantConnect.Orders.Fees;
 
 namespace QuantConnect.Securities
 {
@@ -133,11 +134,11 @@ namespace QuantConnect.Securities
         /// <param name="security">The security to compute initial margin for</param>
         /// <param name="order">The order to be executed</param>
         /// <returns>The total margin in terms of the currency quoted in the order</returns>
-        protected virtual decimal GetInitialMarginRequiredForOrder(Security security, Order order)
+        protected virtual decimal GetInitialMarginRequiredForOrder(Security security, Order order, ICurrencyConverter converter)
         {
             //Get the order value from the non-abstract order classes (MarketOrder, LimitOrder, StopMarketOrder)
             //Market order is approximated from the current security price and set in the MarketOrder Method in QCAlgorithm.
-            var orderFees = security.FeeModel.GetOrderFee(security, order);
+            var orderFees = security.FeeModel.GetOrderFee(new OrderFeeContext(security, order, converter)).Value.Amount;
 
             var orderValue = order.GetValue(security) * GetInitialMarginRequirement(security);
             return orderValue + Math.Sign(orderValue) * orderFees;
@@ -276,7 +277,7 @@ namespace QuantConnect.Securities
             }
 
             var freeMargin = GetMarginRemaining(context.Portfolio, context.Security, context.Order.Direction);
-            var initialMarginRequiredForOrder = GetInitialMarginRequiredForOrder(context.Security, context.Order);
+            var initialMarginRequiredForOrder = GetInitialMarginRequiredForOrder(context.Security, context.Order, context.Portfolio.CashBook);
 
             // pro-rate the initial margin required for order based on how much has already been filled
             var percentUnfilled = (Math.Abs(context.Order.Quantity) - Math.Abs(ticket.QuantityFilled)) / Math.Abs(context.Order.Quantity);
@@ -381,7 +382,10 @@ namespace QuantConnect.Securities
 
                 // generate the order
                 var order = new MarketOrder(context.Security.Symbol, orderQuantity, DateTime.UtcNow);
-                orderFees = context.Security.FeeModel.GetOrderFee(context.Security, order);
+                orderFees = context.Security.FeeModel.GetOrderFee(new OrderFeeContext(
+                    context.Security,
+                    order,
+                    context.Portfolio.CashBook)).Value.Amount;
 
                 // The TPV, take out the fees(unscaled) => yields available value for trading(less fees)
                 // then scale that by the target -- finally remove currentHoldingsValue to get targetOrderValue

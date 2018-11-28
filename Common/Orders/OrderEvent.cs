@@ -174,7 +174,9 @@ namespace QuantConnect.Orders
                 : string.Format("Time: {0} OrderID: {1} Symbol: {2} Status: {3} Quantity: {4} FillPrice: {5} {6}", UtcTime, OrderId, Symbol.Value, Status, FillQuantity, FillPrice.SmartRounding(), FillPriceCurrency);
 
             // attach the order fee so it ends up in logs properly
-            if (OrderFee != 0m) message += string.Format(" OrderFee: {0} {1}", OrderFee, CashBook.AccountCurrency);
+            if (OrderFee != 0m) message += $" OrderFee: {OrderFee}" +
+                //$" {CashBook.AccountCurrency}" +
+                $"";
 
             // add message from brokerage
             if (!string.IsNullOrEmpty(Message))

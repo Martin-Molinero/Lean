@@ -20,6 +20,7 @@ using System.Linq;
 using QuantConnect.Interfaces;
 using QuantConnect.Logging;
 using QuantConnect.Orders;
+using QuantConnect.Orders.Fees;
 using QuantConnect.Securities;
 using QuantConnect.Securities.Option;
 
@@ -364,7 +365,9 @@ namespace QuantConnect.Brokerages.Backtesting
                                     // TODO : This check can be removed in April, 2019 -- a 6-month window to upgrade (also, suspect small % of users, if any are impacted)
                                     if (fill.OrderFee == 0m)
                                     {
-                                        fill.OrderFee = security.FeeModel.GetOrderFee(security, order);
+                                        fill.OrderFee = security.FeeModel.GetOrderFee(
+                                            new OrderFeeContext(security, order, Algorithm.Portfolio.CashBook))
+                                            .Value.Amount;
                                     }
                                 }
                             }

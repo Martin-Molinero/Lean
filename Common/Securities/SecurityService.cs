@@ -60,7 +60,7 @@ namespace QuantConnect.Securities
 
             var exchangeHours = _marketHoursDatabase.GetEntry(symbol.ID.Market, symbol, symbol.ID.SecurityType).ExchangeHours;
 
-            var defaultQuoteCurrency = CashBook.AccountCurrency;
+            var defaultQuoteCurrency = _cashBook.GetAccountCurrency();
             if (symbol.ID.SecurityType == SecurityType.Forex || symbol.ID.SecurityType == SecurityType.Crypto)
             {
                 defaultQuoteCurrency = symbol.Value.Substring(3);
@@ -110,11 +110,11 @@ namespace QuantConnect.Securities
 
                 case SecurityType.Option:
                     if (addToSymbolCache) SymbolCache.Set(symbol.Underlying.Value, symbol.Underlying);
-                    security = new Option.Option(symbol, exchangeHours, _cashBook[CashBook.AccountCurrency], new Option.OptionSymbolProperties(symbolProperties), _cashBook);
+                    security = new Option.Option(symbol, exchangeHours, _cashBook[_cashBook.GetAccountCurrency()], new Option.OptionSymbolProperties(symbolProperties), _cashBook);
                     break;
 
                 case SecurityType.Future:
-                    security = new Future.Future(symbol, exchangeHours, _cashBook[CashBook.AccountCurrency], symbolProperties, _cashBook);
+                    security = new Future.Future(symbol, exchangeHours, _cashBook[_cashBook.GetAccountCurrency()], symbolProperties, _cashBook);
                     break;
 
                 case SecurityType.Forex:

@@ -21,6 +21,11 @@ namespace QuantConnect.Securities
     public interface ICurrencyConverter
     {
         /// <summary>
+        /// Gets the account currency of the algorithm's portfolio
+        /// </summary>
+        string GetAccountCurrency();
+
+        /// <summary>
         /// Converts a cash amount to the account currency
         /// </summary>
         /// <param name="cashAmount">The <see cref="CashAmount"/> instance to convert</param>

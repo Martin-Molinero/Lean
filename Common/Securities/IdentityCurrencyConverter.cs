@@ -34,6 +34,8 @@ namespace QuantConnect.Securities
             this._accountCurrency = accountCurrency;
         }
 
+        public string GetAccountCurrency() => _accountCurrency;
+
         /// <summary>
         /// Converts a cash amount to the account currency.
         /// This implementation can only handle cash amounts in units of the account currency.

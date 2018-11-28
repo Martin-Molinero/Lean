@@ -15,6 +15,7 @@
 
 using System;
 using QuantConnect.Orders;
+using QuantConnect.Orders.Fees;
 
 namespace QuantConnect.Securities.Option
 {
@@ -69,11 +70,14 @@ namespace QuantConnect.Securities.Option
         /// <param name="security">The security to compute initial margin for</param>
         /// <param name="order">The order to be executed</param>
         /// <returns>The total margin in terms of the currency quoted in the order</returns>
-        protected override decimal GetInitialMarginRequiredForOrder(Security security, Order order)
+        protected override decimal GetInitialMarginRequiredForOrder(Security security, Order order, ICurrencyConverter converter)
         {
             //Get the order value from the non-abstract order classes (MarketOrder, LimitOrder, StopMarketOrder)
             //Market order is approximated from the current security price and set in the MarketOrder Method in QCAlgorithm.
-            var orderFees = security.FeeModel.GetOrderFee(security, order);
+            var orderFees = security.FeeModel.GetOrderFee(new OrderFeeContext(
+                security,
+                order,
+                converter)).Value.Amount;
             var value = order.GetValue(security);
             var orderValue = value * GetInitialMarginRequirement(security, value);
 

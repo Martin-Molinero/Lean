@@ -148,7 +148,8 @@ namespace QuantConnect.Securities
             SubscriptionManager subscriptions,
             IReadOnlyDictionary<SecurityType, string> marketMap,
             SecurityChanges changes,
-            ISecurityService securityService
+            ISecurityService securityService,
+            string accountCurrency
             )
         {
             // this gets called every time we add securities using universe selection,
@@ -158,7 +159,7 @@ namespace QuantConnect.Securities
                 return null;
             }
 
-            if (Symbol == CashBook.AccountCurrency)
+            if (Symbol == accountCurrency)
             {
                 ConversionRateSecurity = null;
                 _isBaseCurrency = true;
@@ -167,8 +168,8 @@ namespace QuantConnect.Securities
             }
 
             // we require a security that converts this into the base currency
-            string normal = Symbol + CashBook.AccountCurrency;
-            string invert = CashBook.AccountCurrency + Symbol;
+            string normal = Symbol + accountCurrency;
+            string invert = accountCurrency + Symbol;
             var securitiesToSearch = securities.Select(kvp => kvp.Value)
                 .Concat(changes.AddedSecurities)
                 .Where(s => s.Type == SecurityType.Forex || s.Type == SecurityType.Cfd || s.Type == SecurityType.Crypto);
@@ -238,7 +239,7 @@ namespace QuantConnect.Securities
             }
 
             // if this still hasn't been set then it's an error condition
-            throw new ArgumentException(string.Format("In order to maintain cash in {0} you are required to add a subscription for Forex pair {0}{1} or {1}{0}", Symbol, CashBook.AccountCurrency));
+            throw new ArgumentException(string.Format("In order to maintain cash in {0} you are required to add a subscription for Forex pair {0}{1} or {1}{0}", Symbol, accountCurrency));
         }
 
         /// <summary>

@@ -29,6 +29,7 @@ using NodaTime;
 using QuantConnect.Data.Market;
 using QuantConnect.Logging;
 using QuantConnect.Orders;
+using QuantConnect.Orders.Fees;
 
 namespace QuantConnect.Brokerages.Fxcm
 {
@@ -416,7 +417,9 @@ namespace QuantConnect.Brokerages.Fxcm
                         if ((int)message.getCumQty() == (int)message.getLastQty() && message.getLastQty() > 0)
                         {
                             var security = _securityProvider.GetSecurity(order.Symbol);
-                            orderEvent.OrderFee = security.FeeModel.GetOrderFee(security, order);
+                            orderEvent.OrderFee = security.FeeModel.GetOrderFee(
+                                new OrderFeeContext(security, order, _currencyConverter))
+                                .Value.Amount;
                         }
 
                         _orderEventQueue.Enqueue(orderEvent);

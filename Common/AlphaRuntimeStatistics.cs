@@ -89,7 +89,7 @@ namespace QuantConnect
         /// </summary>
         public Dictionary<string, string> ToDictionary()
         {
-            var accountCurrencySymbol = Currencies.GetCurrencySymbol(CashBook.AccountCurrency);
+            var accountCurrencySymbol = "USD"; //Currencies.GetCurrencySymbol(CashBook.AccountCurrency);
             return new Dictionary<string, string>
             {
                 {"Total Insights Generated", $"{TotalInsightsGenerated}"},

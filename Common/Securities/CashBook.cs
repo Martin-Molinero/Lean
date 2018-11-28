@@ -89,7 +89,12 @@ namespace QuantConnect.Securities
             {
                 var cash = kvp.Value;
 
-                var subscriptionDataConfig = cash.EnsureCurrencyDataFeed(securities, subscriptions, marketMap, changes, securityService);
+                var subscriptionDataConfig = cash.EnsureCurrencyDataFeed(securities,
+                    subscriptions,
+                    marketMap,
+                    changes,
+                    securityService,
+                    AccountCurrency);
                 if (subscriptionDataConfig != null)
                 {
                     addedSubscriptionDataConfigs.Add(subscriptionDataConfig);
@@ -324,6 +329,11 @@ namespace QuantConnect.Securities
         #endregion
 
         #region ICurrencyConverter Implementation
+
+        public string GetAccountCurrency()
+        {
+            return AccountCurrency;
+        }
 
         /// <summary>
         /// Converts a cash amount to the account currency
