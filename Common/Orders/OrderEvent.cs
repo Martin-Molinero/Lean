@@ -14,6 +14,7 @@
 */
 
 using System;
+using QuantConnect.Orders.Fees;
 using QuantConnect.Securities;
 
 namespace QuantConnect.Orders
@@ -23,7 +24,7 @@ namespace QuantConnect.Orders
     /// </summary>
     public class OrderEvent
     {
-        private decimal orderFee;
+        private OrderFee orderFee;
         private decimal fillPrice;
         private decimal fillQuantity;
 
@@ -50,11 +51,7 @@ namespace QuantConnect.Orders
         /// <summary>
         /// The fee associated with the order (always positive value).
         /// </summary>
-        public decimal OrderFee
-        {
-            get { return orderFee; }
-            set { orderFee = value.Normalize(); }
-        }
+        public OrderFee OrderFee { get; set; }
 
         /// <summary>
         /// Fill price information about the order
@@ -118,7 +115,7 @@ namespace QuantConnect.Orders
             OrderDirection direction,
             decimal fillPrice,
             decimal fillQuantity,
-            decimal orderFee,
+            OrderFee orderFee,
             string message = ""
             )
         {
@@ -130,9 +127,44 @@ namespace QuantConnect.Orders
             FillPrice = fillPrice;
             FillPriceCurrency = string.Empty;
             FillQuantity = fillQuantity;
-            OrderFee = Math.Abs(orderFee);
+            OrderFee = orderFee;
             Message = message;
             IsAssignment = false;
+        }
+
+        /// <summary>
+        /// Order Event Constructor.
+        /// </summary>
+        /// <param name="orderId">Id of the parent order</param>
+        /// <param name="symbol">Asset Symbol</param>
+        /// <param name="utcTime">Date/time of this event</param>
+        /// <param name="status">Status of the order</param>
+        /// <param name="direction">The direction of the order this event belongs to</param>
+        /// <param name="fillPrice">Fill price information if applicable.</param>
+        /// <param name="fillQuantity">Fill quantity</param>
+        /// <param name="orderFee">The order fee</param>
+        /// <param name="message">Message from the exchange</param>
+        public OrderEvent(int orderId,
+            Symbol symbol,
+            DateTime utcTime,
+            OrderStatus status,
+            OrderDirection direction,
+            decimal fillPrice,
+            decimal fillQuantity,
+            decimal orderFee,
+            string message = ""
+            )
+        :
+        this(orderId,
+            symbol,
+            utcTime,
+            status,
+            direction,
+            fillPrice,
+            fillQuantity,
+            new OrderFee(new CashAmount(orderFee, string.Empty)),
+            message)
+        {
         }
 
         /// <summary>
@@ -155,7 +187,7 @@ namespace QuantConnect.Orders
             FillPriceCurrency = order.PriceCurrency;
 
             UtcTime = utcTime;
-            OrderFee = Math.Abs(orderFee);
+            OrderFee = new OrderFee(new CashAmount(orderFee, FillPriceCurrency));
             Message = message;
             IsAssignment = false;
         }
@@ -174,7 +206,7 @@ namespace QuantConnect.Orders
                 : string.Format("Time: {0} OrderID: {1} Symbol: {2} Status: {3} Quantity: {4} FillPrice: {5} {6}", UtcTime, OrderId, Symbol.Value, Status, FillQuantity, FillPrice.SmartRounding(), FillPriceCurrency);
 
             // attach the order fee so it ends up in logs properly
-            if (OrderFee != 0m) message += string.Format(" OrderFee: {0} {1}", OrderFee, CashBook.AccountCurrency);
+            if (OrderFee != 0m) message += $" OrderFee: {OrderFee}";
 
             // add message from brokerage
             if (!string.IsNullOrEmpty(Message))

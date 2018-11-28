@@ -14,28 +14,36 @@
 */
 
 using System;
-using NUnit.Framework;
 using QuantConnect.Securities;
-
-namespace QuantConnect.Tests.Common.Securities
+namespace QuantConnect.Orders.Fees
 {
-    [TestFixture]
-    public class IdentityCurrencyConverterTests
+    /// <summary>
+    /// Defines the result for <see cref="IFeeModel.GetOrderFee"/>
+    /// </summary>
+    public class OrderFee
     {
-        [Test]
-        public void ThrowsArgumentExceptionOnCashAmountNotInAccountCurrency()
+        /// <summary>
+        /// Gets the order fee
+        /// </summary>
+        public CashAmount Value { get; }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="OrderFee"/> class
+        /// </summary>
+        /// <param name="orderFee">The order fee</param>
+        public OrderFee(CashAmount orderFee)
         {
-            var converter = new IdentityCurrencyConverter("USD");
-            var cashAmount = new CashAmount(1m, "EUR");
-            Assert.Throws<ArgumentException>(() => converter.ConvertToAccountCurrency(cashAmount));
+            Value = orderFee;
         }
 
-        [Test]
-        public void ConvertsAccountCurrencyAsIdentity()
+        public static implicit operator decimal(OrderFee m)
         {
-            var converter = new IdentityCurrencyConverter("ABC");
-            var cashAmount = new CashAmount(1m, "ABC");
-            Assert.AreEqual(cashAmount, converter.ConvertToAccountCurrency(cashAmount));
+            return Math.Abs(m.Value.Amount).Normalize();
+        }
+
+        public override string ToString()
+        {
+            return $"{Math.Abs(Value.Amount).Normalize()} {Value.Currency}";
         }
     }
 }

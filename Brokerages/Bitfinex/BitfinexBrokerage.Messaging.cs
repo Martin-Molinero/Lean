@@ -27,6 +27,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using QuantConnect.Orders.Fees;
 
 namespace QuantConnect.Brokerages.Bitfinex
 {
@@ -569,7 +570,11 @@ namespace QuantConnect.Brokerages.Bitfinex
                 if (fillQuantity != 0)
                 {
                     var security = _securityProvider.GetSecurity(order.Symbol);
-                    orderFee = security.FeeModel.GetOrderFee(security, order);
+                    orderFee = security.FeeModel.GetOrderFee(
+                            new OrderFeeContext(
+                                security,
+                                order))
+                        .Value.Amount;
                 }
 
                 OrderStatus status = fillQuantity == order.Quantity ? OrderStatus.Filled : OrderStatus.PartiallyFilled;

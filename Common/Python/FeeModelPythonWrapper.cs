@@ -43,11 +43,11 @@ namespace QuantConnect.Python
         /// <param name="security">The security matching the order</param>
         /// <param name="order">The order to compute fees for</param>
         /// <returns>The cost of the order in units of the account currency</returns>
-        public decimal GetOrderFee(Security security, Order order)
+        public OrderFee GetOrderFee(OrderFeeContext context)
         {
             using (Py.GIL())
             {
-                return _model.GetOrderFee(security, order);
+                return _model.GetOrderFee(context);
             }
         }
     }

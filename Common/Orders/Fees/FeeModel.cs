@@ -1,4 +1,4 @@
-/*
+﻿/*
  * QUANTCONNECT.COM - Democratizing Finance, Empowering Individuals.
  * Lean Algorithmic Trading Engine v2.0. Copyright 2014 QuantConnect Corporation.
  *
@@ -13,7 +13,6 @@
  * limitations under the License.
 */
 
-using System;
 using QuantConnect.Securities;
 
 namespace QuantConnect.Orders.Fees
@@ -21,28 +20,16 @@ namespace QuantConnect.Orders.Fees
     /// <summary>
     /// Provides an order fee model that always returns the same order fee.
     /// </summary>
-    public class ConstantFeeModel : FeeModel
+    public abstract class FeeModel : IFeeModel
     {
-        private readonly decimal _fee;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ConstantFeeModel"/> class with the specified <paramref name="fee"/>
-        /// </summary>
-        /// <param name="fee">The constant order fee used by the model</param>
-        public ConstantFeeModel(decimal fee)
-        {
-            _fee = Math.Abs(fee);
-        }
-
         /// <summary>
         /// Returns the constant fee for the model
         /// </summary>
-        /// <param name="security">The security matching the order</param>
-        /// <param name="order">The order to compute fees for</param>
+        /// <param name="context"></param>
         /// <returns>The cost of the order in units of the account currency</returns>
-        public override OrderFee GetOrderFee(OrderFeeContext context)
+        public virtual OrderFee GetOrderFee(OrderFeeContext context)
         {
-            return new OrderFee(new CashAmount(_fee, context.Security.QuoteCurrency.AccountCurrency));
+            return new OrderFee(new CashAmount(0, context.Security.QuoteCurrency.AccountCurrency));
         }
     }
 }

@@ -27,6 +27,7 @@ using QuantConnect.Configuration;
 using QuantConnect.Interfaces;
 using QuantConnect.Logging;
 using QuantConnect.Orders;
+using QuantConnect.Orders.Fees;
 using QuantConnect.Orders.TimeInForces;
 using QuantConnect.Securities;
 using QuantConnect.Securities.Equity;
@@ -123,7 +124,9 @@ namespace QuantConnect.Brokerages.Tradier
         /// <summary>
         /// Create a new Tradier Object:
         /// </summary>
-        public TradierBrokerage(IOrderProvider orderProvider, ISecurityProvider securityProvider, string accountID)
+        public TradierBrokerage(IOrderProvider orderProvider,
+            ISecurityProvider securityProvider,
+            string accountID)
             : base("Tradier Brokerage")
         {
             _orderProvider = orderProvider;
@@ -1351,7 +1354,10 @@ namespace QuantConnect.Brokerages.Tradier
                 {
                     cachedOrder.EmittedOrderFee = true;
                     var security = _securityProvider.GetSecurity(qcOrder.Symbol);
-                    fill.OrderFee = security.FeeModel.GetOrderFee(security, qcOrder);
+                    fill.OrderFee = security.FeeModel.GetOrderFee(
+                        new OrderFeeContext(
+                            security,
+                            qcOrder));
                 }
 
                 // if we filled the order and have another contingent order waiting, submit it

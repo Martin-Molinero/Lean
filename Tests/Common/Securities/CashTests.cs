@@ -100,7 +100,7 @@ namespace QuantConnect.Tests.Common.Securities
                     new Cash(CashBook.AccountCurrency, 0, 1m),
                     SymbolProperties.GetDefault(CashBook.AccountCurrency),
                     cashBook));
-            cash.EnsureCurrencyDataFeed(securities, subscriptions, MarketMap, SecurityChanges.None, dataManager.SecurityService);
+            cash.EnsureCurrencyDataFeed(securities, subscriptions, MarketMap, SecurityChanges.None, dataManager.SecurityService, "USD");
 
             Assert.AreEqual(1, subscriptions.Subscriptions.Count(x => x.Symbol == Symbols.USDJPY));
             Assert.AreEqual(1, securities.Values.Count(x => x.Symbol == Symbols.USDJPY));
@@ -131,7 +131,7 @@ namespace QuantConnect.Tests.Common.Securities
             );
             var usdjpy = new Security(Symbols.USDJPY, SecurityExchangeHours, new Cash("JPY", 0, 0), SymbolProperties.GetDefault("JPY"), ErrorCurrencyConverter.Instance);
             var changes = new SecurityChanges(new[] {usdjpy}, Enumerable.Empty<Security>());
-            var addedSecurity = cash.EnsureCurrencyDataFeed(securities, subscriptions, MarketMap, changes, dataManager.SecurityService);
+            var addedSecurity = cash.EnsureCurrencyDataFeed(securities, subscriptions, MarketMap, changes, dataManager.SecurityService, "USD");
 
             // the security exists in SecurityChanges so it is NOT added to the security manager or subscriptions
             // this security will be added by the algorithm manager
@@ -173,7 +173,7 @@ namespace QuantConnect.Tests.Common.Securities
                 )
             );
 
-            cash.EnsureCurrencyDataFeed(securities, subscriptions, MarketMap, SecurityChanges.None, dataManager.SecurityService);
+            cash.EnsureCurrencyDataFeed(securities, subscriptions, MarketMap, SecurityChanges.None, dataManager.SecurityService, "USD");
             Assert.AreEqual(minimumResolution, subscriptions.Subscriptions.Single(x => x.Symbol == Symbols.USDJPY).Resolution);
         }
 
@@ -201,7 +201,7 @@ namespace QuantConnect.Tests.Common.Securities
                 )
             );
 
-            cash.EnsureCurrencyDataFeed(securities, subscriptions, MarketMap, SecurityChanges.None, dataManager.SecurityService);
+            cash.EnsureCurrencyDataFeed(securities, subscriptions, MarketMap, SecurityChanges.None, dataManager.SecurityService, "USD");
             var config = subscriptions.Subscriptions.Single(x => x.Symbol == Symbols.USDJPY);
             Assert.IsTrue(config.IsInternalFeed);
         }
@@ -230,7 +230,7 @@ namespace QuantConnect.Tests.Common.Securities
                 )
             );
 
-            cash.EnsureCurrencyDataFeed(securities, subscriptions, MarketMap, SecurityChanges.None, dataManager.SecurityService);
+            cash.EnsureCurrencyDataFeed(securities, subscriptions, MarketMap, SecurityChanges.None, dataManager.SecurityService, "USD");
             var config = subscriptions.Subscriptions.Single(x => x.Symbol == Symbols.USDJPY);
             Assert.IsFalse(config.IsInternalFeed);
         }
@@ -263,11 +263,11 @@ namespace QuantConnect.Tests.Common.Securities
                 )
             );
 
-            cashJPY.EnsureCurrencyDataFeed(securities, subscriptions, MarketMap, SecurityChanges.None, dataManager.SecurityService);
+            cashJPY.EnsureCurrencyDataFeed(securities, subscriptions, MarketMap, SecurityChanges.None, dataManager.SecurityService, "USD");
             var config1 = subscriptions.Subscriptions.Single(x => x.Symbol == Symbols.USDJPY);
             Assert.IsTrue(config1.IsInternalFeed);
 
-            cashGBP.EnsureCurrencyDataFeed(securities, subscriptions, MarketMap, SecurityChanges.None, dataManager.SecurityService);
+            cashGBP.EnsureCurrencyDataFeed(securities, subscriptions, MarketMap, SecurityChanges.None, dataManager.SecurityService, "USD");
             var config2 = subscriptions.Subscriptions.Single(x => x.Symbol == Symbols.GBPUSD);
             Assert.IsTrue(config2.IsInternalFeed);
         }
@@ -308,13 +308,15 @@ namespace QuantConnect.Tests.Common.Securities
                     subscriptions,
                     MarketMap,
                     SecurityChanges.None,
-                    dataManager.SecurityService));
+                    dataManager.SecurityService,
+                    "USD"));
             Assert.IsNotNull(
                 cashJPY.EnsureCurrencyDataFeed(securities,
                     subscriptions,
                     MarketMap,
                     SecurityChanges.None,
-                    dataManager.SecurityService));
+                    dataManager.SecurityService,
+                    "USD"));
             Assert.IsFalse(SymbolCache.TryGetSymbol("USDJPY", out symbol));
             Assert.IsFalse(SymbolCache.TryGetSymbol("GBPUSD", out symbol));
         }
@@ -383,7 +385,7 @@ namespace QuantConnect.Tests.Common.Securities
             );
 
             // we need to get subscription index
-            cash.EnsureCurrencyDataFeed(securities, subscriptions, MarketMap, SecurityChanges.None, dataManager.SecurityService);
+            cash.EnsureCurrencyDataFeed(securities, subscriptions, MarketMap, SecurityChanges.None, dataManager.SecurityService, "USD");
 
             var last = 120m;
             cash.Update(new Tick(DateTime.Now, Symbols.USDJPY, last, 119.95m, 120.05m));
@@ -417,7 +419,7 @@ namespace QuantConnect.Tests.Common.Securities
             );
 
             // we need to get subscription index
-            cash.EnsureCurrencyDataFeed(securities, subscriptions, MarketMap, SecurityChanges.None, dataManager.SecurityService);
+            cash.EnsureCurrencyDataFeed(securities, subscriptions, MarketMap, SecurityChanges.None, dataManager.SecurityService, "USD");
 
             var last = 1.5m;
             cash.Update(new Tick(DateTime.Now, Symbols.GBPUSD, last, last * 1.009m, last * 0.009m));

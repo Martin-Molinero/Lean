@@ -33,6 +33,14 @@ namespace QuantConnect.Securities
         {
         }
 
+        public string GetAccountCurrency()
+        {
+            throw new InvalidOperationException($"This method purposefully throws as a proof that a " +
+                $"test does not depend on {nameof(ICurrencyConverter)}.If this exception is encountered, " +
+                $"it means the test DOES depend on {nameof(ICurrencyConverter)} and should be properly " +
+                $"updated to use a real implementation of {nameof(ICurrencyConverter)}.");
+        }
+
         /// <summary>
         /// Converts a cash amount to the account currency
         /// </summary>
