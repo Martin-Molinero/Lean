@@ -174,7 +174,7 @@ namespace QuantConnect.Lean.Engine
 
                     var historyDataCacheProvider = new ZipDataCacheProvider(_algorithmHandlers.DataProvider);
                     historyProvider.Initialize(
-                        new HistoryProviderInitializeParameters(
+                        new HistoryProviderInitializeContext(
                             job,
                             _systemHandlers.Api,
                             _algorithmHandlers.DataProvider,

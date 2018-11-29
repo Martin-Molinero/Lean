@@ -44,12 +44,12 @@ namespace QuantConnect.Lean.Engine.HistoricalData
         /// <summary>
         /// Initializes this history provider to work for the specified job
         /// </summary>
-        /// <param name="parameters">The initialization parameters</param>
-        public override void Initialize(HistoryProviderInitializeParameters parameters)
+        /// <param name="context">The initialization context</param>
+        public override void Initialize(HistoryProviderInitializeContext context)
         {
-            _mapFileProvider = parameters.MapFileProvider;
-            _factorFileProvider = parameters.FactorFileProvider;
-            _dataCacheProvider = parameters.DataCacheProvider;
+            _mapFileProvider = context.MapFileProvider;
+            _factorFileProvider = context.FactorFileProvider;
+            _dataCacheProvider = context.DataCacheProvider;
         }
 
         /// <summary>

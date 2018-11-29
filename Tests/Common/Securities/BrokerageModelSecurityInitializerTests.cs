@@ -66,7 +66,7 @@ namespace QuantConnect.Tests.Common.Securities
             _algo =  new QCAlgorithm();
             var historyProvider = new SubscriptionDataReaderHistoryProvider();
             historyProvider.Initialize(
-                new HistoryProviderInitializeParameters(
+                new HistoryProviderInitializeContext(
                     null,
                     null,
                     new DefaultDataProvider(),

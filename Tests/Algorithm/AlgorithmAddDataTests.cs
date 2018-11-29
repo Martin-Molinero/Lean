@@ -228,7 +228,7 @@ namespace QuantConnect.Tests.Algorithm
             public override int DataPointCount { get; }
             public Resolution LastResolutionRequest;
 
-            public override void Initialize(HistoryProviderInitializeParameters parameters)
+            public override void Initialize(HistoryProviderInitializeContext context)
             {
                 throw new NotImplementedException();
             }

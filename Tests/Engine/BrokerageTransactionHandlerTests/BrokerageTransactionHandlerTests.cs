@@ -888,7 +888,7 @@ namespace QuantConnect.Tests.Engine.BrokerageTransactionHandlerTests
         {
             public override int DataPointCount => 0;
 
-            public override void Initialize(HistoryProviderInitializeParameters parameters)
+            public override void Initialize(HistoryProviderInitializeContext context)
             {
             }
 

@@ -59,8 +59,8 @@ namespace QuantConnect.Brokerages.Tradier
         /// <summary>
         /// Initializes this history provider to work for the specified job
         /// </summary>
-        /// <param name="parameters">The initialization parameters</param>
-        public void Initialize(HistoryProviderInitializeParameters parameters)
+        /// <param name="context">The initialization context</param>
+        public void Initialize(HistoryProviderInitializeContext context)
         {
         }
 

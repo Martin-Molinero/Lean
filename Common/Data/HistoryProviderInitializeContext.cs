@@ -22,7 +22,7 @@ namespace QuantConnect.Data
     /// <summary>
     /// Represents the set of parameters for the <see cref="IHistoryProvider.Initialize"/> method
     /// </summary>
-    public class HistoryProviderInitializeParameters
+    public class HistoryProviderInitializeContext
     {
         /// <summary>
         /// The job
@@ -60,7 +60,7 @@ namespace QuantConnect.Data
         public Action<int> StatusUpdateAction { get; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="HistoryProviderInitializeParameters"/> class from the specified parameters
+        /// Initializes a new instance of the <see cref="HistoryProviderInitializeContext"/> class from the specified parameters
         /// </summary>
         /// <param name="job">The job</param>
         /// <param name="api">The API instance</param>
@@ -69,7 +69,7 @@ namespace QuantConnect.Data
         /// <param name="mapFileProvider">Provider used to get a map file resolver to handle equity mapping</param>
         /// <param name="factorFileProvider">Provider used to get factor files to handle equity price scaling</param>
         /// <param name="statusUpdateAction">Function used to send status updates</param>
-        public HistoryProviderInitializeParameters(
+        public HistoryProviderInitializeContext(
             AlgorithmNodePacket job,
             IApi api,
             IDataProvider dataProvider,

@@ -51,8 +51,8 @@ namespace QuantConnect.Lean.Engine.HistoricalData
         /// <summary>
         /// Initializes this history provider to work for the specified job
         /// </summary>
-        /// <param name="parameters">The initialization parameters</param>
-        public override void Initialize(HistoryProviderInitializeParameters parameters)
+        /// <param name="context">The initialization context</param>
+        public override void Initialize(HistoryProviderInitializeContext context)
         {
         }
 

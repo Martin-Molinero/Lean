@@ -53,8 +53,8 @@ namespace QuantConnect.Data
         /// <summary>
         /// Initializes this history provider to work for the specified job
         /// </summary>
-        /// <param name="parameters">The initialization parameters</param>
-        public abstract void Initialize(HistoryProviderInitializeParameters parameters);
+        /// <param name="context">The initialization context</param>
+        public abstract void Initialize(HistoryProviderInitializeContext context);
 
         /// <summary>
         /// Gets the history for the requested securities

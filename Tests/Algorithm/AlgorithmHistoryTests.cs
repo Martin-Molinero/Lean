@@ -109,7 +109,7 @@ namespace QuantConnect.Tests.Algorithm
             public override int DataPointCount { get; }
             public List<HistoryRequest> HistryRequests { get; } = new List<HistoryRequest>();
 
-            public override void Initialize(HistoryProviderInitializeParameters parameters)
+            public override void Initialize(HistoryProviderInitializeContext context)
             {
                 throw new NotImplementedException();
             }

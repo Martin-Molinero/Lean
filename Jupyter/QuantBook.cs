@@ -81,7 +81,7 @@ namespace QuantConnect.Jupyter
                 var mapFileProvider = algorithmHandlers.MapFileProvider;
                 HistoryProvider = composer.GetExportedValueByTypeName<IHistoryProvider>(Config.Get("history-provider", "SubscriptionDataReaderHistoryProvider"));
                 HistoryProvider.Initialize(
-                    new HistoryProviderInitializeParameters(
+                    new HistoryProviderInitializeContext(
                         null,
                         null,
                         algorithmHandlers.DataProvider,
