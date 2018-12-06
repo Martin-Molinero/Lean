@@ -27,7 +27,8 @@ namespace QuantConnect.Tests.Common.Util
 {
     // For now these tests are excluded from the Travis build because of occasional Yahoo server errors.
     // In future they should be updated to read the Yahoo data from a local test file.
-    [TestFixture, Category("TravisExclude")]
+    [TestFixture, Category("TravisExclude"),
+     Ignore("We are not being able to find the CrumbStore at GetCrumb() causing a for ever loop")]
     public class FactorFileGeneratorTests
     {
         private const string PermTick = "AAPL";
