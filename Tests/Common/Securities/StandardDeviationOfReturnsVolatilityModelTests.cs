@@ -38,8 +38,8 @@ namespace QuantConnect.Tests.Common.Securities
             var security = new Security(
                 SecurityExchangeHours.AlwaysOpen(TimeZones.NewYork),
                 config,
-                new Cash("USD", 0, 0),
-                SymbolProperties.GetDefault("USD"),
+                new Cash(Currencies.Usd, 0, 0),
+                SymbolProperties.GetDefault(Currencies.Usd),
                 ErrorCurrencyConverter.Instance
             );
             security.SetLocalTimeKeeper(timeKeeper.GetLocalTimeKeeper(TimeZones.NewYork));
@@ -77,8 +77,8 @@ namespace QuantConnect.Tests.Common.Securities
             var security = new Security(
                 SecurityExchangeHours.AlwaysOpen(TimeZones.NewYork),
                 config,
-                new Cash("USD", 0, 0),
-                SymbolProperties.GetDefault("USD"),
+                new Cash(Currencies.Usd, 0, 0),
+                SymbolProperties.GetDefault(Currencies.Usd),
                 ErrorCurrencyConverter.Instance
             );
             security.SetLocalTimeKeeper(timeKeeper.GetLocalTimeKeeper(TimeZones.NewYork));
@@ -121,8 +121,8 @@ namespace QuantConnect.Tests.Common.Securities
             var security = new Security(
                 SecurityExchangeHours.AlwaysOpen(TimeZones.NewYork),
                 config,
-                new Cash("USD", 0, 0),
-                SymbolProperties.GetDefault("USD"),
+                new Cash(Currencies.Usd, 0, 0),
+                SymbolProperties.GetDefault(Currencies.Usd),
                 ErrorCurrencyConverter.Instance
             );
             security.SetLocalTimeKeeper(timeKeeper.GetLocalTimeKeeper(TimeZones.NewYork));
@@ -152,8 +152,8 @@ namespace QuantConnect.Tests.Common.Securities
             var security = new Security(
                 SecurityExchangeHours.AlwaysOpen(TimeZones.NewYork),
                 config,
-                new Cash("USD", 0, 0),
-                SymbolProperties.GetDefault("USD"),
+                new Cash(Currencies.Usd, 0, 0),
+                SymbolProperties.GetDefault(Currencies.Usd),
                 ErrorCurrencyConverter.Instance
             );
             security.SetLocalTimeKeeper(timeKeeper.GetLocalTimeKeeper(TimeZones.NewYork));

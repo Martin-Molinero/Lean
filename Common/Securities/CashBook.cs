@@ -33,11 +33,6 @@ namespace QuantConnect.Securities
     public class CashBook : IDictionary<string, Cash>, ICurrencyConverter
     {
         /// <summary>
-        /// Fake currency used when a real one is not required
-        /// </summary>
-        public const string FakeCurrency = "QCC";
-
-        /// <summary>
         /// Gets the base currency used
         /// </summary>
         public string AccountCurrency { get; }
@@ -57,9 +52,9 @@ namespace QuantConnect.Securities
         /// </summary>
         public CashBook()
         {
-            AccountCurrency = "USD";
+            AccountCurrency = Currencies.Usd;
             _currencies = new ConcurrentDictionary<string, Cash>();
-            _currencies.AddOrUpdate(AccountCurrency, new Cash(AccountCurrency, 0, 1.0m, AccountCurrency));
+            _currencies.AddOrUpdate(AccountCurrency, new Cash(AccountCurrency, 0, 1.0m));
         }
 
         /// <summary>
@@ -71,7 +66,7 @@ namespace QuantConnect.Securities
         /// portfolio value/starting capital impact caused by this currency position.</param>
         public void Add(string symbol, decimal quantity, decimal conversionRate)
         {
-            var cash = new Cash(symbol, quantity, conversionRate, AccountCurrency);
+            var cash = new Cash(symbol, quantity, conversionRate);
             _currencies.AddOrUpdate(symbol, cash);
         }
 
@@ -100,7 +95,8 @@ namespace QuantConnect.Securities
                     subscriptions,
                     marketMap,
                     changes,
-                    securityService);
+                    securityService,
+                    AccountCurrency);
                 if (subscriptionDataConfig != null)
                 {
                     addedSubscriptionDataConfigs.Add(subscriptionDataConfig);
@@ -118,6 +114,11 @@ namespace QuantConnect.Securities
         /// <returns>The converted value</returns>
         public decimal Convert(decimal sourceQuantity, string sourceCurrency, string destinationCurrency)
         {
+            if (sourceQuantity == 0)
+            {
+                return 0;
+            }
+
             var source = this[sourceCurrency];
             var destination = this[destinationCurrency];
 
@@ -293,6 +294,10 @@ namespace QuantConnect.Securities
         {
             get
             {
+                if (symbol == Currencies.NullCurrency)
+                {
+                    return _currencies[AccountCurrency];
+                }
                 Cash cash;
                 if (!_currencies.TryGetValue(symbol, out cash))
                 {
@@ -302,7 +307,10 @@ namespace QuantConnect.Securities
             }
             set
             {
-                _currencies[symbol] = value;
+                if (symbol != Currencies.NullCurrency)
+                {
+                    _currencies[symbol] = value;
+                }
             }
         }
 
@@ -348,11 +356,7 @@ namespace QuantConnect.Securities
                 return cashAmount;
             }
 
-            var amount = 0m;
-            if (cashAmount.Amount != 0)
-            {
-                amount = Convert(cashAmount.Amount, cashAmount.Currency, AccountCurrency);
-            }
+            var amount = Convert(cashAmount.Amount, cashAmount.Currency, AccountCurrency);
             return new CashAmount(amount, AccountCurrency);
         }
 

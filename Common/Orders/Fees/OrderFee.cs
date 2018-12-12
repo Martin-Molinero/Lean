@@ -49,5 +49,11 @@ namespace QuantConnect.Orders.Fees
         {
             return m.Value.Amount;
         }
+
+        /// <summary>
+        /// Gets an instance of <see cref="OrderFee"/> that represents zero.
+        /// </summary>
+        public static readonly OrderFee Zero =
+            new OrderFee(new CashAmount(0, CashBook.NullCurrency));
     }
 }

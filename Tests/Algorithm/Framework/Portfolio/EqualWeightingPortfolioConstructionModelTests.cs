@@ -334,8 +334,8 @@ namespace QuantConnect.Tests.Algorithm.Framework.Portfolio
             return new Equity(
                 symbol,
                 config,
-                new Cash("USD", 0, 1),
-                SymbolProperties.GetDefault("USD"),
+                new Cash(Currencies.Usd, 0, 1),
+                SymbolProperties.GetDefault(Currencies.Usd),
                 ErrorCurrencyConverter.Instance
             );
         }

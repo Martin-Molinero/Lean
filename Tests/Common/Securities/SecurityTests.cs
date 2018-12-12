@@ -38,8 +38,8 @@ namespace QuantConnect.Tests.Common.Securities
             var security = new Security(
                 exchangeHours,
                 config,
-                new Cash("USD", 0, 1m),
-                SymbolProperties.GetDefault("USD"),
+                new Cash(Currencies.Usd, 0, 1m),
+                SymbolProperties.GetDefault(Currencies.Usd),
                 ErrorCurrencyConverter.Instance
             );
 
@@ -170,8 +170,8 @@ namespace QuantConnect.Tests.Common.Securities
                     false,
                     false
                 ),
-                new Cash("USD", 0, 1m),
-                new OptionSymbolProperties(SymbolProperties.GetDefault("USD")),
+                new Cash(Currencies.Usd, 0, 1m),
+                new OptionSymbolProperties(SymbolProperties.GetDefault(Currencies.Usd)),
                 ErrorCurrencyConverter.Instance
             );
 
@@ -193,8 +193,8 @@ namespace QuantConnect.Tests.Common.Securities
                     false,
                     false
                 ),
-                new Cash("USD", 0, 1m),
-                new OptionSymbolProperties(SymbolProperties.GetDefault("USD")),
+                new Cash(Currencies.Usd, 0, 1m),
+                new OptionSymbolProperties(SymbolProperties.GetDefault(Currencies.Usd)),
                 ErrorCurrencyConverter.Instance
             );
 
@@ -221,8 +221,8 @@ namespace QuantConnect.Tests.Common.Securities
                     false,
                     false
                 ),
-                new Cash("USD", 0, 1m),
-                SymbolProperties.GetDefault("USD"),
+                new Cash(Currencies.Usd, 0, 1m),
+                SymbolProperties.GetDefault(Currencies.Usd),
                 ErrorCurrencyConverter.Instance
             );
 
@@ -260,8 +260,8 @@ namespace QuantConnect.Tests.Common.Securities
             return new Security(
                 SecurityExchangeHours.AlwaysOpen(TimeZones.NewYork),
                 CreateTradeBarConfig(),
-                new Cash("USD", 0, 1m),
-                SymbolProperties.GetDefault("USD"),
+                new Cash(Currencies.Usd, 0, 1m),
+                SymbolProperties.GetDefault(Currencies.Usd),
                 ErrorCurrencyConverter.Instance
             );
         }

@@ -190,7 +190,7 @@ namespace QuantConnect.Brokerages.InteractiveBrokers
         /// <param name="port">must match the port specified in TWS on the Configure&gt;API&gt;Socket Port field.</param>
         /// <param name="agentDescription">Used for Rule 80A describes the type of trader.</param>
         public InteractiveBrokersBrokerage(IAlgorithm algorithm, IOrderProvider orderProvider, ISecurityProvider securityProvider, string account, string host, int port, string agentDescription = IB.AgentDescription.Individual)
-            : base("Interactive Brokers Brokerage", algorithm)
+            : base("Interactive Brokers Brokerage")
         {
             _algorithm = algorithm;
             _orderProvider = orderProvider;
@@ -463,7 +463,7 @@ namespace QuantConnect.Brokerages.InteractiveBrokers
                 Connect();
             }
 
-            var balances = _accountData.CashBalances.Select(x => new Cash(x.Key, x.Value, GetUsdConversion(x.Key), AccountCurrency)).ToList();
+            var balances = _accountData.CashBalances.Select(x => new Cash(x.Key, x.Value, GetUsdConversion(x.Key))).ToList();
 
             if (balances.Count == 0)
             {
@@ -1288,8 +1288,7 @@ namespace QuantConnect.Brokerages.InteractiveBrokers
                 var order = _orderProvider.GetOrderByBrokerageId(requestId);
                 if (order != null)
                 {
-                    var orderFee = new OrderFee(new CashAmount(0, AccountCurrency));
-                    var orderEvent = new OrderEvent(order, DateTime.UtcNow, orderFee)
+                    var orderEvent = new OrderEvent(order, DateTime.UtcNow, OrderFee.Zero)
                     {
                         Status = OrderStatus.Invalid,
                         Message = message
@@ -1469,9 +1468,8 @@ namespace QuantConnect.Brokerages.InteractiveBrokers
                     }
                     else
                     {
-                        var orderFee = new OrderFee(new CashAmount(0, AccountCurrency));
                         // fire the event
-                        OnOrderEvent(new OrderEvent(order, DateTime.UtcNow, orderFee, "Interactive Brokers Order Event")
+                        OnOrderEvent(new OrderEvent(order, DateTime.UtcNow, OrderFee.Zero, "Interactive Brokers Order Event")
                         {
                             Status = status
                         });

@@ -32,10 +32,10 @@ namespace QuantConnect.Tests.Common.Securities
         [Test]
         public void InitializesProperlyUsingAccountCurrency()
         {
-            var cashAmount = new CashAmount(1000m, "USD");
+            var cashAmount = new CashAmount(1000m, Currencies.Usd);
 
             Assert.AreEqual(1000m, cashAmount.Amount);
-            Assert.AreEqual("USD", cashAmount.Currency);
+            Assert.AreEqual(Currencies.Usd, cashAmount.Currency);
         }
 
         [Test]

@@ -78,7 +78,7 @@ namespace QuantConnect.Tests.Brokerages.InteractiveBrokers
                     Symbol = "EUR",
                     Exchange = "IDEALPRO",
                     SecType = "CASH",
-                    Currency = "USD"
+                    Currency = Currencies.Usd
                 };
                 var parameters = new object[] { contract };
 
@@ -160,8 +160,8 @@ namespace QuantConnect.Tests.Brokerages.InteractiveBrokers
                     false,
                     false
                 ),
-                new Cash("USD", 0, 1m),
-                SymbolProperties.GetDefault("USD"),
+                new Cash(Currencies.Usd, 0, 1m),
+                SymbolProperties.GetDefault(Currencies.Usd),
                 ErrorCurrencyConverter.Instance
             );
 

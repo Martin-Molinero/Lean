@@ -200,8 +200,8 @@ namespace QuantConnect.Tests.Common.Scheduling
                 new Security(
                     securityExchangeHours,
                     config,
-                    new Cash("USD", 0, 1m),
-                    SymbolProperties.GetDefault("USD"),
+                    new Cash(Currencies.Usd, 0, 1m),
+                    SymbolProperties.GetDefault(Currencies.Usd),
                     ErrorCurrencyConverter.Instance
                 )
             );

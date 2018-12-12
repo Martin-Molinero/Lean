@@ -43,8 +43,7 @@ namespace QuantConnect.ToolBox.OandaDownloader
                 null,
                 Environment.Practice,
                 accessToken,
-                accountId,
-                new OandaDownloaderAccountCurrencyProvider());
+                accountId);
         }
 
         /// <summary>

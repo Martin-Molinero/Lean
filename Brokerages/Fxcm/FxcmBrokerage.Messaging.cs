@@ -409,7 +409,7 @@ namespace QuantConnect.Brokerages.Fxcm
 
                         var orderEvent = new OrderEvent(order,
                             DateTime.UtcNow,
-                            new OrderFee(new CashAmount(0, AccountCurrency)))
+                            OrderFee.Zero)
                         {
                             Status = ConvertOrderStatus(orderStatus),
                             FillPrice = Convert.ToDecimal(message.getPrice()),
@@ -421,7 +421,7 @@ namespace QuantConnect.Brokerages.Fxcm
                         {
                             var security = _securityProvider.GetSecurity(order.Symbol);
                             orderEvent.OrderFee = security.FeeModel.GetOrderFee(
-                                new OrderFeeParameters(security, order));
+                                new OrderFeeParameters(security, order, _fxcmAccountCurrency));
                         }
 
                         _orderEventQueue.Enqueue(orderEvent);
@@ -436,7 +436,7 @@ namespace QuantConnect.Brokerages.Fxcm
                     // new order
                     var orderEvent = new OrderEvent(order,
                         DateTime.UtcNow,
-                        new OrderFee(new CashAmount(0, AccountCurrency)))
+                        OrderFee.Zero)
                     {
                         Status = ConvertOrderStatus(orderStatus)
                     };

@@ -38,7 +38,7 @@ namespace QuantConnect.Tests.Common.Securities
 
             var fillPrice = 100m;
             var fillQuantity = 100;
-            var orderFee = new OrderFee(new CashAmount(1m, security.QuoteCurrency.AccountCurrency));
+            var orderFee = new OrderFee(new CashAmount(1m, Currencies.Usd));
             var orderDirection = fillQuantity > 0 ? OrderDirection.Buy : OrderDirection.Sell;
             var fill = new OrderEvent(1, security.Symbol, reference, OrderStatus.Filled, orderDirection, fillPrice, fillQuantity, orderFee);
             portfolio.ProcessFill(fill);
@@ -56,7 +56,7 @@ namespace QuantConnect.Tests.Common.Securities
 
             var fillPrice = 100m;
             var fillQuantity = -100;
-            var orderFee = new OrderFee(new CashAmount(1m, security.QuoteCurrency.AccountCurrency));
+            var orderFee = new OrderFee(new CashAmount(1m, "USD"));
             var orderDirection = fillQuantity > 0 ? OrderDirection.Buy : OrderDirection.Sell;
             var fill = new OrderEvent(1, security.Symbol, reference, OrderStatus.Filled, orderDirection, fillPrice, fillQuantity, orderFee);
             portfolio.ProcessFill(fill);
@@ -76,7 +76,7 @@ namespace QuantConnect.Tests.Common.Securities
 
             var fillPrice = 100m;
             var fillQuantity = 100;
-            var orderFee = new OrderFee(new CashAmount(1m, security.QuoteCurrency.AccountCurrency));
+            var orderFee = new OrderFee(new CashAmount(1m, "USD"));
             var orderDirection = fillQuantity > 0 ? OrderDirection.Buy : OrderDirection.Sell;
             var fill = new OrderEvent(1, security.Symbol, reference, OrderStatus.Filled, orderDirection, fillPrice, fillQuantity, orderFee);
             portfolio.ProcessFill(fill);
@@ -96,7 +96,7 @@ namespace QuantConnect.Tests.Common.Securities
 
             var fillPrice = 100m;
             var fillQuantity = -security.Holdings.Quantity;
-            var orderFee = new OrderFee(new CashAmount(1m, security.QuoteCurrency.AccountCurrency));
+            var orderFee = new OrderFee(new CashAmount(1m, "USD"));
             var orderDirection = fillQuantity > 0 ? OrderDirection.Buy : OrderDirection.Sell;
             var fill = new OrderEvent(1, security.Symbol, reference, OrderStatus.Filled, orderDirection, fillPrice, fillQuantity, orderFee);
             portfolio.ProcessFill(fill);
@@ -117,7 +117,7 @@ namespace QuantConnect.Tests.Common.Securities
 
             var fillPrice = 100m;
             var fillQuantity = -2*security.Holdings.Quantity;
-            var orderFee = new OrderFee(new CashAmount(1m, security.QuoteCurrency.AccountCurrency));
+            var orderFee = new OrderFee(new CashAmount(1m, "USD"));
             var orderDirection = fillQuantity > 0 ? OrderDirection.Buy : OrderDirection.Sell;
             var fill = new OrderEvent(1, security.Symbol, reference, OrderStatus.Filled, orderDirection, fillPrice, fillQuantity, orderFee);
             portfolio.ProcessFill(fill);
@@ -140,7 +140,7 @@ namespace QuantConnect.Tests.Common.Securities
 
             var fillPrice = 100m;
             var fillQuantity = -100;
-            var orderFee = new OrderFee(new CashAmount(1m, security.QuoteCurrency.AccountCurrency));
+            var orderFee = new OrderFee(new CashAmount(1m, "USD"));
             var orderDirection = fillQuantity > 0 ? OrderDirection.Buy : OrderDirection.Sell;
             var fill = new OrderEvent(1, security.Symbol, reference, OrderStatus.Filled, orderDirection, fillPrice, fillQuantity, orderFee);
             portfolio.ProcessFill(fill);
@@ -159,7 +159,7 @@ namespace QuantConnect.Tests.Common.Securities
 
             var fillPrice = 100m;
             var fillQuantity = -security.Holdings.Quantity;
-            var orderFee = new OrderFee(new CashAmount(1m, security.QuoteCurrency.AccountCurrency));
+            var orderFee = new OrderFee(new CashAmount(1m, "USD"));
             var orderDirection = fillQuantity > 0 ? OrderDirection.Buy : OrderDirection.Sell;
             var fill = new OrderEvent(1, security.Symbol, reference, OrderStatus.Filled, orderDirection, fillPrice, fillQuantity, orderFee);
             portfolio.ProcessFill(fill);
@@ -181,7 +181,7 @@ namespace QuantConnect.Tests.Common.Securities
 
             var fillPrice = 100m;
             var fillQuantity = -2*security.Holdings.Quantity; // flip from -100 to +100
-            var orderFee = new OrderFee(new CashAmount(1m, security.QuoteCurrency.AccountCurrency));
+            var orderFee = new OrderFee(new CashAmount(1m, "USD"));
             var orderDirection = fillQuantity > 0 ? OrderDirection.Buy : OrderDirection.Sell;
             var fill = new OrderEvent(1, security.Symbol, reference, OrderStatus.Filled, orderDirection, fillPrice, fillQuantity, orderFee);
             portfolio.ProcessFill(fill);

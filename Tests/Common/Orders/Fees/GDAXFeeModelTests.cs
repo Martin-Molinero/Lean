@@ -37,16 +37,16 @@ namespace QuantConnect.Tests.Common.Orders.Fees
             var tz = TimeZones.NewYork;
             _btcusd = new Crypto(
                 SecurityExchangeHours.AlwaysOpen(tz),
-                new Cash("USD", 0, 1),
+                new Cash(Currencies.Usd, 0, 1),
                 new SubscriptionDataConfig(typeof(TradeBar), Symbols.BTCUSD, Resolution.Minute, tz, tz, true, false, false),
-                new SymbolProperties("BTCUSD", "USD", 1, 0.01m, 0.00000001m),
+                new SymbolProperties("BTCUSD", Currencies.Usd, 1, 0.01m, 0.00000001m),
                 ErrorCurrencyConverter.Instance
             );
             _btcusd.SetMarketPrice(new Tick(DateTime.UtcNow, _btcusd.Symbol, 100, 100));
 
             _btceur = new Crypto(
                 SecurityExchangeHours.AlwaysOpen(tz),
-                new Cash("EUR", 0, 10, "USD"),
+                new Cash("EUR", 0, 10),
                 new SubscriptionDataConfig(typeof(TradeBar), Symbols.BTCEUR, Resolution.Minute, tz, tz, true, false, false),
                 new SymbolProperties("BTCEUR", "EUR", 1, 0.01m, 0.00000001m),
                 ErrorCurrencyConverter.Instance
@@ -60,11 +60,12 @@ namespace QuantConnect.Tests.Common.Orders.Fees
             var fee = _feeModel.GetOrderFee(
                 new OrderFeeParameters(
                     _btcusd,
-                    new MarketOrder(_btcusd.Symbol, 1, DateTime.UtcNow)
+                    new MarketOrder(_btcusd.Symbol, 1, DateTime.UtcNow),
+                    Currencies.Usd
                 )
             );
 
-            Assert.AreEqual("USD", fee.Value.Currency);
+            Assert.AreEqual(Currencies.Usd, fee.Value.Currency);
             // 100 (price) * 0.003 (taker fee)
             Assert.AreEqual(0.3m, fee.Value.Amount);
         }
@@ -75,7 +76,8 @@ namespace QuantConnect.Tests.Common.Orders.Fees
             var fee = _feeModel.GetOrderFee(
                 new OrderFeeParameters(
                     _btceur,
-                    new MarketOrder(_btceur.Symbol, 1, DateTime.UtcNow)
+                    new MarketOrder(_btceur.Symbol, 1, DateTime.UtcNow),
+                    Currencies.Usd
                 )
             );
 

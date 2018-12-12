@@ -21,7 +21,7 @@ namespace QuantConnect.Tests.Common.Securities
     {
         public string AccountCurrency { get; }
 
-        public TestAccountCurrencyProvider() : this("USD") { }
+        public TestAccountCurrencyProvider() : this(Currencies.Usd) { }
 
         public TestAccountCurrencyProvider(string accountCurrency)
         {
