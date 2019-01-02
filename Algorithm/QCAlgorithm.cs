@@ -1960,7 +1960,7 @@ namespace QuantConnect.Algorithm
         /// <param name="message">Exit message to display on quitting</param>
         public void Quit(string message = "")
         {
-            Debug("Quit(): " + message);
+            Logging.Log.Trace("Quit(): " + message);
             Status = AlgorithmStatus.Stopped;
         }
 
@@ -1974,6 +1974,7 @@ namespace QuantConnect.Algorithm
         {
             if (quit)
             {
+                Logging.Log.Trace("Quitting");
                 Status = AlgorithmStatus.Stopped;
             }
         }

@@ -725,6 +725,8 @@ namespace QuantConnect.Algorithm
             // We've already processed too many orders: max 10k
             if (!LiveMode && Transactions.OrdersCount > _maxOrders)
             {
+                Logging.Log.Trace("QCAlgorithmTrading.PreOrderChecksImpl(): Stopping algorithm, " +
+                    $"maximum processed order count reached @ {Transactions.OrdersCount}");
                 Status = AlgorithmStatus.Stopped;
                 return OrderResponse.Error(request, OrderResponseErrorCode.ExceededMaximumOrders, string.Format("You have exceeded maximum number of orders ({0}), for unlimited orders upgrade your account.", _maxOrders));
             }
