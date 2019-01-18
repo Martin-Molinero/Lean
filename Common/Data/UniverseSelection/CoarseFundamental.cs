@@ -15,6 +15,7 @@
 
 using System;
 using System.IO;
+using Python.Runtime;
 
 namespace QuantConnect.Data.UniverseSelection
 {
@@ -23,6 +24,17 @@ namespace QuantConnect.Data.UniverseSelection
     /// </summary>
     public class CoarseFundamental : BaseData
     {
+        /// <summary>
+        /// Python constructor methods for the <see cref="PyCoarseFundamental"/>
+        /// </summary>
+        public static dynamic PyCoarseFundamentalConstructor;
+
+        /// <summary>
+        /// Python version of the <see cref="CoarseFundamental"/> data
+        /// </summary>
+        /// <remarks>Will only be set for Python algorithms</remarks>
+        public PyObject PyCoarseFundamental { get; set; }
+
         /// <summary>
         /// Gets the market for this symbol
         /// </summary>
@@ -78,6 +90,13 @@ namespace QuantConnect.Data.UniverseSelection
         public CoarseFundamental()
         {
             DataType = MarketDataType.Auxiliary;
+            if (PyCoarseFundamentalConstructor == null)
+            {
+                using (Py.GIL())
+                {
+                    PyCoarseFundamentalConstructor = PythonEngine.ImportModule("PyCoarseFundamental").GetAttr("PyCoarseFundamental");
+                }
+            }
         }
 
         /// <summary>

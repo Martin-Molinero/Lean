@@ -100,7 +100,7 @@ namespace QuantConnect.Algorithm
                 extendedMarketHours: true);
             var security = Securities.CreateSecurity(symbolObject, config, leverage);
 
-            AddToUserDefinedUniverse(security, new List<SubscriptionDataConfig>{ config });
+            AddToUserDefinedUniverse(security, new List<SubscriptionDataConfig> { config });
             return security;
         }
 
@@ -118,16 +118,26 @@ namespace QuantConnect.Algorithm
             {
                 AddUniverse(universe);
             }
-            else if (pyObject.TryConvertToDelegate(out coarse))
-            {
-                AddUniverse(c => coarse(c.ToList()).Select(x => (Symbol)x));
-            }
             else
             {
-                using (Py.GIL())
-                {
-                    throw new ArgumentException($"QCAlgorithm.AddUniverse: {pyObject.Repr()} is not a valid argument.");
-                }
+                AddUniverse(
+                    c =>
+                    {
+                        var data = c.Select(x => x.PyCoarseFundamental).ToArray();
+                        using (Py.GIL())
+                        {
+                            var args = new PyList(data);
+                            var result = pyObject.Invoke(args);
+                            var selection = result.As<Symbol[]>();
+                            args.UnsafeDispose();
+                            result.UnsafeDispose();
+                            foreach (var pyCoarseFundamental in data)
+                            {
+                                pyCoarseFundamental.UnsafeDispose();
+                            }
+                            return selection;
+                        }
+                    });
             }
         }
 

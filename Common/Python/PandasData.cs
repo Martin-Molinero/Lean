@@ -270,29 +270,27 @@ namespace QuantConnect.Python
             };
             // creating the pandas MultiIndex is expensive so we keep a cash
             var indexCache = new Dictionary<List<DateTime>, dynamic>(new ListComparer<DateTime>());
-            using (Py.GIL())
+
+            // Returns a dictionary keyed by column name where values are pandas.Series objects
+            var pyDict = new PyDict();
+            var splitNames = names.Split(',');
+            foreach (var kvp in _series)
             {
-                // Returns a dictionary keyed by column name where values are pandas.Series objects
-                var pyDict = new PyDict();
-                var splitNames = names.Split(',');
-                foreach (var kvp in _series)
+                var values = kvp.Value.Item2;
+                if (values.All(filter)) continue;
+
+                dynamic index;
+                if (!indexCache.TryGetValue(kvp.Value.Item1, out index))
                 {
-                    var values = kvp.Value.Item2;
-                    if (values.All(filter)) continue;
-
-                    dynamic index;
-                    if (!indexCache.TryGetValue(kvp.Value.Item1, out index))
-                    {
-                        var tuples = kvp.Value.Item1.Select(selector).ToArray();
-                        index = _pandas.MultiIndex.from_tuples(tuples, names: splitNames);
-                        indexCache[kvp.Value.Item1] = index;
-                    }
-
-                    pyDict.SetItem(kvp.Key, _pandas.Series(values, index));
+                    var tuples = kvp.Value.Item1.Select(selector).ToArray();
+                    index = _pandas.MultiIndex.from_tuples(tuples, names: splitNames);
+                    indexCache[kvp.Value.Item1] = index;
                 }
-                _series.Clear();
-                return _pandas.DataFrame(pyDict);
+
+                pyDict.SetItem(kvp.Key, _pandas.Series(values, index));
             }
+            _series.Clear();
+            return _pandas.DataFrame(pyDict);
         }
 
         /// <summary>

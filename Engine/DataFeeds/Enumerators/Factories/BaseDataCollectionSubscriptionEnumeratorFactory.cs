@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using Python.Runtime;
 using QuantConnect.Data;
 using QuantConnect.Data.UniverseSelection;
 using QuantConnect.Interfaces;
@@ -59,7 +60,17 @@ namespace QuantConnect.Lean.Engine.DataFeeds.Enumerators.Factories
                 {
                     var source = sourceFactory.GetSource(configuration, date, false);
                     var factory = SubscriptionDataSourceReader.ForSource(source, dataCacheProvider, configuration, date, false);
-                    var coarseFundamentalForDate = factory.Read(source);
+
+                    IEnumerable<BaseData> coarseFundamentalForDate;
+                    if (PythonEngine.IsInitialized)
+                    {
+                        var pyCoarseFundamentalEnumerator = new PyCoarseFundamentalEnumerator();
+                        coarseFundamentalForDate = pyCoarseFundamentalEnumerator.SetPyCoarseFundamental(factory.Read(source));
+                    }
+                    else
+                    {
+                        coarseFundamentalForDate = factory.Read(source);
+                    }
 
                     yield return new BaseDataCollection(date.AddDays(1), configuration.Symbol, coarseFundamentalForDate);
                 }
