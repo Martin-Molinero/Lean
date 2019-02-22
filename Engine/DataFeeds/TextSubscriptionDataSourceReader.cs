@@ -16,10 +16,14 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using QuantConnect.Data;
 using QuantConnect.Interfaces;
 using QuantConnect.Lean.Engine.DataFeeds.Transport;
 using QuantConnect.Util;
+using System.Runtime.Caching;
+using QuantConnect.Data.Fundamental;
+using QuantConnect.Data.UniverseSelection;
 
 namespace QuantConnect.Lean.Engine.DataFeeds
 {
@@ -34,7 +38,10 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         private readonly BaseData _factory;
         private readonly DateTime _date;
         private readonly SubscriptionDataConfig _config;
+        private readonly bool _shouldCacheDataPoints;
         private readonly IDataCacheProvider _dataCacheProvider;
+        private static readonly MemoryCache BaseDataSourceCache = MemoryCache.Default;
+        private static readonly CacheItemPolicy CachePolicy = new CacheItemPolicy();
 
         /// <summary>
         /// Event fired when the specified source is considered invalid, this may
@@ -69,6 +76,8 @@ namespace QuantConnect.Lean.Engine.DataFeeds
             _config = config;
             _isLiveMode = isLiveMode;
             _factory = (BaseData) ObjectActivator.GetActivator(config.Type).Invoke(new object[] { config.Type });
+            _shouldCacheDataPoints = !_config.IsCustomData && _config.Resolution >= Resolution.Hour
+                && _config.Type != typeof(FineFundamental) && _config.Type != typeof(CoarseFundamental);
         }
 
         /// <summary>
@@ -78,35 +87,69 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         /// <returns>An <see cref="IEnumerable{BaseData}"/> that contains the data in the source</returns>
         public IEnumerable<BaseData> Read(SubscriptionDataSource source)
         {
-            using (var reader = CreateStreamReader(source))
+            List<BaseData> cache;
+            var cacheItem = BaseDataSourceCache.GetCacheItem(source.Source + _config.Type);
+            if (cacheItem == null)
             {
-                // if the reader doesn't have data then we're done with this subscription
-                if (reader == null || reader.EndOfStream)
+                cache = new List<BaseData>();
+                using (var reader = CreateStreamReader(source))
                 {
-                    OnCreateStreamReaderError(_date, source);
+                    // if the reader doesn't have data then we're done with this subscription
+                    if (reader == null || reader.EndOfStream)
+                    {
+                        OnCreateStreamReaderError(_date, source);
+                        yield break;
+                    }
+                    // while the reader has data
+                    while (!reader.EndOfStream)
+                    {
+                        // read a line and pass it to the base data factory
+                        var line = reader.ReadLine();
+                        BaseData instance = null;
+                        try
+                        {
+                            instance = _factory.Reader(_config, line, _date, _isLiveMode);
+                        }
+                        catch (Exception err)
+                        {
+                            OnReaderError(line, err);
+                        }
+
+                        if (instance != null && instance.EndTime != default(DateTime))
+                        {
+                            if (_shouldCacheDataPoints)
+                            {
+                                cache.Add(instance);
+                            }
+                            else
+                            {
+                                yield return instance;
+                            }
+                        }
+                    }
+                }
+
+                if (!_shouldCacheDataPoints)
+                {
                     yield break;
                 }
 
-                // while the reader has data
-                while (!reader.EndOfStream)
-                {
-                    // read a line and pass it to the base data factory
-                    var line = reader.ReadLine();
-                    BaseData instance = null;
-                    try
-                    {
-                        instance = _factory.Reader(_config, line, _date, _isLiveMode);
-                    }
-                    catch (Exception err)
-                    {
-                        OnReaderError(line, err);
-                    }
-
-                    if (instance != null && instance.EndTime != default(DateTime))
-                    {
-                        yield return instance;
-                    }
-                }
+                cacheItem = new CacheItem(source.Source + _config.Type, cache);
+                BaseDataSourceCache.Add(cacheItem, CachePolicy);
+            }
+            cache = cacheItem.Value as List<BaseData>;
+            if (cache == null)
+            {
+                throw new InvalidOperationException("CacheItem can not be cast into expected type. " +
+                    $"Type is: {cacheItem.Value.GetType()}");
+            }
+            // Could use a smart binary search
+            var index = cache.FindIndex(data => data.Time.AddDays(30) > _date);
+            foreach (var data in cache.Skip(index))
+            {
+                var clone = data.Clone();
+                clone.Symbol = _config.Symbol;
+                yield return clone;
             }
         }
 
