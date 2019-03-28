@@ -23,6 +23,8 @@ from QuantConnect.Algorithm.Framework.Execution import *
 from QuantConnect.Algorithm.Framework.Portfolio import *
 from QuantConnect.Algorithm.Framework.Risk import *
 from QuantConnect.Algorithm.Framework.Selection import *
+from Risk import *
+QCAlgorithmFramework = QCAlgorithm
 
 
 ### <summary>

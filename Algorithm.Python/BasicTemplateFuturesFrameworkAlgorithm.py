@@ -31,6 +31,7 @@ from Selection.FutureUniverseSelectionModel import FutureUniverseSelectionModel
 from QuantConnect.Algorithm.Framework.Execution import *
 from QuantConnect.Algorithm.Framework.Risk import *
 from datetime import date, timedelta
+QCAlgorithmFramework = QCAlgorithm
 
 ### <summary>
 ### Basic template futures framework algorithm uses framework components

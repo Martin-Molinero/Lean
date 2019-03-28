@@ -26,6 +26,7 @@ from Alphas.RsiAlphaModel import RsiAlphaModel
 from Portfolio.EqualWeightingPortfolioConstructionModel import EqualWeightingPortfolioConstructionModel
 from Execution.VolumeWeightedAveragePriceExecutionModel import VolumeWeightedAveragePriceExecutionModel
 from datetime import timedelta
+QCAlgorithmFramework = QCAlgorithm
 
 ### <summary>
 ### Regression algorithm for the VolumeWeightedAveragePriceExecutionModel.

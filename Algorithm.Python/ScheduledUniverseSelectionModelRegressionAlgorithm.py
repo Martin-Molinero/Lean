@@ -25,6 +25,7 @@ from QuantConnect.Algorithm.Framework.Alphas import *
 from QuantConnect.Algorithm.Framework.Portfolio import *
 from QuantConnect.Algorithm.Framework.Selection import *
 from datetime import datetime, timedelta
+QCAlgorithmFramework = QCAlgorithm
 
 ### <summary>
 ### Regression algorithm for testing ScheduledUniverseSelectionModel scheduling functions.

@@ -14,7 +14,6 @@
 from clr import AddReference
 AddReference("System")
 AddReference("QuantConnect.Algorithm")
-AddReference("QuantConnect.Algorithm.Framework")
 AddReference("QuantConnect.Common")
 
 from System import *
@@ -28,6 +27,7 @@ from QuantConnect.Algorithm.Framework.Portfolio import *
 from QuantConnect.Algorithm.Framework.Selection import *
 from Risk.TrailingStopRiskManagementModel import TrailingStopRiskManagementModel
 from datetime import timedelta
+QCAlgorithmFramework = QCAlgorithm
 
 
 class TrailingStopRiskFrameworkAlgorithm(QCAlgorithmFramework):

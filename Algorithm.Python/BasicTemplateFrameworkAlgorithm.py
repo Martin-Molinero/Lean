@@ -29,6 +29,7 @@ from QuantConnect.Algorithm.Framework.Risk import *
 from QuantConnect.Algorithm.Framework.Selection import *
 from datetime import timedelta
 import numpy as np
+QCAlgorithmFramework = QCAlgorithm
 
 ### <summary>
 ### Basic template framework algorithm uses framework components to define the algorithm.

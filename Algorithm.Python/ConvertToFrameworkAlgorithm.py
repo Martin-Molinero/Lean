@@ -14,7 +14,6 @@
 from clr import AddReference
 AddReference("System")
 AddReference("QuantConnect.Algorithm")
-AddReference("QuantConnect.Algorithm.Framework")
 AddReference("QuantConnect.Common")
 AddReference("QuantConnect.Indicators")
 
@@ -25,10 +24,11 @@ from QuantConnect.Algorithm.Framework import QCAlgorithmFrameworkBridge
 from QuantConnect.Algorithm.Framework.Alphas import *
 from QuantConnect.Indicators import *
 from datetime import timedelta
+QCAlgorithmFramework = QCAlgorithm
 
 ### <summary>
 ### Demonstration algorithm showing how to easily convert an old algorithm into the framework.
-### 
+###
 ###  1. Make class derive from QCAlgorithmFrameworkBridge instead of QCAlgorithm.
 ###  2. When making orders, also create insights for the correct direction (up/down), can also set insight prediction period/magnitude/direction
 ###  3. Profit :)

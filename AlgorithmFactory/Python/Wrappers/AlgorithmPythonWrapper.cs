@@ -898,5 +898,7 @@ namespace QuantConnect.AlgorithmFactory.Python.Wrappers
         /// <param name="orderEvent">The <see cref="OrderEvent"/> from which
         /// the new <see cref="Insight"/> will be created</param>
         public void EmitInsightBasedOnFill(OrderEvent orderEvent) => _baseAlgorithm.EmitInsightBasedOnFill(orderEvent);
+
+
     }
 }

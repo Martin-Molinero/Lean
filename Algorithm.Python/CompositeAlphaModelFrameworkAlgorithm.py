@@ -20,16 +20,14 @@ from System import *
 from QuantConnect import *
 from QuantConnect.Orders import *
 from QuantConnect.Algorithm import *
-from QuantConnect.Algorithm.Framework import *
 from QuantConnect.Algorithm.Framework.Alphas import *
 from QuantConnect.Algorithm.Framework.Execution import *
 from QuantConnect.Algorithm.Framework.Risk import *
 from QuantConnect.Algorithm.Framework.Selection import *
-from Alphas.RsiAlphaModel import RsiAlphaModel
-from Alphas.EmaCrossAlphaModel import EmaCrossAlphaModel
-from Portfolio.EqualWeightingPortfolioConstructionModel import EqualWeightingPortfolioConstructionModel
+from QuantConnect.Algorithm.Framework.Portfolio import *
 from datetime import timedelta
 import numpy as np
+QCAlgorithmFramework = QCAlgorithm
 
 ### <summary>
 ### Show cases how to use the CompositeAlphaModel to define.

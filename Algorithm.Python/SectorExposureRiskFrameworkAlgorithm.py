@@ -14,7 +14,6 @@
 from clr import AddReference
 AddReference("System")
 AddReference("QuantConnect.Algorithm")
-AddReference("QuantConnect.Algorithm.Framework")
 AddReference("QuantConnect.Common")
 
 from System import *
@@ -29,6 +28,7 @@ from Alphas.ConstantAlphaModel import ConstantAlphaModel
 from Execution.ImmediateExecutionModel import ImmediateExecutionModel
 from Risk.MaximumSectorExposureRiskManagementModel import MaximumSectorExposureRiskManagementModel
 from datetime import date, timedelta
+QCAlgorithmFramework = QCAlgorithm
 
 ### <summary>
 ### This example algorithm defines its own custom coarse/fine fundamental selection model

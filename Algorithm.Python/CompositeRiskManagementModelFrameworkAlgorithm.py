@@ -29,6 +29,7 @@ from Risk.CompositeRiskManagementModel import CompositeRiskManagementModel
 from Risk.MaximumUnrealizedProfitPercentPerSecurity import MaximumUnrealizedProfitPercentPerSecurity
 from Risk.MaximumDrawdownPercentPerSecurity import MaximumDrawdownPercentPerSecurity
 from datetime import timedelta
+QCAlgorithmFramework = QCAlgorithm
 
 ### <summary>
 ### Show cases how to use the CompositeRiskManagementModel.

@@ -14,7 +14,6 @@
 from clr import AddReference
 AddReference("System")
 AddReference("QuantConnect.Algorithm")
-AddReference("QuantConnect.Algorithm.Framework")
 AddReference("QuantConnect.Common")
 
 from System import *
@@ -30,6 +29,7 @@ from Selection.OptionUniverseSelectionModel import OptionUniverseSelectionModel
 from Execution.ImmediateExecutionModel import ImmediateExecutionModel
 from Risk.NullRiskManagementModel import NullRiskManagementModel
 from datetime import date, timedelta
+QCAlgorithmFramework= QCAlgorithm
 
 ### <summary>
 ### Basic template options framework algorithm uses framework components
