@@ -17,6 +17,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using QuantConnect.Logging;
+using QuantConnect.Util;
 
 namespace QuantConnect
 {
@@ -70,6 +71,17 @@ namespace QuantConnect
         /// <returns>True if algorithm exited successfully, false if cancelled because it exceeded limits.</returns>
         public bool ExecuteWithTimeLimit(TimeSpan timeSpan, Func<IsolatorLimitResult> withinCustomLimits, Action codeBlock, long memoryCap = 1024, int sleepIntervalMillis = 1000)
         {
+            //Launch task
+            var task = Task.Factory.StartNew(codeBlock, CancellationTokenSource.Token);
+            return MonitorTask(task, timeSpan, withinCustomLimits, memoryCap, sleepIntervalMillis);
+        }
+
+        private bool MonitorTask(Task task,
+            TimeSpan timeSpan,
+            Func<IsolatorLimitResult> withinCustomLimits,
+            long memoryCap = 1024,
+            int sleepIntervalMillis = 1000)
+        {
             // default to always within custom limits
             withinCustomLimits = withinCustomLimits ?? (() => new IsolatorLimitResult(TimeSpan.Zero, string.Empty));
 
@@ -82,10 +94,7 @@ namespace QuantConnect
 
             //Convert to bytes
             memoryCap *= 1024 * 1024;
-            var spikeLimit = memoryCap*2;
-
-            //Launch task
-            var task = Task.Factory.StartNew(codeBlock, CancellationTokenSource.Token);
+            var spikeLimit = memoryCap * 2;
 
             // give some granularity to the sleep interval if >= 1000ms
             var sleepGranularity = sleepIntervalMillis >= 1000 ? 5 : 1;
@@ -151,7 +160,7 @@ namespace QuantConnect
             {
                 CancellationTokenSource.Cancel();
                 Log.Error("Security.ExecuteWithTimeLimit(): " + message);
-                throw new Exception(message);
+                throw new TimeoutException(message);
             }
             return task.IsCompleted;
         }
@@ -167,6 +176,43 @@ namespace QuantConnect
         public bool ExecuteWithTimeLimit(TimeSpan timeSpan, Action codeBlock, long memoryCap, int sleepIntervalMillis = 1000)
         {
             return ExecuteWithTimeLimit(timeSpan, null, codeBlock, memoryCap, sleepIntervalMillis);
+        }
+
+        /// <summary>
+        /// Execute a code block with a maximum limit on time and memory in the provided worker thread instance.
+        /// </summary>
+        /// <param name="timeSpan">Timeout in timespan</param>
+        /// <param name="codeBlock">Action codeblock to execute</param>
+        /// <param name="memoryCap">Maximum memory allocation, default 1024Mb</param>
+        /// <param name="workerThread">The worker thread instance that will execute the provided action</param>
+        /// <param name="withinCustomLimits">Function used to determine if the codeBlock is within custom limits, such as with algorithm manager
+        /// timing individual time loops, return a non-null and non-empty string with a message indicating the error/reason for stoppage</param>
+        /// <param name="sleepIntervalMillis">Sleep interval between each check in ms</param>
+        /// <returns>True if algorithm exited successfully, false if cancelled because it exceeded limits.</returns>
+        public bool ExecuteInWorkerWithTimeLimit(TimeSpan timeSpan,
+            Action codeBlock,
+            long memoryCap,
+            WorkerThread workerThread,
+            Func<IsolatorLimitResult> withinCustomLimits = null,
+            int sleepIntervalMillis = 1000)
+        {
+            workerThread.Add(codeBlock);
+
+            // wrapper task so we can reuse MonitorTask
+            var wrapperTask = Task.Factory.StartNew(() => workerThread.FinishedWorkItem.WaitOne());
+            try
+            {
+                return MonitorTask(wrapperTask, timeSpan, withinCustomLimits, memoryCap, sleepIntervalMillis);
+            }
+            catch (Exception)
+            {
+                if (!wrapperTask.IsCompleted)
+                {
+                    // lets free the wrapper task even if the worker thread didn't finish
+                    workerThread.FinishedWorkItem.Set();
+                }
+                throw;
+            }
         }
 
         /// <summary>

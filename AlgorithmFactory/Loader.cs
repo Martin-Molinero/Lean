@@ -24,6 +24,7 @@ using QuantConnect.Interfaces;
 using QuantConnect.Logging;
 using QuantConnect.AlgorithmFactory.Python.Wrappers;
 using QuantConnect.Python;
+using QuantConnect.Util;
 
 namespace QuantConnect.AlgorithmFactory
 {
@@ -38,6 +39,9 @@ namespace QuantConnect.AlgorithmFactory
 
         // Language of the loader class.
         private readonly Language _language;
+
+        // The worker thread instance the loader will use.
+        private readonly WorkerThread _workerThread;
 
         // Defines how we resolve a list of type names into a single type name to be instantiated
         private readonly Func<List<string>, string> _multipleTypeNameResolverFunction;
@@ -84,7 +88,8 @@ namespace QuantConnect.AlgorithmFactory
         /// for the QuantConnect.Algorithm assembly in this solution.  In order to pick the correct type, consumers must specify how to pick the type,
         /// that's what this function does, it picks the correct type from the list of types found within the assembly.
         /// </param>
-        public Loader(Language language, TimeSpan loaderTimeLimit, Func<List<string>, string> multipleTypeNameResolverFunction)
+        /// <param name="workerThread">The worker thread instance the loader should use</param>
+        public Loader(Language language, TimeSpan loaderTimeLimit, Func<List<string>, string> multipleTypeNameResolverFunction, WorkerThread workerThread = null)
         {
             _language = language;
 
@@ -93,6 +98,7 @@ namespace QuantConnect.AlgorithmFactory
                 throw new ArgumentNullException("multipleTypeNameResolverFunction");
             }
 
+            _workerThread = workerThread;
             _loaderTimeLimit = loaderTimeLimit;
             _multipleTypeNameResolverFunction = multipleTypeNameResolverFunction;
         }
@@ -345,10 +351,21 @@ namespace QuantConnect.AlgorithmFactory
 
             var success = false;
             var isolator = new Isolator();
-            var complete = isolator.ExecuteWithTimeLimit(_loaderTimeLimit, () =>
+            bool complete;
+            if (_workerThread != null)
             {
-                success = TryCreateAlgorithmInstance(assemblyPath, out instance, out error);
-            }, ramLimit, sleepIntervalMillis:50);
+                complete = isolator.ExecuteInWorkerWithTimeLimit(_loaderTimeLimit, () =>
+                {
+                    success = TryCreateAlgorithmInstance(assemblyPath, out instance, out error);
+                }, ramLimit, _workerThread, sleepIntervalMillis: 50);
+            }
+            else
+            {
+                complete = isolator.ExecuteWithTimeLimit(_loaderTimeLimit, () =>
+                {
+                    success = TryCreateAlgorithmInstance(assemblyPath, out instance, out error);
+                }, ramLimit, sleepIntervalMillis: 50);
+            }
 
             algorithmInstance = instance;
             errorMessage = error;

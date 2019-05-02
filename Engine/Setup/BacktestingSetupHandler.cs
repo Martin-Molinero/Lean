@@ -27,6 +27,7 @@ using QuantConnect.Packets;
 using QuantConnect.Data;
 using QuantConnect.Lean.Engine.DataFeeds;
 using QuantConnect.Securities;
+using QuantConnect.Util;
 
 namespace QuantConnect.Lean.Engine.Setup
 {
@@ -38,6 +39,11 @@ namespace QuantConnect.Lean.Engine.Setup
         private TimeSpan _maxRuntime = TimeSpan.FromSeconds(300);
         private int _maxOrders = 0;
         private DateTime _startingDate = new DateTime(1998, 01, 01);
+
+        /// <summary>
+        /// The worker thread instance the setup handler should use
+        /// </summary>
+        public WorkerThread WorkerThread { get; set; }
 
         /// <summary>
         /// Internal errors list from running the setup proceedures.
@@ -110,8 +116,10 @@ namespace QuantConnect.Lean.Engine.Setup
             string error;
             IAlgorithm algorithm;
 
+            BaseSetupHandler.InitializeDebugging(algorithmNodePacket.Language, algorithmNodePacket.RamAllocation, WorkerThread);
+
             // limit load times to 60 seconds and force the assembly to have exactly one derived type
-            var loader = new Loader(algorithmNodePacket.Language, TimeSpan.FromSeconds(60), names => names.SingleOrAlgorithmTypeName(Config.Get("algorithm-type-name")));
+            var loader = new Loader(algorithmNodePacket.Language, TimeSpan.FromSeconds(60), names => names.SingleOrAlgorithmTypeName(Config.Get("algorithm-type-name")), WorkerThread);
             var complete = loader.TryCreateAlgorithmInstanceWithIsolator(assemblyPath, algorithmNodePacket.RamAllocation, out algorithm, out error);
             if (!complete) throw new AlgorithmSetupException($"During the algorithm initialization, the following exception has occurred: {error}");
 
@@ -165,7 +173,7 @@ namespace QuantConnect.Lean.Engine.Setup
 
             var controls = job.Controls;
             var isolator = new Isolator();
-            var initializeComplete = isolator.ExecuteWithTimeLimit(TimeSpan.FromMinutes(5), () =>
+            var initializeComplete = isolator.ExecuteInWorkerWithTimeLimit(TimeSpan.FromMinutes(5), () =>
             {
                 try
                 {
@@ -198,6 +206,7 @@ namespace QuantConnect.Lean.Engine.Setup
                     Errors.Add(new AlgorithmSetupException("During the algorithm initialization, the following exception has occurred: ", err));
                 }
             }, controls.RamAllocation,
+                WorkerThread,
                 sleepIntervalMillis:50); // entire system is waiting on this, so be as fast as possible
 
             //Before continuing, detect if this is ready:

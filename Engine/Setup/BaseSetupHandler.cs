@@ -17,11 +17,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using QuantConnect.AlgorithmFactory;
+using QuantConnect.Configuration;
 using QuantConnect.Data;
 using QuantConnect.Data.UniverseSelection;
 using QuantConnect.Interfaces;
 using QuantConnect.Lean.Engine.DataFeeds;
 using QuantConnect.Logging;
+using QuantConnect.Util;
 
 namespace QuantConnect.Lean.Engine.Setup
 {
@@ -97,6 +100,25 @@ namespace QuantConnect.Lean.Engine.Setup
 
             Log.Trace("BaseSetupHandler.SetupCurrencyConversions():" +
                 $"{Environment.NewLine}{algorithm.Portfolio.CashBook}");
+        }
+
+        /// <summary>
+        /// Initialize the debugger
+        /// </summary>
+        /// <param name="language">The algorithm <see cref="Language"/></param>
+        /// <param name="ramAllocation">Maximum memory allocation</param>
+        /// <param name="workerThread">The worker thread instance to use</param>
+        public static void InitializeDebugging(Language language, long ramAllocation, WorkerThread workerThread)
+        {
+            if (Config.GetBool("debugging"))
+            {
+                var isolator = new Isolator();
+                isolator.ExecuteInWorkerWithTimeLimit(TimeSpan.FromMinutes(5),
+                    () => DebuggerHelper.Initialize(language),
+                    ramAllocation,
+                    workerThread,
+                    sleepIntervalMillis: 100);
+            }
         }
     }
 }

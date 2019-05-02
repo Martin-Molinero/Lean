@@ -25,6 +25,7 @@ using QuantConnect.Interfaces;
 using QuantConnect.Logging;
 using QuantConnect.Packets;
 using QuantConnect.Lean.Engine.DataFeeds;
+using QuantConnect.Util;
 
 namespace QuantConnect.Lean.Engine.Setup
 {
@@ -33,6 +34,11 @@ namespace QuantConnect.Lean.Engine.Setup
     /// </summary>
     public class ConsoleSetupHandler : ISetupHandler
     {
+        /// <summary>
+        /// The worker thread instance the setup handler should use
+        /// </summary>
+        public WorkerThread WorkerThread { get; set; }
+
         /// <summary>
         /// Error which occured during setup may appear here.
         /// </summary>
@@ -82,9 +88,11 @@ namespace QuantConnect.Lean.Engine.Setup
             IAlgorithm algorithm;
             var algorithmName = Config.Get("algorithm-type-name");
 
+            BaseSetupHandler.InitializeDebugging(algorithmNodePacket.Language, algorithmNodePacket.RamAllocation, WorkerThread);
+
             // don't force load times to be fast here since we're running locally, this allows us to debug
             // and step through some code that may take us longer than the default 10 seconds
-            var loader = new Loader(algorithmNodePacket.Language, TimeSpan.FromHours(1), names => names.SingleOrDefault(name => MatchTypeName(name, algorithmName)));
+            var loader = new Loader(algorithmNodePacket.Language, TimeSpan.FromHours(1), names => names.SingleOrDefault(name => MatchTypeName(name, algorithmName)), WorkerThread);
             var complete = loader.TryCreateAlgorithmInstanceWithIsolator(assemblyPath, algorithmNodePacket.RamAllocation, out algorithm, out error);
             if (!complete) throw new AlgorithmSetupException($"During the algorithm initialization, the following exception has occurred: {error}");
 
@@ -144,8 +152,16 @@ namespace QuantConnect.Lean.Engine.Setup
                     // set the future chain provider
                     algorithm.SetFutureChainProvider(new CachingFutureChainProvider(new BacktestingFutureChainProvider()));
 
-                    //Setup Base Algorithm:
-                    algorithm.Initialize();
+                    var isolator = new Isolator();
+
+                    isolator.ExecuteInWorkerWithTimeLimit(TimeSpan.FromMinutes(5),
+                        () =>
+                        {
+                            //Setup Base Algorithm:
+                            algorithm.Initialize();
+                        }, baseJob.Controls.RamAllocation,
+                        WorkerThread,
+                        sleepIntervalMillis: 50);
 
                     //Finalize Initialization
                     algorithm.PostInitialize();
