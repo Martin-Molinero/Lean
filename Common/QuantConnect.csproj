@@ -243,6 +243,10 @@
     <Compile Include="Data\SubscriptionDataConfigExtensions.cs" />
     <Compile Include="Data\UniverseSelection\ConstituentsUniverse.cs" />
     <Compile Include="Data\UniverseSelection\ConstituentsUniverseData.cs" />
+    <Compile Include="Data\UniverseSelection\DollarVolumeFilter.cs" />
+    <Compile Include="Data\UniverseSelection\HasFundamentalDataFilter.cs" />
+    <Compile Include="Data\UniverseSelection\PriceBiggerThan.cs" />
+    <Compile Include="Data\UniverseSelection\QuantityFilter.cs" />
     <Compile Include="Expiry.cs" />
     <Compile Include="HistoryProviderEvents.cs" />
     <Compile Include="Indicators\IIndicatorWarmUpPeriodProvider.cs" />
@@ -255,6 +259,7 @@
     <Compile Include="Interfaces\ISecurityInitializerProvider.cs" />
     <Compile Include="Interfaces\ISecurityService.cs" />
     <Compile Include="Interfaces\ISecurityPrice.cs" />
+    <Compile Include="Interfaces\IUniverseSelectionFilter.cs" />
     <Compile Include="Interfaces\ISubscriptionDataConfigProvider.cs" />
     <Compile Include="Interfaces\ISubscriptionDataConfigService.cs" />
     <Compile Include="Interfaces\ITimeKeeper.cs" />

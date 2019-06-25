@@ -19,6 +19,7 @@ using System.Linq;
 using QuantConnect.Data;
 using QuantConnect.Data.Fundamental;
 using QuantConnect.Data.UniverseSelection;
+using QuantConnect.Interfaces;
 using QuantConnect.Securities;
 using QuantConnect.Util;
 
@@ -365,15 +366,20 @@ namespace QuantConnect.Algorithm
             var config = new SubscriptionDataConfig(typeof(T), symbol, resolution, dataTimeZone, exchangeTimeZone, false, false, true, true, isFilteredSubscription: false);
             AddUniverse(new FuncUniverse(config, universeSettings, SecurityInitializer, d => selector(d.OfType<T>()).Select(x => QuantConnect.Symbol.Create(x, securityType, market))));
         }
+        public void AddUniverse(params IUniverseSelectionFilter[] statelessSelections)
+        {
+            AddUniverse(Data.UniverseSelection.Universe.GenerateSelector(statelessSelections), isStateless:true);
+        }
 
         /// <summary>
         /// Creates a new universe and adds it to the algorithm. This is for coarse fundamental US Equity data and
         /// will be executed on day changes in the NewYork time zone (<see cref="TimeZones.NewYork"/>
         /// </summary>
         /// <param name="selector">Defines an initial coarse selection</param>
-        public void AddUniverse(Func<IEnumerable<CoarseFundamental>, IEnumerable<Symbol>> selector)
+        /// <param name="isStateless"></param>
+        public void AddUniverse(Func<IEnumerable<CoarseFundamental>, IEnumerable<Symbol>> selector, bool isStateless = false)
         {
-            AddUniverse(new CoarseFundamentalUniverse(UniverseSettings, SecurityInitializer, selector));
+            AddUniverse(new CoarseFundamentalUniverse(UniverseSettings, SecurityInitializer, selector, isStateless));
         }
 
         /// <summary>

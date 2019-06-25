@@ -14,7 +14,11 @@
  *
 */
 
+using QuantConnect.Data;
 using QuantConnect.Data.UniverseSelection;
+using QuantConnect.Interfaces;
+using System;
+using System.Collections.Generic;
 
 namespace QuantConnect.Algorithm
 {
@@ -41,8 +45,14 @@ namespace QuantConnect.Algorithm
         /// which are chosen at the first trading day of each month.
         /// </summary>
         /// <returns>A new <see cref="ConstituentsUniverse"/> universe for the top 500 stocks by dollar volume</returns>
-        public Universe QC500 => new ConstituentsUniverse(
-            Symbol.Create("constituents-universe-qc500", SecurityType.Equity, Market.USA),
-            _algorithm.UniverseSettings);
+        public Universe QC500(params IUniverseSelectionFilter[] statelessSelections)
+            => GetConstituensUniverse(
+                Symbol.Create("constituents-universe-qc500", SecurityType.Equity, Market.USA),
+                Universe.GenerateSelector(statelessSelections));
+
+        public Universe GetConstituensUniverse(Symbol symbol, Func<IEnumerable<BaseData>, IEnumerable<Symbol>> selector)
+        {
+            return new ConstituentsUniverse(symbol, _algorithm.UniverseSettings, selector:selector);
+        }
     }
 }

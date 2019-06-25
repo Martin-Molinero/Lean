@@ -48,6 +48,7 @@ namespace QuantConnect.Algorithm.CSharp
             // this add universe method accepts a single parameter that is a function that
             // accepts an IEnumerable<CoarseFundamental> and returns IEnumerable<Symbol>
             AddUniverse(CoarseSelectionFunction);
+            AddUniverse(new DollarVolumeFilter(), new QuantityFilter(3));
         }
 
         // sort the data by daily dollar volume and take the top 'NumberOfSymbols'

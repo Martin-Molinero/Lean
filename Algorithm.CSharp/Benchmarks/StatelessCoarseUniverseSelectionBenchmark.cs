@@ -32,6 +32,9 @@ namespace QuantConnect.Algorithm.CSharp.Benchmarks
             SetCash(50000);
 
             AddUniverse(CoarseSelectionFunction);
+            AddUniverse(new HasFundamentalDataFilter(),
+                new DollarVolumeFilter(),
+                new QuantityFilter(NumberOfSymbolsCoarse));
         }
 
         // sort the data by daily dollar volume and take the top 250

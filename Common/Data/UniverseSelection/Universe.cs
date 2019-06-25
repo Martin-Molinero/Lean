@@ -76,6 +76,12 @@ namespace QuantConnect.Data.UniverseSelection
             private set;
         }
 
+        public bool IsStateless
+        {
+            get;
+            protected set;
+        }
+
         /// <summary>
         /// Gets the settings used for subscriptons added for this universe
         /// </summary>
@@ -393,6 +399,17 @@ namespace QuantConnect.Data.UniverseSelection
                 Added = added;
                 Security = security;
             }
+        }
+        public static Func<IEnumerable<BaseData>, IEnumerable<Symbol>> GenerateSelector(params IUniverseSelectionFilter[] universeSelectionFilters)
+        {
+            return baseDatas =>
+            {
+                for (int i = 0; i < universeSelectionFilters.Length; i++)
+                {
+                    baseDatas = universeSelectionFilters[i].Filter(baseDatas);
+                }
+                return baseDatas.Select(x => x.Symbol);
+            };
         }
     }
 }

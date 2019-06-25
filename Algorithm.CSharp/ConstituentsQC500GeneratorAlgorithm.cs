@@ -13,6 +13,8 @@
  * limitations under the License.
 */
 
+using QuantConnect.Data.UniverseSelection;
+
 namespace QuantConnect.Algorithm.CSharp
 {
     /// <summary>
@@ -35,7 +37,8 @@ namespace QuantConnect.Algorithm.CSharp
             SetCash(100000);            // Set Strategy Cash
 
             // Add QC500 Universe
-            AddUniverse(Universe.Index.QC500);
+            AddUniverse(Universe.Index.QC500(new PriceBiggerThanFilter(1m)));
+            AddUniverse(Universe.Index.QC500());
         }
     }
 }

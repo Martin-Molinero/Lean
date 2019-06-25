@@ -13,7 +13,9 @@
  * limitations under the License.
 */
 
+using QuantConnect.Interfaces;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace QuantConnect.Data.UniverseSelection
@@ -31,8 +33,10 @@ namespace QuantConnect.Data.UniverseSelection
         /// </summary>
         /// <param name="symbol">The universe symbol</param>
         /// <param name="universeSettings">The universe settings to use</param>
+        /// <param name="isStateless"></param>
         /// <param name="type">The <see cref="ConstituentsUniverseData"/> type to use</param>
-        public ConstituentsUniverse(Symbol symbol, UniverseSettings universeSettings, Type type = null)
+        /// <param name="selector"></param>
+        public ConstituentsUniverse(Symbol symbol, UniverseSettings universeSettings, bool isStateless = false, Type type = null, Func<IEnumerable<BaseData>, IEnumerable<Symbol>> selector = null)
            : this(new SubscriptionDataConfig(type ?? typeof(ConstituentsUniverseData),
                    symbol,
                    Resolution.Daily,
@@ -42,7 +46,9 @@ namespace QuantConnect.Data.UniverseSelection
                    false,
                    true,
                    true),
-               universeSettings)
+               universeSettings,
+               isStateless,
+               selector)
         {
         }
 
@@ -51,12 +57,22 @@ namespace QuantConnect.Data.UniverseSelection
         /// </summary>
         /// <param name="subscriptionDataConfig">The universe configuration to use</param>
         /// <param name="universeSettings">The universe settings to use</param>
-        public ConstituentsUniverse(SubscriptionDataConfig subscriptionDataConfig, UniverseSettings universeSettings)
+        /// <param name="isStateless"></param>
+        /// <param name="selector"></param>
+        public ConstituentsUniverse(SubscriptionDataConfig subscriptionDataConfig, UniverseSettings universeSettings, bool isStateless, Func<IEnumerable<BaseData>, IEnumerable<Symbol>> selector = null)
             : base(subscriptionDataConfig,
                 universeSettings,
                 constituents =>
                 {
-                    var symbols = constituents.Select(baseData => baseData.Symbol).ToList();
+                    List<Symbol> symbols;
+                    if (selector == null)
+                    {
+                        symbols = constituents.Select(baseData => baseData.Symbol).ToList();
+                    }
+                    else
+                    {
+                        symbols = selector(constituents).ToList();
+                    }
                     // for performance, just compare to Symbol.None if we have 1 Symbol
                     if (symbols.Count == 1 && symbols[0] == Symbol.None)
                     {
@@ -71,6 +87,7 @@ namespace QuantConnect.Data.UniverseSelection
                 throw new InvalidOperationException($"{nameof(ConstituentsUniverse)} {nameof(SubscriptionDataConfig)}" +
                     $" only supports custom data property set to 'true'");
             }
+            IsStateless = isStateless;
         }
     }
 }
