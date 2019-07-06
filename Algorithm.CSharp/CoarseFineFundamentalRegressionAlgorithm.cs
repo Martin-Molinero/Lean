@@ -13,12 +13,9 @@
  * limitations under the License.
 */
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using QuantConnect.Data;
 using QuantConnect.Data.Fundamental;
-using QuantConnect.Data.Market;
 using QuantConnect.Data.UniverseSelection;
 using QuantConnect.Interfaces;
 
@@ -34,44 +31,59 @@ namespace QuantConnect.Algorithm.CSharp
     /// <meta name="tag" content="regression test" />
     public class CoarseFineFundamentalRegressionAlgorithm : QCAlgorithm, IRegressionAlgorithmDefinition
     {
-        private const int NumberOfSymbolsFine = 2;
-
-        // initialize our changes to nothing
-        private SecurityChanges _changes = SecurityChanges.None;
-
+        private const int NumberOfSymbolsFine = 1;
+        private List<Symbol> _symbols;
         public override void Initialize()
         {
             UniverseSettings.Resolution = Resolution.Daily;
 
-            SetStartDate(2014, 03, 24);
-            SetEndDate(2014, 04, 07);
+            SetStartDate(2017, 01, 01);
+            SetEndDate(2018, 01, 01);
             SetCash(50000);
 
             // this add universe method accepts two parameters:
             // - coarse selection function: accepts an IEnumerable<CoarseFundamental> and returns an IEnumerable<Symbol>
             // - fine selection function: accepts an IEnumerable<FineFundamental> and returns an IEnumerable<Symbol>
             AddUniverse(CoarseSelectionFunction, FineSelectionFunction);
+
+            _symbols = new List<Symbol>();
+            foreach (var symbol in new[] {
+                "AAAP","AMZN","IBM","AIG",
+                "CSCO","MSFT","ADBE","ABTLE",
+                "ABXA","ACA","ABY", "ACFC",
+                "ABTX","ACAW","ABUS", "A",
+                "AC","ACB","WMT","ACCOB",
+                "ACBI","ABT","ABX","ACER",
+                "ACFC", "ACET", "ABTL", "ACAD",
+                "ACE", "ACGLO", "AA", "ACCO",
+                "ACGLP", "ACH", "ACHV", "ACL",
+                "ACC", "ACLY", "AABA", "ACIU", // 40
+                "ACIA", "ACHC", "AAC", "ACGL",
+                "ACMGP", "ACMR", "ACHN", "ACM",
+                "ACLS", "AAL", //"ACP", "ACIW",
+                //"AAMC", "ACRS", "ACNB", "ACSF",
+                //"ACTA", "ACT", "ACN", "ABFS",
+                //"ACTYD", "ACTY", "ACRE", "ABG",
+                //"ACV", "ACOR", "ACRX", "ACST",
+                //"AAME", "AAN", "AANA","AAOI",
+                //"AAON", "ACXM", "ACU", "AAP",
+                //"AAS", "ACTG", "AAT", "AATK",
+                //"ACY", "AAU", "AAV", "AAVL",
+                //"AAWW", "AAXN", "AB", "ABAC",
+                //"ABAX", "ABB", "ABBV", "ABC",
+                //"ABCB", "ABCD", "ABCO", "ABD",
+                //"ABDC", "ABE", "ABEO", "ABEV"
+            })
+            {
+                _symbols.Add(
+                    QuantConnect.Symbol.Create(symbol, SecurityType.Equity, Market.USA));
+            }
         }
 
         // return a list of three fixed symbol objects
         public IEnumerable<Symbol> CoarseSelectionFunction(IEnumerable<CoarseFundamental> coarse)
         {
-            if (Time.Date < new DateTime(2014, 4, 1))
-            {
-                return new List<Symbol>
-                {
-                    QuantConnect.Symbol.Create("AAPL", SecurityType.Equity, Market.USA),
-                    QuantConnect.Symbol.Create("AIG", SecurityType.Equity, Market.USA),
-                    QuantConnect.Symbol.Create("IBM", SecurityType.Equity, Market.USA)
-                };
-            }
-
-            return new List<Symbol>
-            {
-                QuantConnect.Symbol.Create("BAC", SecurityType.Equity, Market.USA),
-                QuantConnect.Symbol.Create("GOOG", SecurityType.Equity, Market.USA),
-                QuantConnect.Symbol.Create("SPY", SecurityType.Equity, Market.USA)
-            };
+            return _symbols;
         }
 
         // sort the data by P/E ratio and take the top 'NumberOfSymbolsFine'
@@ -85,65 +97,6 @@ namespace QuantConnect.Algorithm.CSharp
 
             // we need to return only the symbol objects
             return topFine.Select(x => x.Symbol);
-        }
-
-        //Data Event Handler: New data arrives here. "TradeBars" type is a dictionary of strings so you can access it by symbol.
-        public void OnData(TradeBars data)
-        {
-            // if we have no changes, do nothing
-            if (_changes == SecurityChanges.None) return;
-
-            // liquidate removed securities
-            foreach (var security in _changes.RemovedSecurities)
-            {
-                if (security.Invested)
-                {
-                    Liquidate(security.Symbol);
-                    Debug("Liquidated Stock: " + security.Symbol.Value);
-                }
-            }
-
-            // we want 50% allocation in each security in our universe
-            foreach (var security in _changes.AddedSecurities)
-            {
-                if (security.Fundamentals.EarningRatios.EquityPerShareGrowth.OneYear > 0.25m)
-                {
-                    SetHoldings(security.Symbol, 0.5m);
-                    Debug("Purchased Stock: " + security.Symbol.Value);
-                }
-            }
-
-            _changes = SecurityChanges.None;
-        }
-
-        public override void OnData(Slice data)
-        {
-            // verify we don't receive data for inactive securities
-            var inactiveSymbols = data.Keys
-                .Where(sym => !UniverseManager.ActiveSecurities.ContainsKey(sym))
-                // on daily data we'll get the last data point and the delisting at the same time
-                .Where(sym => !data.Delistings.ContainsKey(sym) || data.Delistings[sym].Type != DelistingType.Delisted)
-                .ToList();
-            if (inactiveSymbols.Any())
-            {
-                var symbols = string.Join(", ", inactiveSymbols);
-                throw new Exception($"Received data for non-active security: {symbols}.");
-            }
-        }
-
-        // this event fires whenever we have changes to our universe
-        public override void OnSecuritiesChanged(SecurityChanges changes)
-        {
-            _changes = changes;
-
-            if (changes.AddedSecurities.Count > 0)
-            {
-                Debug("Securities added: " + string.Join(",", changes.AddedSecurities.Select(x => x.Symbol.Value)));
-            }
-            if (changes.RemovedSecurities.Count > 0)
-            {
-                Debug("Securities removed: " + string.Join(",", changes.RemovedSecurities.Select(x => x.Symbol.Value)));
-            }
         }
 
         /// <summary>

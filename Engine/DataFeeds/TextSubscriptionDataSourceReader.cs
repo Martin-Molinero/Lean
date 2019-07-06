@@ -14,17 +14,24 @@
 */
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using QuantConnect.Data;
 using QuantConnect.Interfaces;
 using QuantConnect.Lean.Engine.DataFeeds.Transport;
 using QuantConnect.Util;
 using System.Runtime.Caching;
+using System.Threading.Tasks;
+using NodaTime;
 using QuantConnect.Data.Fundamental;
+using QuantConnect.Data.Market;
 using QuantConnect.Data.UniverseSelection;
+using QuantConnect.Logging;
 
 namespace QuantConnect.Lean.Engine.DataFeeds
 {
@@ -41,14 +48,221 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         private readonly SubscriptionDataConfig _config;
         private bool _shouldCacheDataPoints;
         private readonly IDataCacheProvider _dataCacheProvider;
+        public static readonly ConcurrentDictionary<string, List<BaseData>> Cache = new ConcurrentDictionary<string, List<BaseData>>();
+
+        public static readonly ConcurrentDictionary<Symbol, List<BaseData>> FineCache
+            = new ConcurrentDictionary<Symbol, List<BaseData>>();
+
         private static readonly MemoryCache BaseDataSourceCache = new MemoryCache("BaseDataSourceCache",
-            // Cache can use up to 70% of the installed physical memory
-            new NameValueCollection{ { "physicalMemoryLimitPercentage", "70"} });
+            // Cache can use up to 90% of the installed physical memory
+            new NameValueCollection { { "physicalMemoryLimitPercentage", "90" } });
+
         private static readonly CacheItemPolicy CachePolicy = new CacheItemPolicy
         {
             // Cache entry should be evicted if it has not been accessed in given span of time:
             SlidingExpiration = TimeSpan.FromMinutes(5)
         };
+
+        public static void InitializeCache()
+        {
+            var startTime = DateTime.UtcNow;
+            Log.Trace("Start loading data to cache");
+
+            // coarse
+            if (true)
+            {
+                var coarseType = typeof(CoarseFundamental);
+                var coarsePath = Path.Combine(Globals.DataFolder, "equity", "usa", "fundamental", "coarse");
+                var coarseConfig = new SubscriptionDataConfig(
+                    coarseType,
+                    CoarseFundamental.CreateUniverseSymbol(Market.USA),
+                    Resolution.Daily,
+                    DateTimeZone.Utc,
+                    DateTimeZone.Utc,
+                    false,
+                    false,
+                    false);
+                LoadDataToCache(coarsePath, coarseType, coarseConfig, new SingleEntryDataCacheProvider(new DefaultDataProvider()));
+                Log.Trace("Finished loading coarse data to cache");
+            }
+
+            // equity daily
+            if (false)
+            {
+                var equityType = typeof(TradeBar);
+                var equityPath = Path.Combine(Globals.DataFolder, "equity", "usa", "daily");
+                var equityConfig = new SubscriptionDataConfig(
+                    equityType,
+                    UserDefinedUniverse.CreateSymbol(SecurityType.Equity, Market.USA),
+                    Resolution.Daily,
+                    DateTimeZone.Utc,
+                    DateTimeZone.Utc,
+                    false,
+                    false,
+                    false);
+                LoadDataToCache(equityPath, equityType, equityConfig, new ZipDataCacheProvider(new DefaultDataProvider()));
+            }
+
+            // fine data
+            if (true)
+            {
+                var fineType = typeof(FineFundamental);
+                var finePath = Path.Combine(Globals.DataFolder, "equity", "usa", "fundamental", "fine");
+                var fineConfig = new SubscriptionDataConfig(
+                    fineType,
+                    FineFundamental.CreateUniverseSymbol(Market.USA),
+                    Resolution.Daily,
+                    DateTimeZone.Utc,
+                    DateTimeZone.Utc,
+                    false,
+                    false,
+                    false);
+                LoadDataToCache(finePath, fineType, fineConfig, new ZipDataCacheProvider(new DefaultDataProvider()));
+                Log.Trace("Finished loading fine data to cache");
+            }
+
+            Log.Trace($"Stop loading data to cache. Took: {DateTime.UtcNow - startTime}");
+        }
+
+        private static void LoadDataToCache(string rootPath,
+            Type dataType,
+            SubscriptionDataConfig config,
+            IDataCacheProvider cacheProvider)
+        {
+            var t = new[]
+            {
+                "AAAP","AMZN","IBM","AIG",
+                "CSCO","MSFT","ADBE","ABTLE",
+                "ABXA","ACA","ABY", "ACFC",
+                "ABTX","ACAW","ABUS", "A",
+                "AC","ACB","WMT","ACCOB",
+                "ACBI","ABT","ABX","ACER",
+                "ACFC", "ACET", "ABTL", "ACAD",
+                "ACE", "ACGLO", "AA", "ACCO",
+                "ACGLP", "ACH", "ACHV", "ACL",
+                "ACC", "ACLY", "AABA", "ACIU", // 40
+                "ACIA", "ACHC", "AAC", "ACGL",
+                "ACMGP", "ACMR", "ACHN", "ACM",
+                "ACLS", "AAL", //"ACP", "ACIW",
+                //"AAMC", "ACRS", "ACNB", "ACSF",
+                //"ACTA", "ACT", "ACN", "ABFS",
+                //"ACTYD", "ACTY", "ACRE", "ABG",
+                //"ACV", "ACOR", "ACRX", "ACST",
+                //"AAME", "AAN", "AANA","AAOI",
+                //"AAON", "ACXM", "ACU", "AAP",
+                //"AAS", "ACTG", "AAT", "AATK",
+                //"ACY", "AAU", "AAV", "AAVL",
+                //"AAWW", "AAXN", "AB", "ABAC",
+                //"ABAX", "ABB", "ABBV", "ABC",
+                //"ABCB", "ABCD", "ABCO", "ABD",
+                //"ABDC", "ABE", "ABEO", "ABEV"
+            };
+            var factory = (BaseData)ObjectActivator.GetActivator(dataType).Invoke(new object[] { dataType });
+            var paths = Directory.EnumerateDirectories(rootPath).ToList();
+            if (paths.Count == 0)
+            {
+                paths = Directory.EnumerateFiles(rootPath).ToList();
+            }
+
+            var isFine = dataType == typeof(FineFundamental);
+            var dataTypeStr = dataType.ToString();
+            Parallel.ForEach(paths, new ParallelOptions { MaxDegreeOfParallelism = 18 },
+            (path) =>
+            {
+                var isDir = Directory.Exists(path);
+                List<string> pathsToSearch;
+                if (isDir)
+                {
+                    if (t.Contains(Path.GetFileName(path).ToUpper()))
+                    {
+                        pathsToSearch = Directory.EnumerateFiles(path).ToList();
+                    }
+                    else
+                    {
+                        return;
+                    }
+                }
+                else
+                {
+                    pathsToSearch = new List<string> { path };
+                }
+
+                var symbol = Symbol.Create(
+                    Path.GetFileName(path),
+                    SecurityType.Equity,
+                    Market.USA
+                );
+                var date = DateTime.MaxValue;
+                foreach (var filePath in pathsToSearch)
+                {
+                    try
+                    {
+                        try
+                        {
+                            // get the date from the file if its there
+                            date = DateTime.ParseExact(
+                                Path.GetFileNameWithoutExtension(filePath),
+                                "yyyyMMdd",
+                                CultureInfo.InvariantCulture
+                            );
+                            //if (!isFine && (date < new DateTime(2015, 1, 1)
+                            //    || date > new DateTime(2018, 2, 1)))
+                            //{
+                            //    continue;
+                            //}
+                        }
+                        catch
+                        {
+                            // ignore
+                        }
+
+                        var cacheKey = $"{filePath}{dataTypeStr}";
+                        var cache = new List<BaseData>();
+                        using (var reader = new LocalFileSubscriptionStreamReader(cacheProvider, filePath))
+                        {
+                            // while the reader has data
+                            while (!reader.EndOfStream)
+                            {
+                                // read a line and pass it to the base data factory
+                                var line = reader.ReadLine();
+                                BaseData instance = null;
+                                try
+                                {
+                                    instance = factory.Reader(config, line, date, false);
+                                }
+                                catch
+                                {
+                                    // ignored
+                                }
+
+                                if (instance != null && instance.EndTime != default(DateTime))
+                                {
+                                    cache.Add(instance);
+                                }
+                            }
+                        }
+
+                        Cache[cacheKey] = cache;
+                        //BaseDataSourceCache.Add(new CacheItem(cacheKey, cache), CachePolicy);
+                        if (isFine)
+                        {
+                            FineCache.AddOrUpdate(
+                                 symbol,
+                                 symbol1 => cache,
+                                 (symbol1, existing) =>
+                                 {
+                                     existing.Add(cache[0]);
+                                     return existing;
+                                 });
+                        }
+                    }
+                    catch (Exception exception)
+                    {
+                        Log.Error(exception);
+                    }
+                }
+            });
+        }
 
         /// <summary>
         /// Event fired when the specified source is considered invalid, this may
@@ -82,10 +296,8 @@ namespace QuantConnect.Lean.Engine.DataFeeds
             _date = date;
             _config = config;
             _isLiveMode = isLiveMode;
-            _factory = (BaseData) ObjectActivator.GetActivator(config.Type).Invoke(new object[] { config.Type });
-            _shouldCacheDataPoints = !_config.IsCustomData && _config.Resolution >= Resolution.Hour
-                && _config.Type != typeof(FineFundamental) && _config.Type != typeof(CoarseFundamental)
-		&& !_dataCacheProvider.IsDataEphemeral;
+            _factory = (BaseData)ObjectActivator.GetActivator(config.Type).Invoke(new object[] { config.Type });
+            _shouldCacheDataPoints = !_config.IsCustomData && _config.Resolution >= Resolution.Hour;
         }
 
         /// <summary>
@@ -99,75 +311,88 @@ namespace QuantConnect.Lean.Engine.DataFeeds
             _shouldCacheDataPoints = _shouldCacheDataPoints &&
                 // only cache local files
                 source.TransportMedium == SubscriptionTransportMedium.LocalFile;
-            var cacheItem = _shouldCacheDataPoints
-                ? BaseDataSourceCache.GetCacheItem(source.Source + _config.Type) : null;
-            if (cacheItem == null)
-            {
-                cache = new List<BaseData>();
-                using (var reader = CreateStreamReader(source))
-                {
-                    // if the reader doesn't have data then we're done with this subscription
-                    if (reader == null || reader.EndOfStream)
-                    {
-                        OnCreateStreamReaderError(_date, source);
-                        yield break;
-                    }
-                    // while the reader has data
-                    while (!reader.EndOfStream)
-                    {
-                        // read a line and pass it to the base data factory
-                        var line = reader.ReadLine();
-                        BaseData instance = null;
-                        try
-                        {
-                            instance = _factory.Reader(_config, line, _date, _isLiveMode);
-                        }
-                        catch (Exception err)
-                        {
-                            OnReaderError(line, err);
-                        }
+            var cacheKey = source.Source + _config.Type;
 
-                        if (instance != null && instance.EndTime != default(DateTime))
+            if (!Cache.TryGetValue(cacheKey, out cache))
+            {
+                var cacheItem = _shouldCacheDataPoints ? BaseDataSourceCache.GetCacheItem(cacheKey) : null;
+                if (cacheItem == null)
+                {
+                    cache = new List<BaseData>();
+                    using (var reader = CreateStreamReader(source))
+                    {
+                        // if the reader doesn't have data then we're done with this subscription
+                        if (reader == null || reader.EndOfStream)
                         {
-                            if (_shouldCacheDataPoints)
+                            OnCreateStreamReaderError(_date, source);
+                            yield break;
+                        }
+                        // while the reader has data
+                        while (!reader.EndOfStream)
+                        {
+                            // read a line and pass it to the base data factory
+                            var line = reader.ReadLine();
+                            BaseData instance = null;
+                            try
                             {
-                                cache.Add(instance);
+                                instance = _factory.Reader(_config, line, _date, _isLiveMode);
                             }
-                            else
+                            catch (Exception err)
+                            {
+                                OnReaderError(line, err);
+                            }
+
+                            if (instance != null && instance.EndTime != default(DateTime))
+                            {
+                                if (_shouldCacheDataPoints)
+                                {
+                                    cache.Add(instance);
+                                }
+                                else
+                                {
+                                    yield return instance;
+                                }
+                            }
+                            else if (reader.ShouldBeRateLimited)
                             {
                                 yield return instance;
                             }
                         }
-                        else if (reader.ShouldBeRateLimited)
-                        {
-                            yield return instance;
-                        }
                     }
-                }
 
-                if (!_shouldCacheDataPoints)
+                    if (!_shouldCacheDataPoints)
+                    {
+                        yield break;
+                    }
+
+                    cacheItem = new CacheItem(cacheKey, cache);
+                    BaseDataSourceCache.Add(cacheItem, CachePolicy);
+                }
+                cache = cacheItem.Value as List<BaseData>;
+                if (cache == null)
                 {
-                    yield break;
+                    throw new InvalidOperationException("CacheItem can not be cast into expected type. " +
+                                                        $"Type is: {cacheItem.Value.GetType()}");
                 }
+            }
 
-                cacheItem = new CacheItem(source.Source + _config.Type, cache);
-                BaseDataSourceCache.Add(cacheItem, CachePolicy);
-            }
-            cache = cacheItem.Value as List<BaseData>;
-            if (cache == null)
-            {
-                throw new InvalidOperationException("CacheItem can not be cast into expected type. " +
-                    $"Type is: {cacheItem.Value.GetType()}");
-            }
             // Find the first data point 10 days (just in case) before the desired date
             // and subtract one item (just in case there was a time gap and data.Time is after _date)
-            var frontier = _date.AddDays(-10);
-            var index = cache.FindIndex(data => data.Time > frontier);
+            var isCoarse = _config.Type == typeof(CoarseFundamental);
+            var index = 0;
+            if (!isCoarse)
+            {
+                var frontier = _date.AddDays(-10);
+                index = cache.FindIndex(data => data.Time > frontier);
+            }
             index = index > 0 ? (index - 1) : 0;
             foreach (var data in cache.Skip(index))
             {
                 var clone = data.Clone();
-                clone.Symbol = _config.Symbol;
+                if (!isCoarse)
+                {
+                    clone.Symbol = _config.Symbol;
+                }
                 yield return clone;
             }
         }

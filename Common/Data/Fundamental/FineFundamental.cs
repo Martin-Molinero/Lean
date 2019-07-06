@@ -57,10 +57,10 @@ namespace QuantConnect.Data.Fundamental
         /// </summary>
         public override SubscriptionDataSource GetSource(SubscriptionDataConfig config, DateTime date, bool isLiveMode)
         {
-            var source =
-                Path.Combine(Globals.DataFolder, "equity", config.Market, "fundamental", "fine",
-                config.Symbol.Value.ToLower(), date.ToString("yyyyMMdd") + ".zip");
-
+            //var source =
+            //    Path.Combine(Globals.DataFolder, "equity", config.Market, "fundamental", "fine",
+            //    config.Symbol.Value.ToLower(), date.ToString("yyyyMMdd") + ".zip");
+            var source = $"{Globals.DataFolder}equity\\usa\\fundamental\\fine\\{config.Symbol.Value.ToLower()}\\{date:yyyyMMdd}.zip";
             return new SubscriptionDataSource(source, SubscriptionTransportMedium.LocalFile, FileFormat.Csv);
         }
 

@@ -97,7 +97,7 @@ namespace QuantConnect.Lean.Engine
 
             try
             {
-
+                TextSubscriptionDataSourceReader.InitializeCache();
                 //Reset thread holders.
                 var initializeComplete = false;
                 Thread threadResults = null;

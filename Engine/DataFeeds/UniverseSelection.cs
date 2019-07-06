@@ -105,25 +105,68 @@ namespace QuantConnect.Lean.Engine.DataFeeds
 
                     // use all available threads, the entire system is waiting for this to complete
                     var options = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount };
+                    var localStartTime = dateTimeUtc.ConvertFromUtc(TimeZones.NewYork).AddDays(-1);
+                    var dataType = typeof(FineFundamental);
+                    var sourceFactory = (BaseData)ObjectActivator.GetActivator(dataType).Invoke(new object[] { dataType });
                     Parallel.ForEach(selectSymbolsResult, options, symbol =>
                     {
+                        List<BaseData> datas;
                         var config = FineFundamentalUniverse.CreateConfiguration(symbol);
-                        var security = _securityService.CreateSecurity(symbol,
-                            config,
-                            addToSymbolCache: false);
-
-                        var localStartTime = dateTimeUtc.ConvertFromUtc(config.ExchangeTimeZone).AddDays(-1);
-                        var factory = new FineFundamentalSubscriptionEnumeratorFactory(_algorithm.LiveMode, x => new[] { localStartTime });
-                        var request = new SubscriptionRequest(true, universe, security, new SubscriptionDataConfig(config), localStartTime, localStartTime);
-                        using (var enumerator = factory.CreateEnumerator(request, dataProvider))
+                        var cacheKey = $"{sourceFactory.GetSource(config, localStartTime, false).Source}{dataType}";
+                        if (TextSubscriptionDataSourceReader.Cache.ContainsKey(cacheKey))
                         {
-                            if (enumerator.MoveNext())
+                            var fine = TextSubscriptionDataSourceReader.Cache[cacheKey].First();//.Clone();
+                            fine.Symbol = symbol;
+                            lock (fineCollection.Data)
                             {
-                                lock (fineCollection.Data)
+                                fineCollection.Data.Add(fine);
+                            }
+                        }
+                        else if(TextSubscriptionDataSourceReader.FineCache.TryGetValue(symbol, out datas))
+                        {
+                            var found = false;
+                            for (var i = 1; i < datas.Count; i++)
+                            {
+                                if (datas[i].Time > localStartTime)
                                 {
-                                    fineCollection.Data.Add(enumerator.Current);
+                                    var fine = datas[i - 1];//.Clone();
+                                    fine.Symbol = symbol;
+                                    found = true;
+                                    lock (fineCollection.Data)
+                                    {
+                                        fineCollection.Data.Add(fine);
+                                    }
+                                    break;
                                 }
                             }
+                            if (!found && localStartTime >= datas.First().Time)
+                            {
+                                var fine = datas.Last();
+                                fine.Symbol = symbol;
+                                lock (fineCollection.Data)
+                                {
+                                    fineCollection.Data.Add(fine);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            throw new Exception("No Fine data was found");
+                            //var security = _securityService.CreateSecurity(symbol,
+                            //    config,
+                            //    addToSymbolCache: false);
+                            //var factory = new FineFundamentalSubscriptionEnumeratorFactory(_algorithm.LiveMode, x => new[] { localStartTime });
+                            //var request = new SubscriptionRequest(true, universe, security, new SubscriptionDataConfig(config), localStartTime, localStartTime);
+                            //using (var enumerator = factory.CreateEnumerator(request, dataProvider))
+                            //{
+                            //    if (enumerator.MoveNext())
+                            //    {
+                            //        lock (fineCollection.Data)
+                            //        {
+                            //            fineCollection.Data.Add(enumerator.Current);
+                            //        }
+                            //    }
+                            //}
                         }
                     });
 
@@ -179,6 +222,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
                         universeData.Data.Add(fundamentals);
                     }
 
+                    Log.Trace($"after universeData.Data.Count {universeData.Data.Count}");
                     // END -- HACK ATTACK -- END
 
                     // perform the fine fundamental universe selection
