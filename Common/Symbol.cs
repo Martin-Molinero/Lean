@@ -25,6 +25,7 @@ namespace QuantConnect
     /// the SID is constant over the life of a security
     /// </summary>
     [JsonConverter(typeof(SymbolJsonConverter))]
+    [Serializable]
     public sealed class Symbol : IEquatable<Symbol>, IComparable
     {
         /// <summary>

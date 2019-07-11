@@ -20,12 +20,15 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
+using System.IO.MemoryMappedFiles;
 using System.Linq;
 using QuantConnect.Data;
 using QuantConnect.Interfaces;
 using QuantConnect.Lean.Engine.DataFeeds.Transport;
 using QuantConnect.Util;
 using System.Runtime.Caching;
+using System.Runtime.InteropServices;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
 using NodaTime;
 using QuantConnect.Data.Fundamental;
@@ -49,6 +52,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         private bool _shouldCacheDataPoints;
         private readonly IDataCacheProvider _dataCacheProvider;
         public static readonly ConcurrentDictionary<string, List<BaseData>> Cache = new ConcurrentDictionary<string, List<BaseData>>();
+        public static readonly ConcurrentDictionary<string, MemoryMappedFile> MemoryMappedFiles = new ConcurrentDictionary<string, MemoryMappedFile>();
 
         public static readonly ConcurrentDictionary<Symbol, List<BaseData>> FineCache
             = new ConcurrentDictionary<Symbol, List<BaseData>>();
@@ -104,7 +108,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
             }
 
             // fine data
-            if (true)
+            if (false)
             {
                 var fineType = typeof(FineFundamental);
                 var finePath = Path.Combine(Globals.DataFolder, "equity", "usa", "fundamental", "fine");
@@ -242,7 +246,22 @@ namespace QuantConnect.Lean.Engine.DataFeeds
                             }
                         }
 
-                        Cache[cacheKey] = cache;
+                        using (var memoryStream = new MemoryStream())
+                        {
+                            var formatter = new BinaryFormatter();
+                            formatter.Serialize(memoryStream, cache);
+                            var array = memoryStream.ToArray();
+                            var memMapFile = MemoryMappedFile.CreateNew($"{dataTypeStr}{Path.GetFileName(path)}".ToLower(),
+                                array.Length);
+                            using (var stream = memMapFile.CreateViewStream())
+                            {
+                                stream.Write(array, 0, array.Length);
+                            }
+
+                            MemoryMappedFiles[cacheKey] = memMapFile;
+                        }
+
+                        //Cache[cacheKey] = cache;
                         //BaseDataSourceCache.Add(new CacheItem(cacheKey, cache), CachePolicy);
                         if (isFine)
                         {
@@ -307,13 +326,30 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         /// <returns>An <see cref="IEnumerable{BaseData}"/> that contains the data in the source</returns>
         public IEnumerable<BaseData> Read(SubscriptionDataSource source)
         {
-            List<BaseData> cache;
+            List<BaseData> cache = null;
             _shouldCacheDataPoints = _shouldCacheDataPoints &&
                 // only cache local files
                 source.TransportMedium == SubscriptionTransportMedium.LocalFile;
             var cacheKey = source.Source + _config.Type;
 
-            if (!Cache.TryGetValue(cacheKey, out cache))
+            // Find the first data point 10 days (just in case) before the desired date
+            // and subtract one item (just in case there was a time gap and data.Time is after _date)
+            var isCoarse = _config.Type == typeof(CoarseFundamental);
+
+            if (isCoarse)
+            {
+                using (var memMapFile = MemoryMappedFile.OpenExisting(
+                    $"{typeof(CoarseFundamental)}{Path.GetFileName(source.Source)}".ToLower(),
+                    MemoryMappedFileRights.Read))
+                {
+                    using (var stream = memMapFile.CreateViewStream(0, 0, MemoryMappedFileAccess.Read))
+                    {
+                        var binaryFormatter = new BinaryFormatter();
+                        cache = binaryFormatter.Deserialize(stream) as List<BaseData>;
+                    }
+                }
+            }
+            if (cache == null && !Cache.TryGetValue(cacheKey, out cache))
             {
                 var cacheItem = _shouldCacheDataPoints ? BaseDataSourceCache.GetCacheItem(cacheKey) : null;
                 if (cacheItem == null)
@@ -376,9 +412,6 @@ namespace QuantConnect.Lean.Engine.DataFeeds
                 }
             }
 
-            // Find the first data point 10 days (just in case) before the desired date
-            // and subtract one item (just in case there was a time gap and data.Time is after _date)
-            var isCoarse = _config.Type == typeof(CoarseFundamental);
             var index = 0;
             if (!isCoarse)
             {

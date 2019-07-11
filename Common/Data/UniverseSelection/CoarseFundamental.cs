@@ -21,6 +21,7 @@ namespace QuantConnect.Data.UniverseSelection
     /// <summary>
     /// Defines summary information about a single symbol for a given date
     /// </summary>
+    [Serializable]
     public class CoarseFundamental : BaseData
     {
         /// <summary>

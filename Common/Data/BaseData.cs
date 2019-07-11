@@ -25,6 +25,7 @@ namespace QuantConnect.Data
     /// Abstract base data class of QuantConnect. It is intended to be extended to define
     /// generic user customizable data types while at the same time implementing the basics of data where possible
     /// </summary>
+    [Serializable]
     public abstract class BaseData : IBaseData
     {
         private MarketDataType _dataType = MarketDataType.Base;

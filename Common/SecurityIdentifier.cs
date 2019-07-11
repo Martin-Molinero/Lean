@@ -36,6 +36,7 @@ namespace QuantConnect
     /// The symbol is limited to 12 characters
     /// </remarks>
     [JsonConverter(typeof(SecurityIdentifierJsonConverter))]
+    [Serializable]
     public struct SecurityIdentifier : IEquatable<SecurityIdentifier>
     {
         #region Empty, DefaultDate Fields
@@ -785,6 +786,7 @@ namespace QuantConnect
         /// Provides a reference type container for a security identifier instance.
         /// This is used to maintain a reference to an underlying
         /// </summary>
+        [Serializable]
         private sealed class SidBox : IEquatable<SidBox>
         {
             public readonly SecurityIdentifier SecurityIdentifier;
