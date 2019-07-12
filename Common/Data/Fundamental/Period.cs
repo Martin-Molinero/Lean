@@ -75,4 +75,65 @@ namespace QuantConnect.Data.Fundamental
         /// </summary>
         public const string TenYears = "10Y";
     }
+
+    /// <summary>
+    /// Period constants for multi-period fields
+    /// </summary>
+    public static class IntPeriod
+    {
+        /// <summary>
+        /// Period constant for one month
+        /// </summary>
+        public const byte OneMonth = 1;
+
+        /// <summary>
+        /// Period constant for two months
+        /// </summary>
+        public const byte TwoMonths = 2;
+
+        /// <summary>
+        /// Period constant for three months
+        /// </summary>
+        public const byte ThreeMonths = 3;
+
+        /// <summary>
+        /// Period constant for six months
+        /// </summary>
+        public const byte SixMonths = 6;
+
+        /// <summary>
+        /// Period constant for nine months
+        /// </summary>
+        public const byte NineMonths = 9;
+
+        /// <summary>
+        /// Period constant for twelve months
+        /// </summary>
+        public const byte TwelveMonths = 12;
+
+        /// <summary>
+        /// Period constant for one year
+        /// </summary>
+        public const byte OneYear = 12;
+
+        /// <summary>
+        /// Period constant for two years
+        /// </summary>
+        public const byte TwoYears = 24;
+
+        /// <summary>
+        /// Period constant for three years
+        /// </summary>
+        public const byte ThreeYears = 36;
+
+        /// <summary>
+        /// Period constant for five years
+        /// </summary>
+        public const byte FiveYears = 60;
+
+        /// <summary>
+        /// Period constant for ten years
+        /// </summary>
+        public const byte TenYears = 120;
+    }
 }

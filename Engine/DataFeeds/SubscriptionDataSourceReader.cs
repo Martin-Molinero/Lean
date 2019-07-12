@@ -27,6 +27,11 @@ namespace QuantConnect.Lean.Engine.DataFeeds
     public static class SubscriptionDataSourceReader
     {
         /// <summary>
+        ///
+        /// </summary>
+        public static IBaseDataCacheProvider BaseDataCacheProvider { get; set; }
+
+        /// <summary>
         /// Creates a new <see cref="ISubscriptionDataSourceReader"/> capable of handling the specified <paramref name="source"/>
         /// </summary>
         /// <param name="source">The subscription data source to create a factory for</param>
@@ -37,6 +42,12 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         /// <returns>A new <see cref="ISubscriptionDataSourceReader"/> that can read the specified <paramref name="source"/></returns>
         public static ISubscriptionDataSourceReader ForSource(SubscriptionDataSource source, IDataCacheProvider dataCacheProvider, SubscriptionDataConfig config, DateTime date, bool isLiveMode)
         {
+            var sourceReader = BaseDataCacheProvider?.GetDataSourceReader(source, config, date);
+            if (sourceReader != null)
+            {
+                return sourceReader;
+            }
+
             switch (source.Format)
             {
                 case FileFormat.Csv:

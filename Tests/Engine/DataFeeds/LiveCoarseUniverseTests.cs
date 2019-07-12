@@ -72,11 +72,10 @@ namespace QuantConnect.Tests.Engine.DataFeeds
                         foreach (var symbol in coarseSymbols)
                         {
                             coarseData.Data.Add(
-                                new CoarseFundamental
+                                new CoarseFundamental(Market.USA)
                                 {
                                     Symbol = symbol,
                                     Time = time,
-                                    Market = Market.USA,
                                     Value = 100
                                 });
                         }

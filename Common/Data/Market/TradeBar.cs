@@ -130,16 +130,20 @@ namespace QuantConnect.Data.Market
         /// Return a new instance with the same values as this original.
         /// </summary>
         /// <param name="original">Original tradebar object we seek to clone</param>
-        public TradeBar(TradeBar original)
+        public TradeBar(TradeBar original,
+            decimal? open = null,
+            decimal? close = null,
+            decimal? high = null,
+            decimal? low = null)
         {
             DataType = MarketDataType.TradeBar;
             Time = new DateTime(original.Time.Ticks);
             Symbol = original.Symbol;
             Value = original.Close;
-            Open = original.Open;
-            High = original.High;
-            Low = original.Low;
-            Close = original.Close;
+            Open = open ?? original.Open;
+            High = high ?? original.High;
+            Low = low ?? original.Low;
+            Close = close ?? original.Close;
             Volume = original.Volume;
             Period = original.Period;
             _initialized = 1;

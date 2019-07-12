@@ -16,6 +16,7 @@
 
 using System;
 using Newtonsoft.Json;
+using ProtoBuf;
 
 namespace QuantConnect
 {
@@ -25,6 +26,7 @@ namespace QuantConnect
     /// the SID is constant over the life of a security
     /// </summary>
     [JsonConverter(typeof(SymbolJsonConverter))]
+    [ProtoContract]
     public sealed class Symbol : IEquatable<Symbol>, IComparable
     {
         /// <summary>
@@ -200,12 +202,14 @@ namespace QuantConnect
         /// <summary>
         /// Gets the current symbol for this ticker
         /// </summary>
-        public string Value { get; private set; }
+        [ProtoMember(1)]
+        public string Value { get; set; }
 
         /// <summary>
         /// Gets the security identifier for this symbol
         /// </summary>
-        public SecurityIdentifier ID { get; private set; }
+        [ProtoMember(2)]
+        public SecurityIdentifier ID { get; set; }
 
         /// <summary>
         /// Gets whether or not this <see cref="Symbol"/> is a derivative,
@@ -219,7 +223,8 @@ namespace QuantConnect
         /// <summary>
         /// Gets the security underlying symbol, if any
         /// </summary>
-        public Symbol Underlying { get; private set; }
+        [ProtoMember(3)]
+        public Symbol Underlying { get; set; }
 
 
         /// <summary>
@@ -234,6 +239,11 @@ namespace QuantConnect
         #endregion
 
         #region Constructors
+
+        public Symbol()
+        {
+
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Symbol"/> class

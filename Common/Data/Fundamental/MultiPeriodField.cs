@@ -13,13 +13,25 @@
  * limitations under the License.
 */
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
-using QuantConnect.Util;
 
 namespace QuantConnect.Data.Fundamental
 {
+    public struct PeriodField
+    {
+        public PeriodField(byte period, float value)
+        {
+            Period = period;
+            Value = value;
+        }
+
+        public byte Period { get; set; }
+        public float Value { get; set; }
+    }
+
     /// <summary>
     /// Abstract base class for multi-period fields
     /// </summary>
@@ -28,65 +40,86 @@ namespace QuantConnect.Data.Fundamental
         /// <summary>
         /// The dictionary store containing all values for the multi-period field
         /// </summary>
-        protected IDictionary<string, decimal> Store;
+        protected PeriodField[] Store;
 
         /// <summary>
         /// Gets the default period for the field
         /// </summary>
-        protected virtual string DefaultPeriod => Store.Keys.FirstOrDefault() ?? string.Empty;
+        protected virtual byte DefaultPeriod
+        {
+            get
+            {
+                if (Store == null)
+                {
+                    return 0;
+                }
+                var periodField = Store.FirstOrDefault();
+                return periodField.Period;
+            }
+        }
 
         /// <summary>
         /// Gets the value of the field for the requested period
         /// </summary>
         /// <param name="period">The requested period</param>
         /// <returns>The value for the period</returns>
-        public decimal GetPeriodValue(string period)
+        public decimal GetPeriodValue(byte period)
         {
-            decimal value;
-            return Store.TryGetValue(period, out value) ? value : 0m;
+            if (Store == null)
+            {
+                return 0;
+            }
+            return (decimal)Store.FirstOrDefault(field => field.Period == period).Value;
         }
 
         /// <summary>
         /// Returns true if the field contains a value for the requested period
         /// </summary>
         /// <param name="period">The requested period</param>
-        public bool HasPeriodValue(string period) => Store.ContainsKey(period);
+        public bool HasPeriodValue(byte period) => Store != null && Store.Any(field => field.Period == period);
 
         /// <summary>
         /// Returns true if the field contains a value for the default period
         /// </summary>
-        public bool HasValue => DefaultPeriod.Length > 0 && Store.ContainsKey(DefaultPeriod);
+        public bool HasValue => DefaultPeriod != 0;
 
         /// <summary>
         /// Gets the list of available period names for the field
         /// </summary>
         /// <returns>The list of periods</returns>
-        public IEnumerable<string> GetPeriodNames()
+        public IEnumerable<byte> GetPeriodNames()
         {
-            return Store.Keys;
+            if (Store == null)
+            {
+                return Enumerable.Empty<byte>();
+            }
+            return Store.Select(field => field.Period);
         }
 
         /// <summary>
         /// Gets a dictionary of period names and values for the field
         /// </summary>
         /// <returns>The dictionary of period names and values</returns>
-        public IReadOnlyDictionary<string, decimal> GetPeriodValues()
+        public IReadOnlyList<PeriodField> GetPeriodValues()
         {
-            return Store.ToReadOnlyDictionary();
+            if (Store == null)
+            {
+                return new List<PeriodField>();
+            }
+            return Store;
         }
 
         /// <summary>
         /// Returns the default value for the field
         /// </summary>
         [JsonIgnore]
-        public decimal Value
+        public float Value
         {
             get
             {
-                if (Store.Count == 0) return 0;
+                if (Store == null || Store.Length == 0) return 0;
 
-                decimal value;
-                return Store.TryGetValue(DefaultPeriod, out value) ? value : Store.First().Value;
+                return Store.First().Value;
             }
         }
 
@@ -96,7 +129,7 @@ namespace QuantConnect.Data.Fundamental
         /// <param name="field"></param>
         public static implicit operator decimal(MultiPeriodField field)
         {
-            return field.Value;
+            return (decimal)field.Value;
         }
 
         /// <summary>
@@ -104,9 +137,27 @@ namespace QuantConnect.Data.Fundamental
         /// </summary>
         /// <param name="period">The period</param>
         /// <param name="value">The value to be set</param>
-        public void SetPeriodValue(string period, decimal value)
+        public void SetPeriodValue(byte period, decimal value)
         {
-            Store[period] = value;
+            var newValue = new PeriodField(period, (float)value);
+            if (Store == null)
+            {
+                Store = new[] { newValue };
+            }
+            else
+            {
+                var existing = Array.Find(Store, field => field.Period == period);
+                if (!existing.Equals(default(PeriodField)))
+                {
+                    // if it exists we update it
+                    existing.Value = (float)value;
+                }
+                else
+                {
+                    // we add it
+                    Store = new List<PeriodField>(Store) { newValue }.ToArray();
+                }
+            }
         }
 
         /// <summary>
@@ -114,7 +165,7 @@ namespace QuantConnect.Data.Fundamental
         /// </summary>
         public bool HasValues()
         {
-            return Store.Count > 0;
+            return Store != null && Store.Length > 0;
         }
 
         /// <summary>
@@ -127,9 +178,13 @@ namespace QuantConnect.Data.Fundamental
             if (update == null)
                 return;
 
+            if (Store == null)
+            {
+                Store = new PeriodField[1];
+            }
             foreach (var kvp in update.Store)
             {
-                SetPeriodValue(kvp.Key, kvp.Value);
+                SetPeriodValue(kvp.Period, (decimal)kvp.Value);
             }
         }
 
@@ -142,7 +197,7 @@ namespace QuantConnect.Data.Fundamental
         /// <filterpriority>2</filterpriority>
         public override string ToString()
         {
-            return string.Join(";", Store.Select(x => x.Key + ":" + x.Value));
+            return string.Join(";", Store.Select(x => x.Period + ":" + x.Value));
         }
     }
 }

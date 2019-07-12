@@ -20,6 +20,8 @@ using System.Linq;
 using QuantConnect.Algorithm.CSharp;
 using QuantConnect.Configuration;
 using QuantConnect.Interfaces;
+using QuantConnect.Lean.Engine.DataFeeds;
+using QuantConnect.Util;
 
 namespace QuantConnect.Tests
 {
@@ -41,6 +43,13 @@ namespace QuantConnect.Tests
                 Config.Set("symbol-minute-limit", "100");
                 Config.Set("symbol-second-limit", "100");
                 Config.Set("symbol-tick-limit", "100");
+            }
+
+            if (SubscriptionDataSourceReader.BaseDataCacheProvider == null)
+            {
+                SubscriptionDataSourceReader.BaseDataCacheProvider = Composer.Instance.GetExportedValueByTypeName<IBaseDataCacheProvider>(
+                    Config.Get("base-data-cache-provider", "QuantConnect.Cloud.Server.CloudBaseDataCacheProvider"));
+                SubscriptionDataSourceReader.BaseDataCacheProvider.Initialize();
             }
 
             AlgorithmRunner.RunLocalBacktest(parameters.Algorithm, parameters.Statistics, parameters.AlphaStatistics, parameters.Language);

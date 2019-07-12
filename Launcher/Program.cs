@@ -19,10 +19,9 @@ using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
-using System.Windows.Forms;
 using QuantConnect.Configuration;
-using QuantConnect.Interfaces;
 using QuantConnect.Lean.Engine;
+using QuantConnect.Lean.Engine.DataFeeds;
 using QuantConnect.Logging;
 using QuantConnect.Packets;
 using QuantConnect.Util;
@@ -87,6 +86,10 @@ namespace QuantConnect.Lean.Launcher
 
             //Setup packeting, queue and controls system: These don't do much locally.
             leanEngineSystemHandlers.Initialize();
+
+            SubscriptionDataSourceReader.BaseDataCacheProvider = Composer.Instance.GetExportedValueByTypeName<IBaseDataCacheProvider>(
+                Config.Get("base-data-cache-provider", "QuantConnect.Lean.Engine.DataFeeds.NullBaseDataCacheProvider"));
+            SubscriptionDataSourceReader.BaseDataCacheProvider.Initialize();
 
             //-> Pull job from QuantConnect job queue, or, pull local build:
             string assemblyPath;

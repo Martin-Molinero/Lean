@@ -15,43 +15,51 @@
 
 using System;
 using System.IO;
+using ProtoBuf;
 
 namespace QuantConnect.Data.UniverseSelection
 {
     /// <summary>
     /// Defines summary information about a single symbol for a given date
     /// </summary>
+    [ProtoContract]
     public class CoarseFundamental : BaseData
     {
         /// <summary>
         /// Gets the market for this symbol
         /// </summary>
+        [ProtoMember(7)]
         public string Market { get; set; }
 
         /// <summary>
         /// Gets the day's dollar volume for this symbol
         /// </summary>
+        [ProtoMember(8)]
         public decimal DollarVolume { get; set; }
 
         /// <summary>
         /// Gets the day's total volume
         /// </summary>
+        [ProtoMember(9)]
         public long Volume { get; set; }
 
         /// <summary>
         /// Returns whether the symbol has fundamental data for the given date
         /// </summary>
+        [ProtoMember(10)]
         public bool HasFundamentalData { get; set; }
 
         /// <summary>
         /// Gets the price factor for the given date
         /// </summary>
-        public decimal PriceFactor { get; set; } = 1m;
+        [ProtoMember(11)]
+        public decimal PriceFactor { get; set; }
 
         /// <summary>
         /// Gets the split factor for the given date
         /// </summary>
-        public decimal SplitFactor { get; set; } = 1m;
+        [ProtoMember(12)]
+        public decimal SplitFactor { get; set; }
 
         /// <summary>
         /// Gets the combined factor used to create adjusted prices from raw prices
@@ -81,6 +89,25 @@ namespace QuantConnect.Data.UniverseSelection
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="CoarseFundamental"/> class
+        /// </summary>
+        public CoarseFundamental(string market = null,
+            decimal dollarVolume = 0,
+            long volume = 0,
+            bool hasFundamentalData = false,
+            decimal priceFactor = 1,
+            decimal splitFactor = 1)
+            : this()
+        {
+            Market = market;
+            DollarVolume = dollarVolume;
+            Volume = volume;
+            HasFundamentalData = hasFundamentalData;
+            PriceFactor = priceFactor;
+            SplitFactor = splitFactor;
+        }
+
+        /// <summary>
         /// Return the URL string source of the file. This will be converted to a stream
         /// </summary>
         /// <param name="config">Configuration object</param>
@@ -107,14 +134,13 @@ namespace QuantConnect.Data.UniverseSelection
             try
             {
                 var csv = line.Split(',');
-                var coarse = new CoarseFundamental
+                var coarse = new CoarseFundamental(config.Market,
+                    csv[4].ToDecimal(),
+                    csv[3].ToInt64())
                 {
                     Symbol = new Symbol(SecurityIdentifier.Parse(csv[0]), csv[1]),
                     Time = date,
-                    Market = config.Market,
-                    Value = csv[2].ToDecimal(),
-                    Volume = csv[3].ToInt64(),
-                    DollarVolume = csv[4].ToDecimal()
+                    Value = csv[2].ToDecimal()
                 };
 
                 if (csv.Length > 5)

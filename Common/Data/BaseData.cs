@@ -17,6 +17,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
+using ProtoBuf;
+using QuantConnect.Data.UniverseSelection;
 using QuantConnect.Util;
 
 namespace QuantConnect.Data
@@ -25,18 +27,19 @@ namespace QuantConnect.Data
     /// Abstract base data class of QuantConnect. It is intended to be extended to define
     /// generic user customizable data types while at the same time implementing the basics of data where possible
     /// </summary>
+    [ProtoContract]
+    [ProtoInclude(1, typeof(CoarseFundamental))]
     public abstract class BaseData : IBaseData
     {
         private MarketDataType _dataType = MarketDataType.Base;
         private DateTime _time;
-        private Symbol _symbol = Symbol.Empty;
-        private decimal _value;
         private bool _isFillForward;
 
         /// <summary>
         /// Market Data Type of this data - does it come in individual price packets or is it grouped into OHLC.
         /// </summary>
         /// <remarks>Data is classed into two categories - streams of instantaneous prices and groups of OHLC data.</remarks>
+        [ProtoMember(2)]
         public MarketDataType DataType
         {
             get
@@ -52,15 +55,18 @@ namespace QuantConnect.Data
         /// <summary>
         /// True if this is a fill forward piece of data
         /// </summary>
+        [ProtoMember(3)]
         public bool IsFillForward
         {
             get { return _isFillForward; }
+            set { _isFillForward = value; }
         }
 
         /// <summary>
         /// Current time marker of this data packet.
         /// </summary>
         /// <remarks>All data is timeseries based.</remarks>
+        [ProtoMember(4)]
         public DateTime Time
         {
             get
@@ -77,6 +83,7 @@ namespace QuantConnect.Data
         /// The end time of this data. Some data covers spans (trade bars) and as such we want
         /// to know the entire time span covered
         /// </summary>
+        [ProtoMember(5)]
         public virtual DateTime EndTime
         {
             get { return _time; }
@@ -86,33 +93,15 @@ namespace QuantConnect.Data
         /// <summary>
         /// Symbol representation for underlying Security
         /// </summary>
-        public Symbol Symbol
-        {
-            get
-            {
-                return _symbol;
-            }
-            set
-            {
-                _symbol = value;
-            }
-        }
+        [ProtoMember(6)]
+        public Symbol Symbol { get; set; }
 
         /// <summary>
         /// Value representation of this data packet. All data requires a representative value for this moment in time.
         /// For streams of data this is the price now, for OHLC packets this is the closing price.
         /// </summary>
-        public virtual decimal Value
-        {
-            get
-            {
-                return _value;
-            }
-            set
-            {
-                _value = value;
-            }
-        }
+        [ProtoMember(7)]
+        public virtual decimal Value { get; set; }
 
         /// <summary>
         /// As this is a backtesting platform we'll provide an alias of value as price.

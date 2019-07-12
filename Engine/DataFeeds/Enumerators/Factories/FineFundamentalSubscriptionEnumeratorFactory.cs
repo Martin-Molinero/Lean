@@ -70,20 +70,20 @@ namespace QuantConnect.Lean.Engine.DataFeeds.Enumerators.Factories
                     var fineFundamentalFactory = SubscriptionDataSourceReader.ForSource(fineFundamentalSource, dataCacheProvider, fineFundamentalConfiguration, date, _isLiveMode);
                     var fineFundamentalForDate = (FineFundamental)fineFundamentalFactory.Read(fineFundamentalSource).FirstOrDefault();
 
-                    yield return new FineFundamental
+                    yield return new FineFundamental(MarketDataType.Auxiliary,
+                        fineFundamentalForDate != null ? fineFundamentalForDate.CompanyReference : new CompanyReference(),
+                        fineFundamentalForDate != null ? fineFundamentalForDate.SecurityReference : new SecurityReference(),
+                        fineFundamentalForDate != null ? fineFundamentalForDate.FinancialStatements : new FinancialStatements(),
+                        fineFundamentalForDate != null ? fineFundamentalForDate.EarningReports : new EarningReports(),
+                        fineFundamentalForDate != null ? fineFundamentalForDate.OperationRatios : new OperationRatios(),
+                        fineFundamentalForDate != null ? fineFundamentalForDate.EarningRatios : new EarningRatios(),
+                        fineFundamentalForDate != null ? fineFundamentalForDate.ValuationRatios : new ValuationRatios(),
+                        fineFundamentalForDate != null ? fineFundamentalForDate.CompanyProfile : new CompanyProfile(),
+                        fineFundamentalForDate != null ? fineFundamentalForDate.AssetClassification : new AssetClassification()
+                        )
                     {
-                        DataType = MarketDataType.Auxiliary,
                         Symbol = request.Configuration.Symbol,
-                        Time = date,
-                        CompanyReference = fineFundamentalForDate != null ? fineFundamentalForDate.CompanyReference : new CompanyReference(),
-                        SecurityReference = fineFundamentalForDate != null ? fineFundamentalForDate.SecurityReference : new SecurityReference(),
-                        FinancialStatements = fineFundamentalForDate != null ? fineFundamentalForDate.FinancialStatements : new FinancialStatements(),
-                        EarningReports = fineFundamentalForDate != null ? fineFundamentalForDate.EarningReports : new EarningReports(),
-                        OperationRatios = fineFundamentalForDate != null ? fineFundamentalForDate.OperationRatios : new OperationRatios(),
-                        EarningRatios = fineFundamentalForDate != null ? fineFundamentalForDate.EarningRatios : new EarningRatios(),
-                        ValuationRatios = fineFundamentalForDate != null ? fineFundamentalForDate.ValuationRatios : new ValuationRatios(),
-                        AssetClassification = fineFundamentalForDate != null ? fineFundamentalForDate.AssetClassification : new AssetClassification(),
-                        CompanyProfile = fineFundamentalForDate != null ? fineFundamentalForDate.CompanyProfile : new CompanyProfile()
+                        Time = date
                     };
                 }
             }

@@ -113,15 +113,29 @@ namespace QuantConnect.Lean.Engine.DataFeeds
                             addToSymbolCache: false);
 
                         var localStartTime = dateTimeUtc.ConvertFromUtc(config.ExchangeTimeZone).AddDays(-1);
-                        var factory = new FineFundamentalSubscriptionEnumeratorFactory(_algorithm.LiveMode, x => new[] { localStartTime });
-                        var request = new SubscriptionRequest(true, universe, security, new SubscriptionDataConfig(config), localStartTime, localStartTime);
-                        using (var enumerator = factory.CreateEnumerator(request, dataProvider))
+
+                        // check the cache first
+                        var source = new FineFundamental().GetSource(config, localStartTime, _algorithm.LiveMode);
+                        var sourceReader = SubscriptionDataSourceReader.BaseDataCacheProvider?.GetDataSourceReader(source, config, localStartTime);
+                        if (sourceReader != null)
                         {
-                            if (enumerator.MoveNext())
+                            lock (fineCollection.Data)
                             {
-                                lock (fineCollection.Data)
+                                fineCollection.Data.AddRange(sourceReader.Read(source));
+                            }
+                        }
+                        else
+                        {
+                            var factory = new FineFundamentalSubscriptionEnumeratorFactory(_algorithm.LiveMode, x => new[] { localStartTime });
+                            var request = new SubscriptionRequest(true, universe, security, new SubscriptionDataConfig(config), localStartTime, localStartTime);
+                            using (var enumerator = factory.CreateEnumerator(request, dataProvider))
+                            {
+                                if (enumerator.MoveNext())
                                 {
-                                    fineCollection.Data.Add(enumerator.Current);
+                                    lock (fineCollection.Data)
+                                    {
+                                        fineCollection.Data.Add(enumerator.Current);
+                                    }
                                 }
                             }
                         }
@@ -143,21 +157,20 @@ namespace QuantConnect.Lean.Engine.DataFeeds
                     universeData.Data = new List<BaseData>();
                     foreach (var fine in fineCollection.Data.OfType<FineFundamental>())
                     {
-                        var fundamentals = new Fundamentals
+                        var fundamentals = new Fundamentals(fine.CompanyReference,
+                            fine.SecurityReference,
+                            fine.FinancialStatements,
+                            fine.EarningReports,
+                            fine.OperationRatios,
+                            fine.EarningRatios,
+                            fine.ValuationRatios,
+                            fine.CompanyProfile,
+                            fine.AssetClassification)
                         {
                             Symbol = fine.Symbol,
                             Time = fine.Time,
                             EndTime = fine.EndTime,
-                            DataType = fine.DataType,
-                            AssetClassification = fine.AssetClassification,
-                            CompanyProfile = fine.CompanyProfile,
-                            CompanyReference = fine.CompanyReference,
-                            EarningReports = fine.EarningReports,
-                            EarningRatios = fine.EarningRatios,
-                            FinancialStatements = fine.FinancialStatements,
-                            OperationRatios = fine.OperationRatios,
-                            SecurityReference = fine.SecurityReference,
-                            ValuationRatios = fine.ValuationRatios
+                            DataType = fine.DataType
                         };
 
                         CoarseFundamental coarse;

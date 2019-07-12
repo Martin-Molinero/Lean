@@ -62,9 +62,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds.Enumerators
                 var factor = _splitFactor;
                 if (factor != null)
                 {
-                    var close = AuxiliaryDataEnumerator.GetRawClose(
-                        eventArgs.LastBaseData?.Price ?? 0,
-                        _config);
+                    var close = eventArgs.LastBaseData?.Price ?? 0;
                     _splitFactor = null;
                     yield return new Split(
                         eventArgs.Symbol,
@@ -81,9 +79,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds.Enumerators
                     yield return new Split(
                         eventArgs.Symbol,
                         eventArgs.Date,
-                        AuxiliaryDataEnumerator.GetRawClose(
-                            eventArgs.LastBaseData?.Price ?? 0,
-                            _config),
+                        eventArgs.LastBaseData?.Price ?? 0,
                         splitFactor,
                         SplitType.Warning);
                 }

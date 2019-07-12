@@ -68,6 +68,47 @@ namespace QuantConnect
         }
 
         /// <summary>
+        ///
+        /// </summary>
+        public enum IntMarkets
+        {
+            /// <summary>
+            /// USA Market
+            /// </summary>
+            USA = 1,
+
+            /// <summary>
+            /// Oanda Market
+            /// </summary>
+            Oanda,
+
+            /// <summary>
+            /// FXCM Market Hours
+            /// </summary>
+            FXCM
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="intMarkets"></param>
+        /// <returns></returns>
+        public static string GetMarket(IntMarkets intMarkets)
+        {
+            switch (intMarkets)
+            {
+                case IntMarkets.USA:
+                    return USA;
+                case IntMarkets.Oanda:
+                    return Oanda;
+                case IntMarkets.FXCM:
+                    return FXCM;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(intMarkets), intMarkets, null);
+            }
+        }
+
+        /// <summary>
         /// USA Market
         /// </summary>
         public const string USA = "usa";

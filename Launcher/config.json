@@ -36,6 +36,7 @@
   "factor-file-provider": "QuantConnect.Data.Auxiliary.LocalDiskFactorFileProvider",
   "data-provider": "QuantConnect.Lean.Engine.DataFeeds.DefaultDataProvider",
   "alpha-handler": "QuantConnect.Lean.Engine.Alphas.DefaultAlphaHandler",
+  "base-data-cache-provider": "QuantConnect.Lean.Engine.DataFeeds.NullBaseDataCacheProvider",
 
   // limits on number of symbols to allow
   "symbol-minute-limit": 10000,

@@ -206,6 +206,28 @@ namespace QuantConnect.Data.Market
         }
 
         /// <summary>
+        /// Default initializer to setup an empty quotebar.
+        /// </summary>
+        public QuoteBar(QuoteBar quoteBar)
+        {
+            Symbol = quoteBar.Symbol;
+            Time = quoteBar.Time;
+            Bid = quoteBar.Bid == null ? null : new Bar(quoteBar.Bid.Open,
+                quoteBar.Bid.High,
+                quoteBar.Bid.Low,
+                quoteBar.Bid.Close);
+            Ask = quoteBar.Ask == null ? null : new Bar(quoteBar.Ask.Open,
+                quoteBar.Ask.High,
+                quoteBar.Ask.Low,
+                quoteBar.Ask.Close);
+            Value = quoteBar.Value;
+            Period = quoteBar.Period;
+            DataType = quoteBar.DataType;
+            LastBidSize = quoteBar.LastBidSize;
+            LastAskSize = quoteBar.LastAskSize;
+        }
+
+        /// <summary>
         /// Initialize Quote Bar with Bid(OHLC) and Ask(OHLC) Values:
         /// </summary>
         /// <param name="time">DateTime Timestamp of the bar</param>

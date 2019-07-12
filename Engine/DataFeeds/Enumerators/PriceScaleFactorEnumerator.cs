@@ -104,16 +104,19 @@ namespace QuantConnect.Lean.Engine.DataFeeds.Enumerators
                         var tradeBar = Current as TradeBar;
                         if (tradeBar != null)
                         {
-                            tradeBar.Open = _config.GetNormalizedPrice(tradeBar.Open);
-                            tradeBar.High = _config.GetNormalizedPrice(tradeBar.High);
-                            tradeBar.Low = _config.GetNormalizedPrice(tradeBar.Low);
-                            tradeBar.Close = _config.GetNormalizedPrice(tradeBar.Close);
+                            tradeBar = new TradeBar(tradeBar,
+                                _config.GetNormalizedPrice(tradeBar.Open),
+                                _config.GetNormalizedPrice(tradeBar.Close),
+                                _config.GetNormalizedPrice(tradeBar.High),
+                                _config.GetNormalizedPrice(tradeBar.Low));
+                            Current = tradeBar;
                         }
                         break;
                     case MarketDataType.Tick:
                         var tick = Current as Tick;
                         if (tick != null)
                         {
+                            tick = new Tick(tick);
                             if (securityType == SecurityType.Equity)
                             {
                                 tick.Value = _config.GetNormalizedPrice(tick.Value);
@@ -147,12 +150,14 @@ namespace QuantConnect.Lean.Engine.DataFeeds.Enumerators
                                     }
                                 }
                             }
+                            Current = tick;
                         }
                         break;
                     case MarketDataType.QuoteBar:
                         var quoteBar = Current as QuoteBar;
                         if (quoteBar != null)
                         {
+                            quoteBar = new QuoteBar(quoteBar);
                             if (quoteBar.Ask != null)
                             {
                                 quoteBar.Ask.Open = _config.GetNormalizedPrice(quoteBar.Ask.Open);
@@ -168,6 +173,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds.Enumerators
                                 quoteBar.Bid.Close = _config.GetNormalizedPrice(quoteBar.Bid.Close);
                             }
                             quoteBar.Value = quoteBar.Close;
+                            Current = quoteBar;
                         }
                         break;
                     case MarketDataType.Auxiliary:

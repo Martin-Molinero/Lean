@@ -159,5 +159,15 @@ namespace QuantConnect
                 { "LEAN Version", "v" + Globals.Version }
             };
         }
+
+        /// <summary>
+        /// Convert the bytes to a MB in double format for string display
+        /// </summary>
+        /// <param name="ramInBytes"></param>
+        /// <returns></returns>
+        public static double PrettyFormatRam(long ramInBytes)
+        {
+            return Math.Round(Convert.ToDouble(ramInBytes / (1024 * 1024)));
+        }
     }
 }

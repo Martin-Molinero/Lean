@@ -130,7 +130,7 @@ namespace QuantConnect
                 // if the rolling EMA > cap; or the spike is more than 2x the allocation.
                 if (memoryUsed > memoryCap || sample > spikeLimit)
                 {
-                    message = "Execution Security Error: Memory Usage Maxed Out - " + PrettyFormatRam(memoryCap) + "MB max, with last sample of " + PrettyFormatRam((long)sample) + "MB.";
+                    message = "Execution Security Error: Memory Usage Maxed Out - " + OS.PrettyFormatRam(memoryCap) + "MB max, with last sample of " + OS.PrettyFormatRam((long)sample) + "MB.";
                     break;
                 }
 
@@ -142,9 +142,9 @@ namespace QuantConnect
                     }
 
                     Log.Trace("Isolator.ExecuteWithTimeLimit(): " +
-                              $"Used: {PrettyFormatRam(memoryUsed)}, " +
-                              $"Sample: {PrettyFormatRam((long)sample)}, " +
-                              $"App: {PrettyFormatRam(OS.ApplicationMemoryUsed * 1024 * 1024)}, " +
+                              $"Used: {OS.PrettyFormatRam(memoryUsed)}, " +
+                              $"Sample: {OS.PrettyFormatRam((long)sample)}, " +
+                              $"App: {OS.PrettyFormatRam(OS.ApplicationMemoryUsed * 1024 * 1024)}, " +
                               $"CurrentTimeStepElapsed: {isolatorLimitResult.CurrentTimeStepElapsed:mm':'ss'.'fff}");
 
                     memoryLogger = DateTime.Now.AddMinutes(1);
@@ -197,16 +197,6 @@ namespace QuantConnect
         public bool ExecuteWithTimeLimit(TimeSpan timeSpan, Action codeBlock, long memoryCap, int sleepIntervalMillis = 1000, WorkerThread workerThread = null)
         {
             return ExecuteWithTimeLimit(timeSpan, null, codeBlock, memoryCap, sleepIntervalMillis, workerThread);
-        }
-
-        /// <summary>
-        /// Convert the bytes to a MB in double format for string display
-        /// </summary>
-        /// <param name="ramInBytes"></param>
-        /// <returns></returns>
-        private static double PrettyFormatRam(long ramInBytes)
-        {
-            return Math.Round(Convert.ToDouble(ramInBytes/(1024*1024)));
         }
     }
 }

@@ -52,6 +52,32 @@ namespace QuantConnect.Data.Fundamental
         }
 
         /// <summary>
+        /// Default constructor
+        /// </summary>
+        public Fundamentals(CompanyReference companyReference,
+            SecurityReference securityReference,
+            FinancialStatements financialStatements,
+            EarningReports earningReports,
+            OperationRatios operationRatios,
+            EarningRatios earningRatios,
+            ValuationRatios valuationRatios,
+            CompanyProfile companyProfile,
+            AssetClassification assetClassification)
+            : base(MarketDataType.Auxiliary,
+                companyReference,
+                securityReference,
+                financialStatements,
+                earningReports,
+                operationRatios,
+                earningRatios,
+                valuationRatios,
+                companyProfile,
+                assetClassification)
+        {
+            DataType = MarketDataType.Auxiliary;
+        }
+
+        /// <summary>
         /// Return the URL string source of the file. This will be converted to a stream
         /// </summary>
         public override SubscriptionDataSource GetSource(SubscriptionDataConfig config, DateTime date, bool isLiveMode)

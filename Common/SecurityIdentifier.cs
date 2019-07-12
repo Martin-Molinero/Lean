@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Newtonsoft.Json;
+using ProtoBuf;
 using QuantConnect.Configuration;
 using QuantConnect.Data.Auxiliary;
 using QuantConnect.Interfaces;
@@ -36,14 +37,15 @@ namespace QuantConnect
     /// The symbol is limited to 12 characters
     /// </remarks>
     [JsonConverter(typeof(SecurityIdentifierJsonConverter))]
+    [ProtoContract]
     public struct SecurityIdentifier : IEquatable<SecurityIdentifier>
     {
         #region Empty, DefaultDate Fields
 
-        private static readonly ConcurrentDictionary<string, SecurityIdentifier> SecurityIdentifierCache
-            = new ConcurrentDictionary<string, SecurityIdentifier>();
+        public static readonly ConcurrentDictionary<int, SecurityIdentifier> SecurityIdentifierCache
+            = new ConcurrentDictionary<int, SecurityIdentifier>();
         private static readonly string MapFileProviderTypeName = Config.Get("map-file-provider", "LocalDiskMapFileProvider");
-        private static readonly char[] InvalidCharacters = {'|', ' '};
+        private static readonly char[] InvalidCharacters = { '|', ' ' };
         private static IMapFileProvider _mapFileProvider;
         private static readonly object _mapFileProviderLock = new object();
 
@@ -98,9 +100,6 @@ namespace QuantConnect
 
         #region Member variables
 
-        private readonly string _symbol;
-        private readonly ulong _properties;
-        private readonly SidBox _underlying;
         private readonly int _hashCode;
         private decimal _strikePrice;
 
@@ -114,7 +113,7 @@ namespace QuantConnect
         /// </summary>
         public bool HasUnderlying
         {
-            get { return _underlying != null; }
+            get { return UnderlyingSidBox != null; }
         }
 
         /// <summary>
@@ -125,13 +124,15 @@ namespace QuantConnect
         {
             get
             {
-                if (_underlying == null)
+                if (UnderlyingSidBox == null)
                 {
                     throw new InvalidOperationException("No underlying specified for this identifier. Check that HasUnderlying is true before accessing the Underlying property.");
                 }
-                return _underlying.SecurityIdentifier;
+                return UnderlyingSidBox.SecurityIdentifier;
             }
         }
+
+        public SidBox UnderlyingSidBox { get; set; }
 
         /// <summary>
         /// Gets the date component of this identifier. For equities this
@@ -164,10 +165,7 @@ namespace QuantConnect
         /// For equities, by convention this is the first ticker symbol for which
         /// the security traded
         /// </summary>
-        public string Symbol
-        {
-            get { return _symbol; }
-        }
+        public string Symbol { get; set; }
 
         /// <summary>
         /// Gets the market component of this security identifier. If located in the
@@ -189,7 +187,29 @@ namespace QuantConnect
         /// <summary>
         /// Gets the security type component of this security identifier.
         /// </summary>
-        public SecurityType SecurityType { get; }
+        public SecurityType SecurityType { get; set; }
+
+        public ulong Properties { get; set; }
+
+        [ProtoMember(1)]
+        public string Protobuf
+        {
+            get
+            {
+                return ToString();
+            }
+            set
+            {
+                SecurityIdentifier securityIdentifier;
+                if (TryParse(value, out securityIdentifier))
+                {
+                    Properties = securityIdentifier.Properties;
+                    SecurityType = securityIdentifier.SecurityType;
+                    Symbol = securityIdentifier.Symbol;
+                    UnderlyingSidBox = securityIdentifier.UnderlyingSidBox;
+                }
+            }
+        }
 
         /// <summary>
         /// Gets the option strike price. This only applies to SecurityType.Option
@@ -270,12 +290,12 @@ namespace QuantConnect
             {
                 throw new ArgumentException("symbol must not contain the characters '|' or ' '.", "symbol");
             }
-            _symbol = symbol;
-            _properties = properties;
-            _underlying = null;
+            Symbol = symbol;
+            Properties = properties;
+            UnderlyingSidBox = null;
             _strikePrice = -1;
             SecurityType = (SecurityType)ExtractFromProperties(SecurityTypeOffset, SecurityTypeWidth, properties);
-            _hashCode = unchecked (symbol.GetHashCode() * 397) ^ properties.GetHashCode();
+            _hashCode = unchecked(symbol.GetHashCode() * 397) ^ properties.GetHashCode();
         }
 
         /// <summary>
@@ -292,12 +312,12 @@ namespace QuantConnect
             {
                 throw new ArgumentNullException("symbol", "SecurityIdentifier requires a non-null string 'symbol'");
             }
-            _symbol = symbol;
-            _properties = properties;
+            Symbol = symbol;
+            Properties = properties;
             // performance: directly call Equals(SecurityIdentifier other), shortcuts Equals(object other)
             if (!underlying.Equals(Empty))
             {
-                _underlying = new SidBox(underlying);
+                UnderlyingSidBox = new SidBox(underlying);
             }
         }
 
@@ -633,7 +653,7 @@ namespace QuantConnect
             return true;
         }
 
-        private static readonly char[] SplitSpace = {' '};
+        private static readonly char[] SplitSpace = { ' ' };
 
         /// <summary>
         /// Parses the string into its component ulong pieces
@@ -649,7 +669,7 @@ namespace QuantConnect
             }
 
             // for performance, we first verify if we already have parsed this SecurityIdentifier
-            if (SecurityIdentifierCache.TryGetValue(value, out identifier))
+            if (SecurityIdentifierCache.TryGetValue(value.GetHashCode(), out identifier))
             {
                 return true;
             }
@@ -684,7 +704,7 @@ namespace QuantConnect
                 return false;
             }
 
-            SecurityIdentifierCache.TryAdd(value, identifier);
+            SecurityIdentifierCache.TryAdd(value.GetHashCode(), identifier);
             return true;
         }
 
@@ -693,7 +713,7 @@ namespace QuantConnect
         /// </summary>
         private ulong ExtractFromProperties(ulong offset, ulong width)
         {
-            return ExtractFromProperties(offset, width, _properties);
+            return ExtractFromProperties(offset, width, Properties);
         }
 
         /// <summary>
@@ -718,9 +738,9 @@ namespace QuantConnect
         /// <param name="other">An object to compare with this object.</param>
         public bool Equals(SecurityIdentifier other)
         {
-            return _properties == other._properties
-                && _symbol == other._symbol
-                && _underlying == other._underlying;
+            return Properties == other.Properties
+                && Symbol == other.Symbol
+                && UnderlyingSidBox == other.UnderlyingSidBox;
         }
 
         /// <summary>
@@ -771,12 +791,12 @@ namespace QuantConnect
         /// <filterpriority>2</filterpriority>
         public override string ToString()
         {
-            var props = EncodeBase36(_properties);
+            var props = EncodeBase36(Properties);
             if (HasUnderlying)
             {
-                return _symbol + ' ' + props + '|' + _underlying.SecurityIdentifier;
+                return Symbol + ' ' + props + '|' + UnderlyingSidBox.SecurityIdentifier;
             }
-            return _symbol + ' ' + props;
+            return Symbol + ' ' + props;
         }
 
         #endregion
@@ -785,8 +805,10 @@ namespace QuantConnect
         /// Provides a reference type container for a security identifier instance.
         /// This is used to maintain a reference to an underlying
         /// </summary>
-        private sealed class SidBox : IEquatable<SidBox>
+        [ProtoContract]
+        public sealed class SidBox : IEquatable<SidBox>
         {
+            [ProtoMember(1)]
             public readonly SecurityIdentifier SecurityIdentifier;
             public SidBox(SecurityIdentifier securityIdentifier)
             {
