@@ -292,6 +292,7 @@
     <Compile Include="SECDataDownloader\SECDataDownloader.cs" />
     <Compile Include="SECDataDownloader\SECDataConverter.cs" />
     <Compile Include="SECDataDownloader\SECDataDownloaderProgram.cs" />
+    <Compile Include="SituatedFileWriter.cs" />
     <Compile Include="SmartInsider\SmartInsiderConverter.cs" />
     <Compile Include="SmartInsider\SmartInsiderProgram.cs" />
     <Compile Include="TemporaryPathProvider.cs" />

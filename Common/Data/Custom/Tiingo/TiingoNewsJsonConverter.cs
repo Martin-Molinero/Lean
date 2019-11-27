@@ -70,7 +70,7 @@ namespace QuantConnect.Data.Custom.Tiingo
                 foreach (var token in data)
                 {
                     var dataPoint = DeserializeNews(token);
-                    SetSymbolAndTime(dataPoint);
+                    SetSymbolAndTime(dataPoint, _symbol, _liveMode);
                     result.Add(dataPoint);
                 }
                 // we need to reverse the news data since it has newest data first
@@ -79,7 +79,7 @@ namespace QuantConnect.Data.Custom.Tiingo
             else
             {
                 var dataPoint = DeserializeNews(data);
-                SetSymbolAndTime(dataPoint);
+                SetSymbolAndTime(dataPoint, _symbol, _liveMode);
                 result.Add(dataPoint);
             }
 
@@ -166,12 +166,18 @@ namespace QuantConnect.Data.Custom.Tiingo
             return jToken.ToObject<DateTime>();
         }
 
-        private void SetSymbolAndTime(TiingoNews dataPoint)
+        /// <summary>
+        /// Sets the symbol and time for a Tiingo news instance
+        /// </summary>
+        /// <param name="dataPoint">The Tiingo news instance to set</param>
+        /// <param name="symbol">The Symbol to use</param>
+        /// <param name="liveMode">True if live mode</param>
+        public static void SetSymbolAndTime(TiingoNews dataPoint, Symbol symbol, bool liveMode)
         {
-            if (_symbol != null)
+            if (symbol != null)
             {
-                dataPoint.Symbol = _symbol;
-                if (_liveMode)
+                dataPoint.Symbol = symbol;
+                if (liveMode)
                 {
                     // for live use crawl date
                     dataPoint.Time = dataPoint.CrawlDate;

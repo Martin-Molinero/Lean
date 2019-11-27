@@ -29,6 +29,7 @@ namespace QuantConnect.Data.Custom.Tiingo
     /// https://api.tiingo.com/documentation/news
     /// </summary>
     /// <remarks>Requires setting <see cref="Tiingo.AuthCode"/></remarks>
+    [JsonObject(MemberSerialization.OptIn)]
     public class TiingoNews : IndexedBaseData
     {
         /// <summary>
@@ -48,48 +49,57 @@ namespace QuantConnect.Data.Custom.Tiingo
         /// <summary>
         /// The domain the news source is from.
         /// </summary>
+        [JsonProperty("source")]
         public string Source { get; set; }
 
         /// <summary>
         /// The datetime the news story was added to Tiingos database in UTC.
         /// This is always recorded by Tiingo and the news source has no input on this date.
         /// </summary>
+        [JsonProperty("crawl_date")]
         public DateTime CrawlDate { get; set; }
 
         /// <summary>
         /// URL of the news article.
         /// </summary>
+        [JsonProperty("url")]
         public string Url { get; set; }
 
         /// <summary>
         /// The datetime the news story was published in UTC. This is usually reported by the news source and not by Tiingo.
         /// If the news source does not declare a published date, Tiingo will use the time the news story was discovered by our crawler farm.
         /// </summary>
+        [JsonProperty("published_date")]
         public DateTime PublishedDate { get; set; }
 
         /// <summary>
         /// Tags that are mapped and discovered by Tiingo.
         /// </summary>
+        [JsonProperty("tags")]
         public List<string> Tags { get; set; }
 
         /// <summary>
         /// Long-form description of the news story.
         /// </summary>
+        [JsonProperty("description")]
         public string Description { get; set; }
 
         /// <summary>
         /// Title of the news article.
         /// </summary>
+        [JsonProperty("title")]
         public string Title { get; set; }
 
         /// <summary>
         /// Unique identifier specific to the news article.
         /// </summary>
+        [JsonProperty("article_id")]
         public string ArticleID { get; set; }
 
         /// <summary>
         /// What symbols are mentioned in the news story.
         /// </summary>
+        [JsonProperty("symbols")]
         public List<Symbol> Symbols { get; set; }
 
         /// <summary>
@@ -102,16 +112,24 @@ namespace QuantConnect.Data.Custom.Tiingo
         /// <returns>The <see cref="SubscriptionDataSource"/> instance to use</returns>
         public override SubscriptionDataSource GetSourceForAnIndex(SubscriptionDataConfig config, DateTime date, string index, bool isLiveMode)
         {
+            var indexData = index.Split(',');
+            var startingPosition = indexData[0].ToInt64();
+            var linesToRead = indexData[1].ToInt32();
+
             var source = Path.Combine(
                 Globals.DataFolder,
                 "alternative",
                 "tiingo",
                 "content",
-                $"{date.ToStringInvariant(DateFormat.EightCharacter)}.zip#{index}"
+                $"{date.ToStringInvariant(DateFormat.EightCharacter)}.txt"
             );
-            return new SubscriptionDataSource(source,
+
+            return new SubscriptionDataSource(
+                source,
                 SubscriptionTransportMedium.LocalFile,
-                FileFormat.Csv);
+                FileFormat.Csv,
+                startingPosition,
+                linesToRead);
         }
 
         /// <summary>
@@ -165,18 +183,19 @@ namespace QuantConnect.Data.Custom.Tiingo
         /// </returns>
         public override BaseData Reader(SubscriptionDataConfig config, string content, DateTime date, bool isLiveMode)
         {
-            var data = JsonConvert.DeserializeObject<List<TiingoNews>>(content,
-                new TiingoNewsJsonConverter(config.Symbol, isLiveMode));
-
             if (isLiveMode)
             {
+                var data = JsonConvert.DeserializeObject<List<TiingoNews>>(content,
+                    new TiingoNewsJsonConverter(config.Symbol, true));
+
                 // use the last news time, that's the most recent, as the collection time
                 var newest = data.LastOrDefault();
                 return new BaseDataCollection(newest?.Time ?? date, config.Symbol, data);
             }
             // we expect a single piece of news for backtesting
-            var single = data.Single();
-            return single;
+            var news = JsonConvert.DeserializeObject<TiingoNews>(content);
+            TiingoNewsJsonConverter.SetSymbolAndTime(news, config.Symbol, false);
+            return news;
         }
 
         /// <summary>

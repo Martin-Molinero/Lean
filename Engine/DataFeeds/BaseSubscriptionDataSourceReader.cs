@@ -92,6 +92,15 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         /// </summary>
         protected IStreamReader HandleLocalFileSource(SubscriptionDataSource source)
         {
+            if (source.StartingPosition.HasValue)
+            {
+                // handles zip or text files
+                return new LocalFileSubscriptionStreamReader(DataCacheProvider,
+                    source.Source,
+                    source.StartingPosition.Value,
+                    source.NumberOfLinesToRead ?? -1);
+            }
+
             // handles zip or text files
             return new LocalFileSubscriptionStreamReader(DataCacheProvider, source.Source);
         }

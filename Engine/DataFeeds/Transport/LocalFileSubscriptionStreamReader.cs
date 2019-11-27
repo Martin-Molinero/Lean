@@ -29,6 +29,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds.Transport
     public class LocalFileSubscriptionStreamReader : IStreamReader
     {
         private readonly ZipFile _zipFile;
+        private long _linesToRead = -1;
 
         /// <summary>
         /// Gets whether or not this stream reader should be rate limited
@@ -63,9 +64,11 @@ namespace QuantConnect.Lean.Engine.DataFeeds.Transport
         /// <param name="dataCacheProvider">The <see cref="IDataCacheProvider"/> used to retrieve a stream of data</param>
         /// <param name="source">The local file to be read</param>
         /// <param name="startingPosition">The position in the stream from which to start reading</param>
-        public LocalFileSubscriptionStreamReader(IDataCacheProvider dataCacheProvider, string source, long startingPosition)
+        /// <param name="linesToRead">Specifies the amount of lines to read, default -1 is no limit</param>
+        public LocalFileSubscriptionStreamReader(IDataCacheProvider dataCacheProvider, string source, long startingPosition, long linesToRead = -1)
         {
             var stream = dataCacheProvider.Fetch(source);
+            _linesToRead = linesToRead;
 
             if (stream != null)
             {
@@ -121,7 +124,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds.Transport
         /// </summary>
         public bool EndOfStream
         {
-            get { return StreamReader == null || StreamReader.EndOfStream; }
+            get { return _linesToRead == 0 || StreamReader == null || StreamReader.EndOfStream; }
         }
 
         /// <summary>
@@ -129,6 +132,11 @@ namespace QuantConnect.Lean.Engine.DataFeeds.Transport
         /// </summary>
         public string ReadLine()
         {
+            if (_linesToRead == 0)
+            {
+                return null;
+            }
+            _linesToRead = _linesToRead > 0 ? _linesToRead - 1 : _linesToRead;
             return StreamReader.ReadLine();
         }
 

@@ -135,7 +135,7 @@ namespace QuantConnect.ToolBox.TiingoNewsConverter
                             singleNewsData.ArticleID + ".json",
                             singleNewsData.PublishedDate,
                             // Formatting.None -> 1 line
-                            jNews.ToString(Formatting.None)
+                            JsonConvert.SerializeObject(singleNewsData, Formatting.None)
                         );
 
                         // store article by PublishDate
@@ -189,6 +189,16 @@ namespace QuantConnect.ToolBox.TiingoNewsConverter
         {
             var newsDateStr = date.ToStringInvariant(DateFormat.EightCharacter);
 
+            var newsIdAndPosition = new Dictionary<string, long>();
+            var contentPath = Path.Combine(_contentDirectory.FullName, $"{newsDateStr}.txt");
+            using (var streamWriter = new SituatedFileWriter(contentPath))
+            {
+                foreach (var article in newsForDate)
+                {
+                    newsIdAndPosition[article.ID] = streamWriter.WriteLine(article.RawData);
+                }
+            }
+
             var indexesToStore = indexesPerTicker.Where(index => index.Key.Date == date).ToList();
             foreach (var kvp in indexesToStore)
             {
@@ -201,7 +211,9 @@ namespace QuantConnect.ToolBox.TiingoNewsConverter
                         // we have to order the articles here when we are about to store them
                         // by publish date
                         var orderedArticles = kvp.Value.OrderBy(article => article.PublishDate).ToList();
-                        var data = string.Join(Environment.NewLine, orderedArticles.Select(article => article.ID));
+                        var data = string.Join(Environment.NewLine, orderedArticles
+                             // we get the position number for an article ID. '1' because we want to read just 1 line
+                            .Select(article => $"{newsIdAndPosition[article.ID]},1"));
 
                         // the ticker directory
                         var tickerDir = Directory.CreateDirectory(
@@ -219,25 +231,11 @@ namespace QuantConnect.ToolBox.TiingoNewsConverter
                     }
                     catch (Exception exception)
                     {
-                        Log.Error($"TiingoNewsConverter.Convert(): Failed to store index: {indexKey}", exception);
+                        Log.Error($"TiingoNewsConverter.Convert(): Failed to store index: {indexKey.Date} {indexKey.Ticker} - {exception.Message}");
                     }
                 }));
 
                 indexesPerTicker.Remove(indexKey);
-            }
-
-            if (newsForDate.Count > 0)
-            {
-                // Store news for date: this is slow so send it to a task too
-                ioTasks.Enqueue(Task.Run(() =>
-                {
-                    var data = newsForDate.ToDictionary(article => article.ID, article => article.RawData);
-                    var contentPath = Path.Combine(_contentDirectory.FullName, $"{newsDateStr}.zip");
-                    if (!Compression.ZipData(contentPath, data))
-                    {
-                        Log.Error($"TiingoNewsConverter.Convert(): Failed to store news: {contentPath}");
-                    }
-                }));
             }
         }
 

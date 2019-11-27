@@ -46,6 +46,16 @@ namespace QuantConnect.Data
         public readonly IReadOnlyList<KeyValuePair<string, string>> Headers;
 
         /// <summary>
+        /// The starting position in bytes of the provided source
+        /// </summary>
+        public readonly long? StartingPosition;
+
+        /// <summary>
+        /// The number of lines to be read from the source
+        /// </summary>
+        public readonly long? NumberOfLinesToRead;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionDataSource"/> class.
         /// </summary>
         /// <param name="source">The subscription's data source location</param>
@@ -61,8 +71,14 @@ namespace QuantConnect.Data
         /// <param name="source">The subscription's data source location</param>
         /// <param name="transportMedium">The transport medium to be used to retrieve the subscription's data from the source</param>
         /// <param name="format">The format of the data within the source</param>
-        public SubscriptionDataSource(string source, SubscriptionTransportMedium transportMedium, FileFormat format)
-            : this(source, transportMedium, format, null)
+        /// <param name="startingPosition">The starting position in bytes of the provided source</param>
+        /// <param name="numberOfLinesToRead">The number of lines to be read from the source</param>
+        public SubscriptionDataSource(string source,
+            SubscriptionTransportMedium transportMedium,
+            FileFormat format,
+            long? startingPosition = null,
+            long? numberOfLinesToRead = null)
+            : this(source, transportMedium, format, null, startingPosition, numberOfLinesToRead)
         {
         }
 
@@ -74,12 +90,21 @@ namespace QuantConnect.Data
         /// <param name="transportMedium">The transport medium to be used to retrieve the subscription's data from the source</param>
         /// <param name="format">The format of the data within the source</param>
         /// <param name="headers">The headers to be used for this source</param>
-        public SubscriptionDataSource(string source, SubscriptionTransportMedium transportMedium, FileFormat format, IEnumerable<KeyValuePair<string, string>> headers)
+        /// <param name="startingPosition">The starting position in bytes of the provided source</param>
+        /// <param name="numberOfLinesToRead">The number of lines to be read from the source</param>
+        public SubscriptionDataSource(string source,
+            SubscriptionTransportMedium transportMedium,
+            FileFormat format,
+            IEnumerable<KeyValuePair<string, string>> headers,
+            long? startingPosition = null,
+            long? numberOfLinesToRead = null)
         {
             Source = source;
             Format = format;
             TransportMedium = transportMedium;
             Headers = (headers?.ToList() ?? new List<KeyValuePair<string, string>>()).AsReadOnly();
+            StartingPosition = startingPosition;
+            NumberOfLinesToRead = numberOfLinesToRead;
         }
 
         /// <summary>
