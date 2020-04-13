@@ -77,7 +77,7 @@ namespace QuantConnect.Lean.Engine.HistoricalData
         /// <summary>
         /// Creates a subscription to process the request
         /// </summary>
-        private Subscription CreateSubscription(HistoryRequest request, DateTime start, DateTime end)
+        protected virtual Subscription CreateSubscription(HistoryRequest request, DateTime start, DateTime end)
         {
             // data reader expects these values in local times
             start = start.ConvertFromUtc(request.ExchangeHours.TimeZone);
@@ -131,14 +131,13 @@ namespace QuantConnect.Lean.Engine.HistoricalData
             dataReader.DownloadFailed += (sender, args) => { OnDownloadFailed(args); };
             dataReader.ReaderErrorDetected += (sender, args) => { OnReaderErrorDetected(args); };
 
-            var reader = CorporateEventEnumeratorFactory.CreateEnumerators(
+            var reader = AddCorporateEventEnumerator(
                 dataReader,
                 config,
-                _factorFileProvider,
                 dataReader,
                 mapFileResolver,
-                false,
-                start);
+                start,
+                request);
 
             // optionally apply fill forward behavior
             if (request.FillForwardResolution.HasValue)
@@ -175,6 +174,19 @@ namespace QuantConnect.Lean.Engine.HistoricalData
                 return SubscriptionUtils.CreateAndScheduleWorker(subscriptionRequest, reader);
             }
             return SubscriptionUtils.Create(subscriptionRequest, reader);
+        }
+
+        /// <summary>
+        /// Adds the corporate event enumerator to the stack, in charge of split, dividends, mappings and price scaling
+        /// </summary>
+        protected virtual IEnumerator<BaseData> AddCorporateEventEnumerator(IEnumerator<BaseData> rawData,
+            SubscriptionDataConfig config,
+            ITradableDatesNotifier tradableDatesNotifier,
+            MapFileResolver mapFileResolver,
+            DateTime start,
+            HistoryRequest request)
+        {
+            return CorporateEventEnumeratorFactory.CreateEnumerators(rawData, config, _factorFileProvider, tradableDatesNotifier, mapFileResolver, false, start);
         }
 
         private class FilterEnumerator<T> : IEnumerator<T>
