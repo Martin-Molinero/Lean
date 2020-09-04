@@ -15,6 +15,7 @@
 */
 
 using System;
+using System.Runtime.CompilerServices;
 
 namespace QuantConnect.Lean.Engine.DataFeeds.WorkScheduling
 {
@@ -47,6 +48,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds.WorkScheduling
         /// <summary>
         /// Updates the weight of this work item
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int UpdateWeight()
         {
             Weight = _weightFunc();
