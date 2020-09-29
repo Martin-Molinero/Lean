@@ -31,7 +31,6 @@ namespace QuantConnect.Lean.Engine.DataFeeds
     public class TimeSliceFactory
     {
         private readonly DateTimeZone _timeZone;
-        private Dictionary<Symbol, Symbol> _futureCanonicalSymbol;
 
         // performance: these collections are not always used so keep a reference to an empty
         // instance to use and avoid unnecessary constructors and allocations
