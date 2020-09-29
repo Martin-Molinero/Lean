@@ -47,9 +47,8 @@ Next we must prepare a Python installation for Lean to use. Follow the instructi
         - Value: `{python dll location}`
 4. Install [pandas=0.25.3](https://pandas.pydata.org/) and its [dependencies](https://pandas.pydata.org/pandas-docs/stable/install.html#dependencies).
 5. Install [wrapt=1.11.2](https://pypi.org/project/wrapt/) module.
-6. Reboot computer to ensure changes are propagated.
-
-<br />
+6. Install [pyarrow=1.0.1](https://arrow.apache.org/install/) module.
+7. Reboot computer to ensure changes are propagated.
 
 ### [macOS](https://github.com/QuantConnect/Lean#macos)
 
@@ -66,6 +65,7 @@ Next we must prepare a Python installation for Lean to use. Follow the instructi
    ```
 2. Install [pandas=0.25.3](https://pandas.pydata.org/) and its [dependencies](https://pandas.pydata.org/pandas-docs/stable/install.html#dependencies).
 3. Install [wrapt=1.11.2](https://pypi.org/project/wrapt/) module.
+4. Install [pyarrow=1.0.1](https://arrow.apache.org/install/) module.
 
 <br />
 
@@ -78,6 +78,10 @@ wget https://cdn.quantconnect.com/miniconda/Miniconda3-4.5.12-Linux-x86_64.sh
 bash Miniconda3-4.5.12-Linux-x86_64.sh -b
 rm -rf Miniconda3-4.5.12-Linux-x86_64.sh
 conda update -y python conda pip
+conda install -y cython=0.29.11
+conda install -y pandas=0.25.3
+conda install -y wrapt=1.11.2
+pip install pyarrow==1.0.1
 ```
 2. Create a new Python environment with the needed dependencies
 ```
