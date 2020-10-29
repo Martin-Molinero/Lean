@@ -336,6 +336,7 @@
     <Compile Include="Data\Custom\SmartInsider\SmartInsiderTransaction.cs" />
     <Compile Include="Data\IndexedBasedData.cs" />
     <Compile Include="Data\DataQueueHandlerSubscriptionManager.cs" />
+    <Compile Include="Data\UniverseSelection\ContinuousFutureUniverse.cs" />
     <Compile Include="Data\UniverseSelection\UniversePythonWrapper.cs" />
     <Compile Include="ExtendedDictionary.cs" />
     <Compile Include="Data\SubscriptionDataConfigExtensions.cs" />
