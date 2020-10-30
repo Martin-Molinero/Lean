@@ -314,6 +314,11 @@ namespace QuantConnect
 
                 return new Symbol(ID, alias, underlyingSymbol);
             }
+            else if(ID.SecurityType == SecurityType.Future)
+            {
+                var id = SecurityIdentifier.Parse(mappedSymbol);
+                return new Symbol(id, id.Symbol, Underlying);
+            }
             else
             {
                 return new Symbol(ID, mappedSymbol, Underlying);
