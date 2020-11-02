@@ -162,6 +162,15 @@ namespace QuantConnect.Lean.Engine.HistoricalData
                 false,
                 startTimeLocal);
 
+            if (request.Symbol.SecurityType == SecurityType.Future && request.Symbol.IsCanonical())
+            {
+                // mapping for the continuous future
+                // TODO: won't work for live trading requests, where we could perform multiple history requests
+                var mapper = new FutureMappingEventProvider(config);
+                dataReader.NewTradableDate += mapper.HandleNewTradableDate;
+                reader = new ContinuousContractEnumerator(reader, request.Symbol);
+            }
+
             // optionally apply fill forward behavior
             if (request.FillForwardResolution.HasValue)
             {

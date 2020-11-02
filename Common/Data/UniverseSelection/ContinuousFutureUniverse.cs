@@ -29,7 +29,7 @@ namespace QuantConnect.Data.UniverseSelection
         public override UniverseSettings UniverseSettings { get; }
 
         public ContinuousFutureUniverse(Future future, UniverseSettings universeSettings, IFutureChainProvider chainProvider)
-            : base(future.SubscriptionDataConfig)
+            : base(new SubscriptionDataConfig(future.SubscriptionDataConfig, symbol: Symbol.CreateFuture($"{future.Symbol.ID.Symbol}-CONTINUOUS-UNIVERSE", future.Symbol.ID.Market, SecurityIdentifier.DefaultDate)))
         {
             _chainProvider = chainProvider;
             UniverseSettings = universeSettings;
@@ -38,12 +38,16 @@ namespace QuantConnect.Data.UniverseSelection
 
         public override IEnumerable<Symbol> SelectSymbols(DateTime utcTime, BaseDataCollection data)
         {
-            var chain = _chainProvider.GetFutureContractList(Configuration.Symbol, utcTime);
+            var chain = _chainProvider.GetFutureContractList(_future.Symbol, utcTime);
             // 'FutureFilterUniverse' could be provided by the user
             // volume roll style? history?
-            var filter = new FutureFilterUniverse(chain, data).Expiration(5, 100).FrontMonth();
+            var selectedFutureContract = new FutureFilterUniverse(chain, data).Expiration(5, 100).FrontMonth().SingleOrDefault();
+            if (selectedFutureContract == null)
+            {
+                return Unchanged;
+            }
 
-            return filter;
+            return new[] { selectedFutureContract };
         }
 
         public override IEnumerable<SubscriptionRequest> GetSubscriptionRequests(
@@ -65,16 +69,20 @@ namespace QuantConnect.Data.UniverseSelection
                 // we keep the underlying rolling, allow the user to access the current real data contract symbol
                 _future.Underlying = security;
                 // we update our continuous future price cache to the new securities
-                _future.Cache = security.Cache;
+                //_future.Cache = security.Cache;
             }
 
-            return result.Select(config => new SubscriptionRequest(isUniverseSubscription: false,
-                universe: this,
-                // This is where the magic happens, the symbol in config is the real actual contract but we push the update to the canonical security
-                security: _future,
-                configuration: config,
-                startTimeUtc: currentTimeUtc,
-                endTimeUtc: maximumEndTimeUtc));
+            return result.SelectMany(config =>
+            {
+                return new[] { security, _future }.Select(targetSecurity => new SubscriptionRequest(
+                      isUniverseSubscription: false,
+                      universe: this,
+                      // This is where the magic happens, the symbol in config is the real actual contract but we push the update to the canonical security
+                      security: targetSecurity,
+                      configuration: config,
+                      startTimeUtc: currentTimeUtc,
+                      endTimeUtc: maximumEndTimeUtc));
+            });
         }
 
         /// <summary>

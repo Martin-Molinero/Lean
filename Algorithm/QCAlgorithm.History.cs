@@ -573,7 +573,7 @@ namespace QuantConnect.Algorithm
         {
             var sentMessage = false;
             // filter out any universe securities that may have made it this far
-            var reqs = requests.Where(hr => !UniverseManager.ContainsKey(hr.Symbol)).ToList();
+            var reqs = requests.Where(hr => !UniverseManager.ContainsKey(hr.Symbol) || hr.Symbol.SecurityType == SecurityType.Future).ToList();
             foreach (var request in reqs)
             {
                 // prevent future requests
@@ -601,7 +601,7 @@ namespace QuantConnect.Algorithm
         /// </summary>
         private IEnumerable<HistoryRequest> CreateDateRangeHistoryRequests(IEnumerable<Symbol> symbols, DateTime startAlgoTz, DateTime endAlgoTz, Resolution? resolution = null, bool? fillForward = null, bool? extendedMarket = null)
         {
-            return symbols.Where(x => !x.IsCanonical()).SelectMany(x =>
+            return symbols.SelectMany(x =>
             {
                 var requests = new List<HistoryRequest>();
 
@@ -626,7 +626,7 @@ namespace QuantConnect.Algorithm
         /// </summary>
         private IEnumerable<HistoryRequest> CreateBarCountHistoryRequests(IEnumerable<Symbol> symbols, int periods, Resolution? resolution = null)
         {
-            return symbols.Where(x => !x.IsCanonical()).SelectMany(x =>
+            return symbols.Where(x => !x.IsCanonical() || x.SecurityType == SecurityType.Future).SelectMany(x =>
             {
                 var res = GetResolution(x, resolution);
                 var exchange = GetExchangeHours(x);

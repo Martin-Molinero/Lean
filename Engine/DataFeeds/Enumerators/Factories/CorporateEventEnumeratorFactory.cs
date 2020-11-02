@@ -54,25 +54,6 @@ namespace QuantConnect.Lean.Engine.DataFeeds.Enumerators.Factories
             DateTime startTime,
             bool enablePriceScaling = true)
         {
-            ITradableDateEventProvider[] tradableDateEventProviders;
-            if (config.SecurityType == SecurityType.Future)
-            {
-                tradableDateEventProviders = new ITradableDateEventProvider[]
-                {
-
-                };
-            }
-            else
-            {
-                tradableDateEventProviders = new ITradableDateEventProvider[]
-                {
-                    new MappingEventProvider(),
-                    new SplitEventProvider(),
-                    new DividendEventProvider(),
-                    new DelistingEventProvider()
-                };
-            }
-
             var lazyFactorFile =
                 new Lazy<FactorFile>(() => SubscriptionUtils.GetFactorFileToUse(config, factorFileProvider));
 
@@ -80,7 +61,13 @@ namespace QuantConnect.Lean.Engine.DataFeeds.Enumerators.Factories
                 config,
                 lazyFactorFile,
                 new Lazy<MapFile>(() => GetMapFileToUse(config, mapFileResolver)),
-                tradableDateEventProviders,
+                new ITradableDateEventProvider[]
+                {
+                    new MappingEventProvider(),
+                    new SplitEventProvider(),
+                    new DividendEventProvider(),
+                    new DelistingEventProvider()
+                },
                 tradableDayNotifier,
                 includeAuxiliaryData,
                 startTime);

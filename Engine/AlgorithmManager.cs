@@ -257,6 +257,8 @@ namespace QuantConnect.Lean.Engine
                         {
                             security.IsTradable = false;
                         }
+
+                        var manager = algorithm.UniverseManager;
                     }
 
                     realtime.OnSecuritiesChanged(timeSlice.SecurityChanges);

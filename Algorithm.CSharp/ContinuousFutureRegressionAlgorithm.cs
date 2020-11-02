@@ -18,6 +18,7 @@ using QuantConnect.Data;
 using QuantConnect.Interfaces;
 using QuantConnect.Data.Market;
 using System.Collections.Generic;
+using System.Linq;
 using QuantConnect.Orders;
 using QuantConnect.Securities.Future;
 
@@ -57,28 +58,24 @@ namespace QuantConnect.Algorithm.CSharp
                 var quotes = data.Get<QuoteBar>();
                 if (quotes.ContainsKey(_continuousFuture.Symbol))
                 {
-                    //Log($"{Time}-{_continuousFuture.Underlying.Symbol}-V1- {quotes[_continuousFuture.Symbol]}");
-                    //Log($"{Time}-{_continuousFuture.Underlying.Symbol}-V2- {Securities[_continuousFuture.Symbol].GetLastData()}");
-                    Log($"{Time}-V1- {quotes[_continuousFuture.Symbol]}");
-                    Log($"{Time}-V2- {Securities[_continuousFuture.Symbol].GetLastData()}");
+                    Log($"{Time}-{_continuousFuture.Underlying.Symbol}-V1- {quotes[_continuousFuture.Symbol]}");
+                    Log($"{Time}-{_continuousFuture.Underlying.Symbol}-V2- {Securities[_continuousFuture.Symbol].GetLastData()}");
                 }
 
                 if (Portfolio.Invested)
                 {
-                    Liquidate();
+                    //Liquidate();
                 }
                 else
                 {
-                    // This works because we set this contract as tradable, even if it's a canonical security
-                    Buy(_continuousFuture.Symbol, 1);
-
-                    //Buy(_continuousFuture.Underlying.Symbol, 1); // this works too -> 
+                    // users have to trade the current contract, matching live trading behavior
+                    Buy(_continuousFuture.Underlying.Symbol, 1);
                 }
 
                 // TODO: internally, once we have the start and end date we could use the 'ContinuousFutureUniverse.SelectSymbols(eachDay, null)' or similar to get the symbol for that date
                 // and create the sub history requests for each contract.
                 // Could do this at the QCAlgorithm side so that we don't need to change the history provider at all, but will mean direct access to the history provider wont work
-                //var response = History(new[] { _continuousFuture.Symbol }, 10000);
+                var response = History(new[] { _continuousFuture.Symbol }, 100000).ToList();
             }
         }
 

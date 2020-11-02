@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using QuantConnect.Data;
 using QuantConnect.Securities;
+using QuantConnect.Securities.Interfaces;
 
 namespace QuantConnect.Interfaces
 {
@@ -72,6 +73,9 @@ namespace QuantConnect.Interfaces
         /// </summary>
         Symbol Symbol { get; }
 
+        SecurityExchange Exchange { get; }
+
+        ISecurityDataFilter DataFilter { get; }
         /// <summary>
         /// Update any security properties based on the latest market data and time
         /// </summary>

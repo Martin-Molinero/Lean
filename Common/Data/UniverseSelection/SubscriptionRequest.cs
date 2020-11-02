@@ -94,7 +94,7 @@ namespace QuantConnect.Data.UniverseSelection
         /// </summary>
         public SubscriptionRequest(bool isUniverseSubscription,
             Universe universe,
-            Security security,
+            ISecurityPrice security,
             SubscriptionDataConfig configuration,
             DateTime startTimeUtc,
             DateTime endTimeUtc)

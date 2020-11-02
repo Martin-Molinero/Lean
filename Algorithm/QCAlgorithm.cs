@@ -1528,7 +1528,6 @@ namespace QuantConnect.Algorithm
                     }
                     else
                     {
-                        security.IsTradable = true;
                         AddUniverse(new ContinuousFutureUniverse((Future)security, settings, FutureChainProvider));
 
                         universe = new FuturesChainUniverse((Future)security, settings);
