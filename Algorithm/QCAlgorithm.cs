@@ -1529,15 +1529,7 @@ namespace QuantConnect.Algorithm
                     else
                     {
                         security.IsTradable = true;
-                        //universe = new ContinuousFutureUniverse((Future)security, settings, FutureChainProvider);
-                        //AddUniverse(universe);
-                        var continuousConfigs = SubscriptionManager.SubscriptionDataConfigService.Add(symbol,
-                            resolution,
-                            fillDataForward,
-                            extendedMarketHours,
-                            isFilteredSubscription: false,
-                            subscriptionDataTypes: new List<Tuple<Type, TickType>> { new Tuple<Type, TickType>(typeof(QuoteBar), TickType.Quote)});
-                        AddToUserDefinedUniverse(security, continuousConfigs);
+                        AddUniverse(new ContinuousFutureUniverse((Future)security, settings, FutureChainProvider));
 
                         universe = new FuturesChainUniverse((Future)security, settings);
                     }

@@ -63,23 +63,22 @@ namespace QuantConnect.Data.UniverseSelection
             if (_future.Underlying == null || security.Symbol.ID.Date > _future.Underlying.Symbol.ID.Date)
             {
                 // we keep the underlying rolling, allow the user to access the current real data contract symbol
-                // TODO: but this could be skipped really if the remapped the data in the stack before emitting
                 _future.Underlying = security;
                 // we update our continuous future price cache to the new securities
-                _future.Cache = security.Cache; //we don't need this really, we trade with the continuous contract,
+                _future.Cache = security.Cache;
             }
 
             return result.Select(config => new SubscriptionRequest(isUniverseSubscription: false,
                 universe: this,
-                security: _future, // This is where the magic happens
+                // This is where the magic happens, the symbol in config is the real actual contract but we push the update to the canonical security
+                security: _future,
                 configuration: config,
                 startTimeUtc: currentTimeUtc,
                 endTimeUtc: maximumEndTimeUtc));
         }
 
         /// <summary>
-        /// Each tradeable day of the future we trigger a new selection.
-        /// Allows use to select the current contract
+        /// Each tradeable day of the future we trigger a new selection. Allows use to update the current contract
         /// </summary>
         public IEnumerable<DateTime> GetTriggerTimes(DateTime startTimeUtc, DateTime endTimeUtc, MarketHoursDatabase marketHoursDatabase)
         {
