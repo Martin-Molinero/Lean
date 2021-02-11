@@ -137,12 +137,17 @@ namespace QuantConnect.Data.Market
                 return new SubscriptionDataSource(string.Empty, SubscriptionTransportMedium.Streaming);
             }
 
-            var source = LeanData.GenerateZipFilePath(Globals.DataFolder, config.Symbol, date, config.Resolution, config.TickType);
+            var source = LeanData.GenerateZipFilePath(Globals.DataFolder, config.Symbol, date, Resolution.Tick, TickType.OpenInterest);
+            if (config.Symbol.IsCanonical())
+            {
+                return new SubscriptionDataSource(source, SubscriptionTransportMedium.LocalFile, FileFormat.ZipCollection);
+            }
+
             if (config.SecurityType == SecurityType.Option ||
                 config.SecurityType == SecurityType.FutureOption ||
                 config.SecurityType == SecurityType.Future)
             {
-                source += "#" + LeanData.GenerateZipEntryName(config.Symbol, date, config.Resolution, config.TickType);
+                source += "#" + LeanData.GenerateZipEntryName(config.Symbol, date, Resolution.Tick, TickType.OpenInterest);
             }
             return new SubscriptionDataSource(source, SubscriptionTransportMedium.LocalFile, FileFormat.Csv);
         }

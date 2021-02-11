@@ -54,6 +54,10 @@ namespace QuantConnect.Lean.Engine.DataFeeds
                     reader = new CollectionSubscriptionDataSourceReader(dataCacheProvider, config, date, isLiveMode);
                     break;
 
+                case FileFormat.ZipCollection:
+                    reader = new ZipCollectionSubscriptionDataSourceReader(dataCacheProvider, config, date, isLiveMode);
+                    break;
+
                 case FileFormat.ZipEntryName:
                     reader = new ZipEntryNameSubscriptionDataSourceReader(config, date, isLiveMode);
                     break;

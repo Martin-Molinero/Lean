@@ -21,6 +21,7 @@ using System.Collections.Specialized;
 using System.Linq;
 using QuantConnect.Data;
 using QuantConnect.Data.Auxiliary;
+using QuantConnect.Data.Market;
 using QuantConnect.Data.UniverseSelection;
 using QuantConnect.Interfaces;
 using QuantConnect.Logging;
@@ -534,7 +535,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         {
             if (isCanonical)
             {
-                return new List<Tuple<Type, TickType>> { new Tuple<Type, TickType>(typeof(ZipEntryName), TickType.Quote) };
+                return new List<Tuple<Type, TickType>> { new Tuple<Type, TickType>(typeof(OpenInterest), TickType.Quote) };
             }
 
             IEnumerable<TickType> availableDataType = AvailableDataTypes[symbolSecurityType];

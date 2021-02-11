@@ -43,6 +43,11 @@ namespace QuantConnect.Data
         /// <summary>
         /// Data stored using an intermediate index source
         /// </summary>
-        Index
+        Index,
+
+        /// <summary>
+        /// Read all data entries from a zip file. Supporting multiple symbols per entry
+        /// </summary>
+        ZipCollection,
     }
 }
