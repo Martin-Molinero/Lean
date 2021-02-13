@@ -51,7 +51,7 @@
     <PackageReference Include="DotNetZip" Version="1.13.3" />
     <PackageReference Include="fasterflect" Version="3.0.0" />
     <PackageReference Include="MathNet.Numerics" Version="4.15.0" />
-    <PackageReference Include="gsalaz98.Unofficial.Apache.Arrow" Version="2.0.2-SNAPSHOT" />
+    <PackageReference Include="Apache.Arrow" Version="3.0.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="5.0.3">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
