@@ -58,27 +58,32 @@ namespace QuantConnect.Lean.Engine.Setup
 
             // now set conversion rates
             var cashToUpdate = algorithm.Portfolio.CashBook.Values
-                .Where(x => x.ConversionRateSecurity != null && x.ConversionRate == 0)
+                .Where(x => x.CurrencyConversion != null && x.ConversionRate == 0)
+                .ToList();
+
+            var securitiesToUpdate = cashToUpdate
+                .SelectMany(x => x.CurrencyConversion.GetConversionRateSecurities())
+                .Distinct()
                 .ToList();
 
             var historyRequestFactory = new HistoryRequestFactory(algorithm);
             var historyRequests = new List<HistoryRequest>();
-            foreach (var cash in cashToUpdate)
+            foreach (var security in securitiesToUpdate)
             {
                 var configs = algorithm
                     .SubscriptionManager
                     .SubscriptionDataConfigService
-                    .GetSubscriptionDataConfigs(cash.ConversionRateSecurity.Symbol,
+                    .GetSubscriptionDataConfigs(security.Symbol,
                         includeInternalConfigs: true);
 
                 // we need to order and select a specific configuration type
                 // so the conversion rate is deterministic
                 var configToUse = configs.OrderBy(x => x.TickType).First();
-                var hours = cash.ConversionRateSecurity.Exchange.Hours;
+                var hours = security.Exchange.Hours;
 
                 var resolution = configs.GetHighestResolution();
                 var startTime = historyRequestFactory.GetStartTimeAlgoTz(
-                    cash.ConversionRateSecurity.Symbol,
+                    security.Symbol,
                     10,
                     resolution,
                     hours,
@@ -89,19 +94,23 @@ namespace QuantConnect.Lean.Engine.Setup
                     configToUse,
                     startTime,
                     endTime,
-                    cash.ConversionRateSecurity.Exchange.Hours,
+                    security.Exchange.Hours,
                     resolution));
             }
 
             var slices = algorithm.HistoryProvider.GetHistory(historyRequests, algorithm.TimeZone);
             slices.PushThrough(data =>
             {
-                foreach (var cash in cashToUpdate
-                    .Where(x => x.ConversionRateSecurity.Symbol == data.Symbol))
+                foreach (var security in securitiesToUpdate.Where(x => x.Symbol == data.Symbol))
                 {
-                    cash.Update(data);
+                    security.SetMarketPrice(data);
                 }
             });
+
+            foreach (var cash in cashToUpdate)
+            {
+                cash.Update();
+            }
 
             Log.Trace("BaseSetupHandler.SetupCurrencyConversions():" +
                 $"{Environment.NewLine}{algorithm.Portfolio.CashBook}");
