@@ -1,4 +1,4 @@
-﻿# QUANTCONNECT.COM - Democratizing Finance, Empowering Individuals.
+# QUANTCONNECT.COM - Democratizing Finance, Empowering Individuals.
 # Lean Algorithmic Trading Engine v2.0. Copyright 2014 QuantConnect Corporation.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +27,7 @@ class HistoryRequestBenchmark(QCAlgorithm):
 
     def Initialize(self):
         self.SetStartDate(2010, 1, 1)
-        self.SetEndDate(2018, 1, 1)
+        self.SetEndDate(2015, 12, 12)
         self.SetCash(10000)
         self.symbol = self.AddEquity("SPY").Symbol
 

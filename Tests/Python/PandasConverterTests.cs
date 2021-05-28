@@ -3230,7 +3230,7 @@ def Test(dataFrame, symbol):
                 .ToArray();
 
             // GetDataFrame with argument of type IEnumerable<BaseData>
-            dynamic dataFrame = converter.GetDataFrame(rawBars);
+            dynamic dataFrame = converter.GetDataFrame(rawBars.Select(x => new Slice(x.EndTime, new[] { x })));
 
             using (Py.GIL())
             {
