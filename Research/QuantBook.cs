@@ -200,12 +200,6 @@ namespace QuantConnect.Research
         /// <returns>pandas DataFrame</returns>
         public PyObject GetFundamental(PyObject input, string selector, DateTime? start = null, DateTime? end = null)
         {
-            //Null selector is not allowed for Python DataFrame
-            if (string.IsNullOrWhiteSpace(selector))
-            {
-                throw new ArgumentException("Invalid selector. Cannot be None, empty or consist only of white-space characters");
-            }
-
             //Covert to symbols
             var symbols = PythonUtil.ConvertToSymbols(input);
 
