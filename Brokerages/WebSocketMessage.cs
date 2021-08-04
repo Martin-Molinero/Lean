@@ -13,6 +13,8 @@
  * limitations under the License.
 */
 
+using QuantConnect.Brokerages.Zerodha;
+
 namespace QuantConnect.Brokerages
 {
     /// <summary>
@@ -28,17 +30,17 @@ namespace QuantConnect.Brokerages
         /// <summary>
         /// Gets the raw message data as text
         /// </summary>
-        public string Message { get; }
+        public WebSocketClientWrapper.MessageData Data { get; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="WebSocketMessage"/> class
         /// </summary>
         /// <param name="webSocket">The sender websocket instance</param>
-        /// <param name="message">The message</param>
-        public WebSocketMessage(IWebSocket webSocket, string message)
+        /// <param name="data">The message data</param>
+        public WebSocketMessage(IWebSocket webSocket, WebSocketClientWrapper.MessageData data)
         {
             WebSocket = webSocket;
-            Message = message;
+            Data = data;
         }
     }
 }

@@ -127,12 +127,13 @@ namespace QuantConnect.Brokerages.Bitfinex
             return true;
         }
 
-        private void OnDataMessage(WebSocketMessage e)
+        private void OnDataMessage(WebSocketMessage message)
         {
-            var webSocket = (BitfinexWebSocketWrapper)e.WebSocket;
+            var webSocket = (BitfinexWebSocketWrapper)message.WebSocket;
 
             try
             {
+                var e = (WebSocketClientWrapper.TextMessage) message.Data;
                 var token = JToken.Parse(e.Message);
 
                 if (token is JArray)

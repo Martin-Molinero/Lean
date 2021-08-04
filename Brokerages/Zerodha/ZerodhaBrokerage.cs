@@ -96,7 +96,7 @@ namespace QuantConnect.Brokerages.Zerodha
         private readonly string _wssUrl = "wss://ws.kite.trade/";
 
         private readonly string _tradingSegment;
-        private readonly BrokerageConcurrentMessageHandler<MessageData> _messageHandler;
+        private readonly BrokerageConcurrentMessageHandler<WebSocketClientWrapper.MessageData> _messageHandler;
         private readonly string _zerodhaProductType;
 
         private DateTime _lastTradeTickTime;
@@ -127,8 +127,8 @@ namespace QuantConnect.Brokerages.Zerodha
             _apiKey = apiKey;
             _accessToken = apiSecret;
             _securityProvider = securityProvider;
-             _messageHandler = new BrokerageConcurrentMessageHandler<MessageData>(OnMessageImpl);
-            WebSocket = new ZerodhaWebSocketClientWrapper();
+             _messageHandler = new BrokerageConcurrentMessageHandler<WebSocketClientWrapper.MessageData>(OnMessageImpl);
+            WebSocket = new WebSocketClientWrapper();
             _wssUrl += string.Format(CultureInfo.InvariantCulture, "?api_key={0}&access_token={1}", _apiKey, _accessToken);
             WebSocket.Initialize(_wssUrl);
             WebSocket.Message += OnMessage;
@@ -1001,7 +1001,7 @@ namespace QuantConnect.Brokerages.Zerodha
             Log.Error($"ZerodhaBrokerage.OnError(): Message: {e.Message} Exception: {e.Exception}");
         }
 
-        private void OnMessage(object sender, MessageData e)
+        private void OnMessage(object sender, WebSocketClientWrapper.MessageData e)
         {
             _messageHandler.HandleNewMessage(e);
         }
@@ -1010,12 +1010,13 @@ namespace QuantConnect.Brokerages.Zerodha
         /// Implementation of the OnMessage event
         /// </summary>
         /// <param name="e"></param>
-        private void OnMessageImpl(MessageData e)
+        private void OnMessageImpl(WebSocketClientWrapper.MessageData message)
         {
             try
             {
-                if (e.MessageType == WebSocketMessageType.Binary)
+                if (message.MessageType == WebSocketMessageType.Binary)
                 {
+                    var e = (WebSocketClientWrapper.BinaryMessage)message;
                     if (e.Count > 1)
                     {
                         int offset = 0;
@@ -1072,10 +1073,6 @@ namespace QuantConnect.Brokerages.Zerodha
                         OnMessage(new BrokerageMessageEvent(BrokerageMessageType.Error, -1, $"Zerodha WSS Error. Data: {e.Data} Exception: {messageDict["data"]}"));
 
                     }
-                }
-                else if (e.MessageType == WebSocketMessageType.Close)
-                {
-                    WebSocket.Close();
                 }
             }
             catch (Exception exception)
