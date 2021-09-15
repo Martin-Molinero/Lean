@@ -61,10 +61,7 @@ namespace QuantConnect.Algorithm.CSharp
 
         public override void OnOrderEvent(OrderEvent orderEvent)
         {
-            if (orderEvent.Status.IsFill())
-            {
-                Debug($"Purchased Stock: {orderEvent.Symbol}");
-            }
+            Log($"Purchased Stock: {orderEvent}");
         }
 
         /// <summary>

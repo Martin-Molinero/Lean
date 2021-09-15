@@ -89,6 +89,7 @@ namespace QuantConnect.Tests
             // find all regression algorithms in Algorithm.CSharp
             return (
                 from type in typeof(BasicTemplateAlgorithm).Assembly.GetTypes()
+                where type.Name.Contains("RelativeDailyVolumeAlgorithm", StringComparison.InvariantCultureIgnoreCase)
                 where typeof(IRegressionAlgorithmDefinition).IsAssignableFrom(type)
                 where !type.IsAbstract                          // non-abstract
                 where type.GetConstructor(new Type[0]) != null  // has default ctor

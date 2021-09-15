@@ -472,6 +472,8 @@ namespace QuantConnect
                     )
             );
 
+            Log.Error(joinedOrders);
+
             return joinedOrders.ToMD5();
         }
 
