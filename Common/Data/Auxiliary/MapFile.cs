@@ -148,21 +148,13 @@ namespace QuantConnect.Data.Auxiliary
         }
 
         /// <summary>
-        /// Reads in an entire map file for the requested symbol from the DataFolder
-        /// </summary>
-        public static MapFile Read(string permtick, string market, SecurityType securityType, IDataProvider dataProvider)
-        {
-            return new MapFile(permtick, MapFileRow.Read(GetMapFilePath(permtick, market, securityType), market, securityType, dataProvider));
-        }
-
-        /// <summary>
         /// Writes the map file to a CSV file
         /// </summary>
         /// <param name="market">The market to save the MapFile to</param>
         /// <param name="securityType">The map file security type</param>
         public void WriteToCsv(string market, SecurityType securityType)
         {
-            var filePath = GetMapFilePath(Permtick, market, securityType);
+            var filePath = Path.Combine(GetMapFilePath(market, securityType), Permtick.ToLowerInvariant() + ".csv");
             var fileDir = Path.GetDirectoryName(filePath);
 
             if (!Directory.Exists(fileDir))
@@ -177,13 +169,12 @@ namespace QuantConnect.Data.Auxiliary
         /// <summary>
         /// Constructs the map file path for the specified market and symbol
         /// </summary>
-        /// <param name="permtick">The symbol as on disk, OIH or OIH.1</param>
         /// <param name="market">The market this symbol belongs to</param>
         /// <param name="securityType">The map file security type</param>
         /// <returns>The file path to the requested map file</returns>
-        public static string GetMapFilePath(string permtick, string market, SecurityType securityType)
+        public static string GetMapFilePath(string market, SecurityType securityType)
         {
-            return Path.Combine(Globals.CacheDataFolder, securityType.SecurityTypeToLower(), market, "map_files", permtick.ToLowerInvariant() + ".csv");
+            return Path.Combine(Globals.CacheDataFolder, securityType.SecurityTypeToLower(), market, "map_files");
         }
 
         #region Implementation of IEnumerable

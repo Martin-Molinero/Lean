@@ -172,7 +172,26 @@ namespace QuantConnect
                 catch (WebException ex)
                 {
                     Log.Error(ex, $"DownloadData(): failed for: '{url}'");
-                    // If server returned an error most likely on this day there is no data we are going to the next cycle
+                    return null;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Helper method to download a provided url as a byte array
+        /// </summary>
+        /// <param name="url">The url to download data from</param>
+        public static byte[] DownloadByteArray(this string url)
+        {
+            using (var wc = new HttpClient())
+            {
+                try
+                {
+                    return wc.GetByteArrayAsync(url).Result;
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, $"DownloadByteArray(): failed for: '{url}'");
                     return null;
                 }
             }
@@ -3417,6 +3436,8 @@ namespace QuantConnect
         {
             switch (symbol.SecurityType)
             {
+                case SecurityType.Base:
+                    return symbol.HasUnderlying && symbol.Underlying.RequiresMapping();
                 case SecurityType.Future:
                     return symbol.IsCanonical();
                 case SecurityType.Equity:
