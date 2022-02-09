@@ -27,7 +27,8 @@ namespace QuantConnect.Brokerages
         /// </summary>
         /// <param name="url">The target websocket url</param>
         /// <param name="sessionToken">The websocket session token</param>
-        void Initialize(string url, string sessionToken = null);
+        /// <param name="tokenFieldName">The websocket session token request name to use</param>
+        void Initialize(string url, string sessionToken = null, string tokenFieldName = "x-session-token");
 
         /// <summary>
         /// Wraps send method
