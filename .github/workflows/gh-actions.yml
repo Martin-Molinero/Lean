@@ -7,6 +7,11 @@ on:
   pull_request:
     branches: [master]
 
+env:
+  DOTNET_TieredPGO: 1
+  DOTNET_ReadyToRun: 0
+  DOTNET_TC_QuickJitForLoops: 1
+
 jobs:
   build:
     runs-on: ubuntu-20.04
