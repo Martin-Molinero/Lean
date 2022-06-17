@@ -35,9 +35,9 @@ namespace QuantConnect.Data.Consolidators
         private SecurityIdentifier _securityIdentifier;
         private bool _securityIdentifierIsSet;
         //The number of data updates between creating new bars.
-        private readonly int? _maxCount;
+        private int? _maxCount;
         //
-        private readonly IPeriodSpecification _periodSpecification;
+        private IPeriodSpecification _periodSpecification;
         //The minimum timespan between creating new bars.
         private TimeSpan? _period;
         //The number of pieces of data we've accumulated since our last emit
@@ -146,6 +146,21 @@ namespace QuantConnect.Data.Consolidators
                 // first allow the base class a chance to filter out data it doesn't want
                 // before we start incrementing counts and what not
                 return;
+            }
+
+            if (_period.HasValue)
+            {
+                var dataLength = data.EndTime - data.Time;
+                if (dataLength == _period)
+                {
+                    // if the user is consolidating period 'X' with data of length 'X', be gentle, and transform into a bar of count 1 consolidation
+                    _maxCount = 1;
+                    _periodSpecification = new BarCountPeriodSpecification();
+                }
+                else if (dataLength > _period)
+                {
+                    throw new ArgumentException($"For Symbol {data.Symbol} can not consolidate bars of period: {_period}, using data of the same or higher period: {data.EndTime - data.Time}");
+                }
             }
 
             //Decide to fire the event
@@ -275,7 +290,7 @@ namespace QuantConnect.Data.Consolidators
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected DateTime GetRoundedBarTime(DateTime time)
         {
-            var barTime = _periodSpecification.GetRoundedBarTime(time);
+            var startTime = _periodSpecification.GetRoundedBarTime(time);
 
             // In the case of a new bar, define the period defined at opening time
             if (_workingBar == null)
@@ -283,7 +298,7 @@ namespace QuantConnect.Data.Consolidators
                 _period = _periodSpecification.Period;
             }
 
-            return barTime;
+            return startTime;
         }
 
         /// <summary>

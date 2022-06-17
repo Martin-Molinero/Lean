@@ -15,19 +15,121 @@
 
 using System;
 using NUnit.Framework;
-using QuantConnect.Data.Consolidators;
 using QuantConnect.Data.Market;
+using QuantConnect.Data.Consolidators;
 
 namespace QuantConnect.Tests.Common.Data
 {
     [TestFixture]
     public class QuoteBarConsolidatorTests
     {
+
+        [Test]
+        public void ThrowsWhenPeriodIsSmallerThanDataPeriod()
+        {
+            QuoteBar quoteBar = null;
+            using var creator = new QuoteBarConsolidator(Time.OneHour);
+            creator.DataConsolidated += (sender, args) =>
+            {
+                quoteBar = args;
+            };
+
+            var time = new DateTime(2022, 6, 6, 13, 30, 1);
+            var bar1 = new QuoteBar
+            {
+                Time = time,
+                Symbol = Symbols.SPY,
+                Bid = new Bar(1, 2, 0.75m, 1.25m),
+                LastBidSize = 3,
+                Ask = null,
+                LastAskSize = 0,
+                Value = 1,
+                Period = TimeSpan.FromDays(1)
+            };
+            Assert.Throws<ArgumentException>(() => creator.Update(bar1));
+        }
+
+        [Test]
+        public void GentlyHandlesPeriodAndDataAreSameResolution()
+        {
+            QuoteBar quoteBar = null;
+            using var creator = new QuoteBarConsolidator(Time.OneDay);
+            creator.DataConsolidated += (sender, args) =>
+            {
+                quoteBar = args;
+            };
+
+            var time = new DateTime(2022, 6, 6, 13, 30, 1);
+            var bar1 = new QuoteBar
+            {
+                Time = time,
+                Symbol = Symbols.SPY,
+                Bid = new Bar(1, 2, 0.75m, 1.25m),
+                LastBidSize = 3,
+                Ask = null,
+                LastAskSize = 0,
+                Value = 1,
+                Period = TimeSpan.FromDays(1)
+            };
+            creator.Update(bar1);
+            Assert.IsNotNull(quoteBar);
+
+            Assert.AreEqual(bar1.Symbol, quoteBar.Symbol);
+            Assert.AreEqual(bar1.Ask, quoteBar.Ask);
+            Assert.AreEqual(bar1.Bid.Open, quoteBar.Bid.Open);
+            Assert.AreEqual(bar1.Bid.High, quoteBar.Bid.High);
+            Assert.AreEqual(bar1.Bid.Low, quoteBar.Bid.Low);
+            Assert.AreEqual(bar1.Bid.Close, quoteBar.Bid.Close);
+            Assert.AreEqual(bar1.LastBidSize, quoteBar.LastBidSize);
+            Assert.AreEqual(bar1.LastAskSize, quoteBar.LastAskSize);
+            Assert.AreEqual(bar1.Value, quoteBar.Value);
+            Assert.AreEqual(bar1.EndTime, quoteBar.EndTime);
+            Assert.AreEqual(bar1.Time, quoteBar.Time);
+        }
+
+        [Test]
+        public void AggregatesNewCountQuoteBarProperlyDaily()
+        {
+            QuoteBar quoteBar = null;
+            using var creator = new QuoteBarConsolidator(1);
+            creator.DataConsolidated += (sender, args) =>
+            {
+                quoteBar = args;
+            };
+
+            var time = new DateTime(2022, 6, 6, 13, 30, 1);
+            var bar1 = new QuoteBar
+            {
+                Time = time,
+                Symbol = Symbols.SPY,
+                Bid = new Bar(1, 2, 0.75m, 1.25m),
+                LastBidSize = 3,
+                Ask = null,
+                LastAskSize = 0,
+                Value = 1,
+                Period = TimeSpan.FromDays(1)
+            };
+            creator.Update(bar1);
+            Assert.IsNotNull(quoteBar);
+
+            Assert.AreEqual(bar1.Symbol, quoteBar.Symbol);
+            Assert.AreEqual(bar1.Ask, quoteBar.Ask);
+            Assert.AreEqual(bar1.Bid.Open, quoteBar.Bid.Open);
+            Assert.AreEqual(bar1.Bid.High, quoteBar.Bid.High);
+            Assert.AreEqual(bar1.Bid.Low, quoteBar.Bid.Low);
+            Assert.AreEqual(bar1.Bid.Close, quoteBar.Bid.Close);
+            Assert.AreEqual(bar1.LastBidSize, quoteBar.LastBidSize);
+            Assert.AreEqual(bar1.LastAskSize, quoteBar.LastAskSize);
+            Assert.AreEqual(bar1.Value, quoteBar.Value);
+            Assert.AreEqual(bar1.EndTime, quoteBar.EndTime);
+            Assert.AreEqual(bar1.Time, quoteBar.Time);
+        }
+
         [Test]
         public void AggregatesNewCountQuoteBarProperly()
         {
             QuoteBar quoteBar = null;
-            var creator = new QuoteBarConsolidator(4);
+            using var creator = new QuoteBarConsolidator(4);
             creator.DataConsolidated += (sender, args) =>
             {
                 quoteBar = args;
@@ -108,7 +210,7 @@ namespace QuantConnect.Tests.Common.Data
         public void AggregatesNewTimeSpanQuoteBarProperly()
         {
             QuoteBar quoteBar = null;
-            var creator = new QuoteBarConsolidator(TimeSpan.FromMinutes(2));
+            using var creator = new QuoteBarConsolidator(TimeSpan.FromMinutes(2));
             creator.DataConsolidated += (sender, args) =>
             {
                 quoteBar = args;
@@ -187,7 +289,7 @@ namespace QuantConnect.Tests.Common.Data
         [Test]
         public void DoesNotConsolidateDifferentSymbols()
         {
-            var consolidator = new QuoteBarConsolidator(2);
+            using var consolidator = new QuoteBarConsolidator(2);
 
             var time = DateTime.Today;
             var period = TimeSpan.FromMinutes(1);
@@ -219,14 +321,14 @@ namespace QuantConnect.Tests.Common.Data
             consolidator.Update(bar1);
 
             Exception ex = Assert.Throws<InvalidOperationException>(() => consolidator.Update(bar2));
-            Assert.IsTrue(ex.Message.Contains("is not the same"));
+            Assert.IsTrue(ex.Message.Contains("is not the same", StringComparison.InvariantCultureIgnoreCase));
         }
 
         [Test]
         public void LastCloseAndCurrentOpenPriceShouldBeSameConsolidatedOnTimeSpan()
         {
             QuoteBar quoteBar = null;
-            var creator = new QuoteBarConsolidator(TimeSpan.FromMinutes(2));
+            using var creator = new QuoteBarConsolidator(TimeSpan.FromMinutes(2));
             creator.DataConsolidated += (sender, args) =>
             {
                 quoteBar = args;

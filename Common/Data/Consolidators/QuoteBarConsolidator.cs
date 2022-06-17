@@ -94,6 +94,10 @@ namespace QuantConnect.Data.Consolidators
                     workingBar.Update(0, previous.Bid?.Close ?? 0, previous.Ask?.Close ?? 0, 0, previous.LastBidSize, previous.LastAskSize);
                 }
             }
+            else if (!IsTimeBased)
+            {
+                workingBar.Period += data.Period;
+            }
 
             // update the bid and ask
             if (bid != null)
@@ -126,7 +130,6 @@ namespace QuantConnect.Data.Consolidators
             }
 
             workingBar.Value = data.Value;
-            if (!IsTimeBased) workingBar.Period += data.Period;
         }
     }
 }
