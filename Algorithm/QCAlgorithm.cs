@@ -226,7 +226,7 @@ namespace QuantConnect.Algorithm
         public IReadOnlyDictionary<Symbol, Security> ActiveSecurities => UniverseManager.ActiveSecurities;
 
         /// <summary>
-        /// Portfolio object provieds easy access to the underlying security-holding properties; summed together in a way to make them useful.
+        /// Portfolio object provides easy access to the underlying security-holding properties; summed together in a way to make them useful.
         /// This saves the user time by providing common portfolio requests in a single
         /// </summary>
         [DocumentationAttribute(SecuritiesAndPortfolio)]

@@ -6,17 +6,22 @@
   // two predefined environments, 'backtesting' and 'live', feel free
   // to add more!
 
+  //"environment": "backtesting", // "live-paper", "backtesting", "live-interactive", "live-interactive-iqfeed"
   "environment": "backtesting", // "live-paper", "backtesting", "live-interactive", "live-interactive-iqfeed"
 
   // algorithm class selector
-  "algorithm-type-name": "BasicTemplateFrameworkAlgorithm",
+  //"algorithm-type-name": "BasicTemplateFrameworkAlgorithm",
+  "algorithm-type-name": "SignalExportTesting",
 
   // Algorithm language selector - options CSharp, Python
   "algorithm-language": "CSharp",
+  //"algorithm-language": "Python",
 
   //Physical DLL location
-  "algorithm-location": "QuantConnect.Algorithm.CSharp.dll",
+  //"algorithm-location": "QuantConnect.Algorithm.CSharp.dll",
   //"algorithm-location": "../../../Algorithm.Python/BasicTemplateFrameworkAlgorithm.py",
+  "algorithm-location": "QuantConnect.Algorithm.dll",
+  //"algorithm-location": "../../../Algorithm/SignalExports/SignalExportTesting.py",
 
   //Research notebook
   //"composer-dll-directory": ".",

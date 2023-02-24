@@ -18,7 +18,15 @@
 	},
 
 	// Add the IDs of extensions you want installed when the container is created.
-	"extensions": ["ms-dotnettools.csharp", "ms-python.python", "ms-python.vscode-pylance", "formulahendry.dotnet-test-explorer", "eamodio.gitlens", "yzhang.markdown-all-in-one"],
+	"extensions": [
+		"ms-dotnettools.csharp",
+		"ms-python.python",
+		"ms-python.vscode-pylance",
+		"formulahendry.dotnet-test-explorer",
+		"eamodio.gitlens",
+		"yzhang.markdown-all-in-one",
+		"ms-azuretools.vscode-docker"
+	],
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
