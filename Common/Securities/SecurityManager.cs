@@ -222,7 +222,7 @@ namespace QuantConnect.Securities
             {
                 lock (_securityManager)
                 {
-                    return _securityManager.Select(kvp => kvp.Key).ToList();
+                    return _securityManager.Keys.ToList();
                 }
             }
         }
@@ -268,7 +268,7 @@ namespace QuantConnect.Securities
             {
                 lock (_securityManager)
                 {
-                    return _securityManager.Select(kvp => kvp.Value).ToList();
+                    return _securityManager.Values.ToList();
                 }
             }
         }

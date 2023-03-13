@@ -24,7 +24,6 @@ using QuantConnect.Logging;
 using QuantConnect.Orders;
 using QuantConnect.Python;
 using QuantConnect.Securities.Positions;
-using static QuantConnect.StringExtensions;
 
 namespace QuantConnect.Securities
 {
@@ -262,8 +261,7 @@ namespace QuantConnect.Securities
         {
             get
             {
-                return (from kvp in Securities
-                        select kvp.Value.Holdings).ToList();
+                return GetValues.ToList();
             }
         }
 
@@ -428,7 +426,7 @@ namespace QuantConnect.Securities
                     {
                         decimal totalHoldingsValueWithoutForexCryptoFutureCfd = 0;
                         decimal totalFuturesAndCfdHoldingsValue = 0;
-                        foreach (var kvp in Securities.Where((pair, i) => pair.Value.Holdings.Quantity != 0))
+                        foreach (var kvp in Securities.Where((pair, i) => pair.Value.Holdings.Invested))
                         {
                             var position = kvp.Value;
                             var securityType = position.Type;
