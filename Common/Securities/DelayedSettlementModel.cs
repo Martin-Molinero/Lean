@@ -1,4 +1,4 @@
-﻿/*
+/*
  * QUANTCONNECT.COM - Democratizing Finance, Empowering Individuals.
  * Lean Algorithmic Trading Engine v2.0. Copyright 2014 QuantConnect Corporation.
  * 
@@ -14,6 +14,7 @@
 */
 
 using System;
+using System.Collections.Generic;
 
 namespace QuantConnect.Securities
 {
@@ -27,14 +28,20 @@ namespace QuantConnect.Securities
         private readonly TimeSpan _timeOfDay;
 
         /// <summary>
+        /// The list of pending funds waiting for settlement time
+        /// </summary>
+        private readonly Queue<UnsettledCashAmount> _unsettledCashAmounts;
+
+        /// <summary>
         /// Creates an instance of the <see cref="DelayedSettlementModel"/> class
         /// </summary>
         /// <param name="numberOfDays">The number of days required for settlement</param>
         /// <param name="timeOfDay">The time of day used for settlement</param>
         public DelayedSettlementModel(int numberOfDays, TimeSpan timeOfDay)
         {
-            _numberOfDays = numberOfDays;
             _timeOfDay = timeOfDay;
+            _numberOfDays = numberOfDays;
+            _unsettledCashAmounts = new();
         }
 
         /// <summary>
@@ -67,13 +74,40 @@ namespace QuantConnect.Securities
                 // use correct settlement time
                 var settlementTimeUtc = settlementDate.Add(_timeOfDay).ConvertToUtc(security.Exchange.Hours.TimeZone);
 
-                portfolio.AddUnsettledCashAmount(new UnsettledCashAmount(settlementTimeUtc, currency, amount));
+                lock (_unsettledCashAmounts)
+                {
+                    _unsettledCashAmounts.Enqueue(new UnsettledCashAmount(settlementTimeUtc, currency, amount));
+                }
             }
             else
             {
                 // negative amount: buy order filled
 
                 portfolio.CashBook[currency].AddAmount(amount);
+            }
+        }
+
+        /// <summary>
+        /// Scan for pending settlements
+        /// </summary>
+        /// <param name="settlementParameters">The settlement parameters</param>
+        public void ScanSettlement(ScanSettlementParameters settlementParameters)
+        {
+            lock (_unsettledCashAmounts)
+            {
+                while (_unsettledCashAmounts.TryPeek(out var item)
+                    // check if settlement time has passed
+                    && settlementParameters.TimeUtc >= item.SettlementTimeUtc)
+                {
+                    // remove item from unsettled funds list
+                    _unsettledCashAmounts.Dequeue();
+
+                    // update unsettled cashbook
+                    settlementParameters.Portfolio.UnsettledCashBook[item.Currency].AddAmount(-item.Amount);
+
+                    // update settled cashbook
+                    settlementParameters.Portfolio.CashBook[item.Currency].AddAmount(item.Amount);
+                }
             }
         }
     }

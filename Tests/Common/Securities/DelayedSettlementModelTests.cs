@@ -1,4 +1,4 @@
-﻿/*
+/*
  * QUANTCONNECT.COM - Democratizing Finance, Empowering Individuals.
  * Lean Algorithmic Trading Engine v2.0. Copyright 2014 QuantConnect Corporation.
  *
@@ -53,31 +53,31 @@ namespace QuantConnect.Tests.Common.Securities
             // Sell on Monday
             var timeUtc = Noon.ConvertToUtc(TimeZones.NewYork);
             model.ApplyFunds(portfolio, security, timeUtc, Currencies.USD, 1000);
-            portfolio.ScanForCashSettlement(timeUtc);
+            model.ScanSettlement(new ScanSettlementParameters(portfolio, security, timeUtc));
             Assert.AreEqual(3000, portfolio.Cash);
             Assert.AreEqual(1000, portfolio.UnsettledCash);
 
             // Tuesday, still unsettled
             timeUtc = timeUtc.AddDays(1);
-            portfolio.ScanForCashSettlement(timeUtc);
+            model.ScanSettlement(new ScanSettlementParameters(portfolio, security, timeUtc));
             Assert.AreEqual(3000, portfolio.Cash);
             Assert.AreEqual(1000, portfolio.UnsettledCash);
 
             // Wednesday, still unsettled
             timeUtc = timeUtc.AddDays(1);
-            portfolio.ScanForCashSettlement(timeUtc);
+            model.ScanSettlement(new ScanSettlementParameters(portfolio, security, timeUtc));
             Assert.AreEqual(3000, portfolio.Cash);
             Assert.AreEqual(1000, portfolio.UnsettledCash);
 
             // Thursday at 7:55 AM, still unsettled
             timeUtc = timeUtc.AddDays(1).AddHours(-4).AddMinutes(-5);
-            portfolio.ScanForCashSettlement(timeUtc);
+            model.ScanSettlement(new ScanSettlementParameters(portfolio, security, timeUtc));
             Assert.AreEqual(3000, portfolio.Cash);
             Assert.AreEqual(1000, portfolio.UnsettledCash);
 
             // Thursday at 8 AM, now settled
             timeUtc = timeUtc.AddMinutes(5);
-            portfolio.ScanForCashSettlement(timeUtc);
+            model.ScanSettlement(new ScanSettlementParameters(portfolio, security, timeUtc));
             Assert.AreEqual(4000, portfolio.Cash);
             Assert.AreEqual(0, portfolio.UnsettledCash);
         }
@@ -108,43 +108,43 @@ namespace QuantConnect.Tests.Common.Securities
             // Sell on Thursday
             var timeUtc = Noon.AddDays(3).ConvertToUtc(TimeZones.NewYork);
             model.ApplyFunds(portfolio, security, timeUtc, Currencies.USD, 1000);
-            portfolio.ScanForCashSettlement(timeUtc);
+            model.ScanSettlement(new ScanSettlementParameters(portfolio, security, timeUtc));
             Assert.AreEqual(3000, portfolio.Cash);
             Assert.AreEqual(1000, portfolio.UnsettledCash);
 
             // Friday, still unsettled
             timeUtc = timeUtc.AddDays(1);
-            portfolio.ScanForCashSettlement(timeUtc);
+            model.ScanSettlement(new ScanSettlementParameters(portfolio, security, timeUtc));
             Assert.AreEqual(3000, portfolio.Cash);
             Assert.AreEqual(1000, portfolio.UnsettledCash);
 
             // Saturday, still unsettled
             timeUtc = timeUtc.AddDays(1);
-            portfolio.ScanForCashSettlement(timeUtc);
+            model.ScanSettlement(new ScanSettlementParameters(portfolio, security, timeUtc));
             Assert.AreEqual(3000, portfolio.Cash);
             Assert.AreEqual(1000, portfolio.UnsettledCash);
 
             // Sunday, still unsettled
             timeUtc = timeUtc.AddDays(1);
-            portfolio.ScanForCashSettlement(timeUtc);
+            model.ScanSettlement(new ScanSettlementParameters(portfolio, security, timeUtc));
             Assert.AreEqual(3000, portfolio.Cash);
             Assert.AreEqual(1000, portfolio.UnsettledCash);
 
             // Monday, still unsettled
             timeUtc = timeUtc.AddDays(1);
-            portfolio.ScanForCashSettlement(timeUtc);
+            model.ScanSettlement(new ScanSettlementParameters(portfolio, security, timeUtc));
             Assert.AreEqual(3000, portfolio.Cash);
             Assert.AreEqual(1000, portfolio.UnsettledCash);
 
             // Tuesday at 7:55 AM, still unsettled
             timeUtc = timeUtc.AddDays(1).AddHours(-4).AddMinutes(-5);
-            portfolio.ScanForCashSettlement(timeUtc);
+            model.ScanSettlement(new ScanSettlementParameters(portfolio, security, timeUtc));
             Assert.AreEqual(3000, portfolio.Cash);
             Assert.AreEqual(1000, portfolio.UnsettledCash);
 
             // Tuesday at 8 AM, now settled
             timeUtc = timeUtc.AddMinutes(5);
-            portfolio.ScanForCashSettlement(timeUtc);
+            model.ScanSettlement(new ScanSettlementParameters(portfolio, security, timeUtc));
             Assert.AreEqual(4000, portfolio.Cash);
             Assert.AreEqual(0, portfolio.UnsettledCash);
         }

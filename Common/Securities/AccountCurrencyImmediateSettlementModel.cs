@@ -1,4 +1,4 @@
-﻿/*
+/*
  * QUANTCONNECT.COM - Democratizing Finance, Empowering Individuals.
  * Lean Algorithmic Trading Engine v2.0. Copyright 2014 QuantConnect Corporation.
  *
@@ -36,6 +36,14 @@ namespace QuantConnect.Securities
             var amountInAccountCurrency = portfolio.CashBook.ConvertToAccountCurrency(amount, currency);
 
             portfolio.CashBook[portfolio.CashBook.AccountCurrency].AddAmount(amountInAccountCurrency);
+        }
+
+        /// <summary>
+        /// Scan for pending settlements
+        /// </summary>
+        /// <param name="settlementParameters">The settlement parameters</param>
+        public void ScanSettlement(ScanSettlementParameters settlementParameters)
+        {
         }
     }
 }
