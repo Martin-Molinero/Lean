@@ -113,13 +113,13 @@ namespace QuantConnect.Tests.Engine.DataFeeds
 
             var feed = RunDataFeed();
 
-            var selectionHappened = 0;
+            var selectionHappened = 0l;
             if (securityType == SecurityType.Option)
             {
                 var chainAsset = _algorithm.AddOption("AAPL", resolution);
                 chainAsset.SetFilter(x =>
                 {
-                    selectionHappened++;
+                    Interlocked.Increment(ref selectionHappened);
                     var symbols = x.Expiration(0, expirationDatesFilter).IncludeWeeklys().OnlyApplyFilterAtMarketOpen().ToList();
 
                     Assert.AreEqual(expirationDatesFilter + 1, symbols.Count(s => s.ID.OptionRight == OptionRight.Call));
@@ -136,7 +136,7 @@ namespace QuantConnect.Tests.Engine.DataFeeds
                 var chainAsset = _algorithm.AddFuture("ES", resolution);
                 chainAsset.SetFilter(x =>
                 {
-                    selectionHappened++;
+                    Interlocked.Increment(ref selectionHappened);
                     var symbols = x.Expiration(0, expirationDatesFilter).IncludeWeeklys().OnlyApplyFilterAtMarketOpen().ToList();
 
                     Assert.AreEqual(expirationDatesFilter + 1, symbols.Count);
@@ -151,7 +151,7 @@ namespace QuantConnect.Tests.Engine.DataFeeds
             // allow time for the exchange to pick up the selection point
             Thread.Sleep(50);
             ConsumeBridge(feed, TimeSpan.FromSeconds(5), true, ts => {
-                if (selectionHappened == 2)
+                if (Interlocked.Read(ref selectionHappened) == 2)
                 {
                     // we got what we wanted shortcut unit test
                     _manualTimeProvider.SetCurrentTimeUtc(Time.EndOfTime);

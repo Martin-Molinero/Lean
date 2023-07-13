@@ -37,6 +37,13 @@ namespace QuantConnect.Securities
         }
 
         /// <summary>
+        /// Constructs FutureFilterUniverse
+        /// </summary>
+        public FutureFilterUniverse()
+        {
+        }
+
+        /// <summary>
         /// Determine if the given Future contract symbol is standard
         /// </summary>
         /// <returns>True if contract is standard</returns>

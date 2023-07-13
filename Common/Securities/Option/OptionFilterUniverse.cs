@@ -78,7 +78,7 @@ namespace QuantConnect.Securities
         /// <param name="localTime">The current local time</param>
         public void Refresh(IEnumerable<Symbol> allSymbols, BaseData underlying, DateTime localTime)
         {
-            base.Refresh(allSymbols, localTime);
+            Refresh(allSymbols, localTime);
 
             UnderlyingInternal = underlying;
             _refreshUniqueStrikes = _lastExchangeDate != localTime.Date;

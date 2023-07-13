@@ -433,7 +433,7 @@ namespace QuantConnect.Securities.Option
         /// <summary>
         /// Gets or sets the contract filter
         /// </summary>
-        public IDerivativeSecurityFilter ContractFilter
+        public IDerivativeSecurityFilter<OptionFilterUniverse> ContractFilter
         {
             get; set;
         }
@@ -581,11 +581,9 @@ namespace QuantConnect.Securities.Option
         /// <param name="universeFunc">new universe selection function</param>
         public void SetFilter(Func<OptionFilterUniverse, OptionFilterUniverse> universeFunc)
         {
-            ContractFilter = new FuncSecurityDerivativeFilter(universe =>
+            ContractFilter = new FuncSecurityDerivativeFilter<OptionFilterUniverse>(optionUniverse =>
             {
-                var optionUniverse = universe as OptionFilterUniverse;
-                var result = universeFunc(optionUniverse);
-                return result.ApplyTypesFilter();
+                return universeFunc(optionUniverse).ApplyTypesFilter();
             });
         }
 
@@ -595,9 +593,8 @@ namespace QuantConnect.Securities.Option
         /// <param name="universeFunc">new universe selection function</param>
         public void SetFilter(PyObject universeFunc)
         {
-            ContractFilter = new FuncSecurityDerivativeFilter(universe =>
+            ContractFilter = new FuncSecurityDerivativeFilter<OptionFilterUniverse>(optionUniverse =>
             {
-                var optionUniverse = universe as OptionFilterUniverse;
                 using (Py.GIL())
                 {
                     PyObject result = (universeFunc as dynamic)(optionUniverse);

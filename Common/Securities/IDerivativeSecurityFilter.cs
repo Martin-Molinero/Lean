@@ -1,4 +1,4 @@
-﻿/*
+/*
  * QUANTCONNECT.COM - Democratizing Finance, Empowering Individuals.
  * Lean Algorithmic Trading Engine v2.0. Copyright 2014 QuantConnect Corporation.
  * 
@@ -15,21 +15,19 @@
 */
 
 using System.Collections.Generic;
-using QuantConnect.Data;
-using System;
 
 namespace QuantConnect.Securities
 {
     /// <summary>
     /// Filters a set of derivative symbols using the underlying price data.
     /// </summary>
-    public interface IDerivativeSecurityFilter
+    public interface IDerivativeSecurityFilter<T> where T : ContractSecurityFilterUniverse<T>
     {
         /// <summary>
         /// Filters the input set of symbols represented by the universe 
         /// </summary>
         /// <param name="universe">derivative symbols universe used in filtering</param>
         /// <returns>The filtered set of symbols</returns>
-        IDerivativeSecurityFilterUniverse Filter(IDerivativeSecurityFilterUniverse universe);
+        IEnumerable<Symbol> Filter(T universe);
     }
 }

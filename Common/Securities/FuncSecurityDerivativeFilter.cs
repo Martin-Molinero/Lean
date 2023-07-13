@@ -15,21 +15,24 @@
 */
 
 using System;
+using System.Collections.Generic;
+using QuantConnect.Data.UniverseSelection;
 
 namespace QuantConnect.Securities
 {
     /// <summary>
     /// Provides a functional implementation of <see cref="IDerivativeSecurityFilter"/>
     /// </summary>
-    public class FuncSecurityDerivativeFilter : IDerivativeSecurityFilter
+    public class FuncSecurityDerivativeFilter<T> : IDerivativeSecurityFilter<T>
+        where T : ContractSecurityFilterUniverse<T>
     {
-        private readonly Func<IDerivativeSecurityFilterUniverse, IDerivativeSecurityFilterUniverse> _filter;
+        private readonly Func<T, IEnumerable<Symbol>> _filter;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FuncSecurityDerivativeFilter"/> class
         /// </summary>
         /// <param name="filter">The functional implementation of the <see cref="Filter"/> method</param>
-        public FuncSecurityDerivativeFilter(Func<IDerivativeSecurityFilterUniverse, IDerivativeSecurityFilterUniverse> filter)
+        public FuncSecurityDerivativeFilter(Func<T, IEnumerable<Symbol>> filter)
         {
             _filter = filter;
         }
@@ -39,9 +42,13 @@ namespace QuantConnect.Securities
         /// </summary>
         /// <param name="universe">Derivative symbols universe used in filtering</param>
         /// <returns>The filtered set of symbols</returns>
-        public IDerivativeSecurityFilterUniverse Filter(IDerivativeSecurityFilterUniverse universe)
+        public IEnumerable<Symbol> Filter(T universe)
         {
-            return _filter(universe);
+            if (universe.ShouldSelectSymbols())
+            {
+                return _filter(universe);
+            }
+            return Universe.Unchanged;
         }
     }
 }

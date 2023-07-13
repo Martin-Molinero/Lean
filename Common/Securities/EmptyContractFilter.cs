@@ -14,9 +14,7 @@
  *
 */
 
-using System;
 using System.Linq;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace QuantConnect.Securities
@@ -24,32 +22,17 @@ namespace QuantConnect.Securities
     /// <summary>
     /// Derivate security universe selection filter which will always return empty
     /// </summary>
-    public class EmptyContractFilter : IDerivativeSecurityFilter
+    public class EmptyContractFilter<T> : IDerivativeSecurityFilter<T>
+        where T : ContractSecurityFilterUniverse<T>
     {
         /// <summary>
         /// Filters the input set of symbols represented by the universe
         /// </summary>
         /// <param name="universe">derivative symbols universe used in filtering</param>
         /// <returns>The filtered set of symbols</returns>
-        public IDerivativeSecurityFilterUniverse Filter(IDerivativeSecurityFilterUniverse universe)
+        public IEnumerable<Symbol> Filter(T universe)
         {
-            return new NoneIDerivativeSecurityFilterUniverse();
-        }
-
-        private class NoneIDerivativeSecurityFilterUniverse : IDerivativeSecurityFilterUniverse
-        {
-            public bool IsDynamic => false;
-            public DateTime LocalTime => default;
-
-            public IEnumerator<Symbol> GetEnumerator()
-            {
-                return Enumerable.Empty<Symbol>().GetEnumerator();
-            }
-
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                return Enumerable.Empty<Symbol>().GetEnumerator();
-            }
+            return Enumerable.Empty<Symbol>();
         }
     }
 }

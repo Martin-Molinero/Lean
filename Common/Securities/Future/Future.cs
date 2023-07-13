@@ -20,6 +20,7 @@ using QuantConnect.Orders.Fills;
 using QuantConnect.Orders.Slippage;
 using Python.Runtime;
 using QuantConnect.Util;
+using System.Collections.Generic;
 
 namespace QuantConnect.Securities.Future
 {
@@ -98,7 +99,7 @@ namespace QuantConnect.Securities.Future
             // for now all futures are cash settled as we don't allow underlying (Live Cattle?) to be posted on the account
             SettlementType = SettlementType.Cash;
             Holdings = new FutureHolding(this, currencyConverter);
-            ContractFilter = new EmptyContractFilter();
+            ContractFilter = new EmptyContractFilter<FutureFilterUniverse>();
         }
 
         /// <summary>
@@ -145,7 +146,7 @@ namespace QuantConnect.Securities.Future
             // for now all futures are cash settled as we don't allow underlying (Live Cattle?) to be posted on the account
             SettlementType = SettlementType.Cash;
             Holdings = new FutureHolding(this, currencyConverter);
-            ContractFilter = new EmptyContractFilter();
+            ContractFilter = new EmptyContractFilter<FutureFilterUniverse>();
             Underlying = underlying;
         }
 
@@ -194,7 +195,7 @@ namespace QuantConnect.Securities.Future
         /// <summary>
         /// Gets or sets the contract filter
         /// </summary>
-        public IDerivativeSecurityFilter ContractFilter
+        public IDerivativeSecurityFilter<FutureFilterUniverse> ContractFilter
         {
             get; set;
         }
@@ -247,14 +248,10 @@ namespace QuantConnect.Securities.Future
         /// <param name="universeFunc">new universe selection function</param>
         public void SetFilter(Func<FutureFilterUniverse, FutureFilterUniverse> universeFunc)
         {
-            Func<IDerivativeSecurityFilterUniverse, IDerivativeSecurityFilterUniverse> func = universe =>
+            ContractFilter = new FuncSecurityDerivativeFilter<FutureFilterUniverse>(futureUniverse =>
             {
-                var futureUniverse = universe as FutureFilterUniverse;
-                var result = universeFunc(futureUniverse);
-                return result.ApplyTypesFilter();
-            };
-
-            ContractFilter = new FuncSecurityDerivativeFilter(func);
+                return universeFunc(futureUniverse).ApplyTypesFilter();
+            });
         }
 
         /// <summary>

@@ -15,11 +15,10 @@
 */
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using QuantConnect.Data.Market;
 using QuantConnect.Interfaces;
 using QuantConnect.Securities;
+using System.Collections.Generic;
 using QuantConnect.Securities.Future;
 
 namespace QuantConnect.Data.UniverseSelection
@@ -29,8 +28,8 @@ namespace QuantConnect.Data.UniverseSelection
     /// </summary>
     public class FuturesChainUniverse : Universe
     {
+        private readonly FutureFilterUniverse _filterUniverse;
         private readonly UniverseSettings _universeSettings;
-        private DateTime _cacheDate;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FuturesChainUniverse"/> class
@@ -42,6 +41,7 @@ namespace QuantConnect.Data.UniverseSelection
             : base(future.SubscriptionDataConfig)
         {
             Future = future;
+            _filterUniverse = new();
             _universeSettings = new UniverseSettings(universeSettings) { DataNormalizationMode = DataNormalizationMode.Raw };
         }
 
@@ -66,24 +66,11 @@ namespace QuantConnect.Data.UniverseSelection
         /// <returns>The data that passes the filter</returns>
         public override IEnumerable<Symbol> SelectSymbols(DateTime utcTime, BaseDataCollection data)
         {
-            // date change detection needs to be done in exchange time zone
             var localEndTime = data.EndTime.ConvertFromUtc(Future.Exchange.TimeZone);
-            var exchangeDate = localEndTime.Date;
-            if (_cacheDate == exchangeDate)
-            {
-                return Unchanged;
-            }
-
             var availableContracts = data.Data.Select(x => x.Symbol);
-            var results = Future.ContractFilter.Filter(new FutureFilterUniverse(availableContracts, localEndTime));
 
-            // if results are not dynamic, we cache them and won't call filtering till the end of the day
-            if (!results.IsDynamic)
-            {
-                _cacheDate = exchangeDate;
-            }
-
-            return results;
+            _filterUniverse.Refresh(availableContracts, localEndTime);
+            return Future.ContractFilter.Filter(_filterUniverse);
         }
 
         /// <summary>

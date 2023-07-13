@@ -15,6 +15,7 @@
 */
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using QuantConnect.Data.Market;
@@ -33,10 +34,9 @@ namespace QuantConnect.Tests.Common.Securities
             Func<FutureFilterUniverse, FutureFilterUniverse> universeFunc = universe => universe
                     .Expiration(TimeSpan.FromDays(3), TimeSpan.FromDays(7));
 
-            Func<IDerivativeSecurityFilterUniverse, IDerivativeSecurityFilterUniverse> func =
-                universe => universeFunc(universe as FutureFilterUniverse);
+            Func<FutureFilterUniverse, IEnumerable<Symbol>> func = universe => universeFunc(universe);
 
-            var filter = new FuncSecurityDerivativeFilter(func);
+            var filter = new FuncSecurityDerivativeFilter<FutureFilterUniverse>(func);
             var symbols = new[]
             {
                 Symbol.CreateFuture("SPY", Market.USA, time.AddDays(0)), // 0
@@ -67,10 +67,10 @@ namespace QuantConnect.Tests.Common.Securities
 
             Func<FutureFilterUniverse, FutureFilterUniverse> universeFunc = universe => universe;
 
-            Func<IDerivativeSecurityFilterUniverse, IDerivativeSecurityFilterUniverse> func =
-                universe => universeFunc(universe as FutureFilterUniverse).ApplyTypesFilter();
+            Func<FutureFilterUniverse, IEnumerable<Symbol>> func =
+                universe => universeFunc(universe).ApplyTypesFilter();
 
-            var filter = new FuncSecurityDerivativeFilter(func);
+            var filter = new FuncSecurityDerivativeFilter<FutureFilterUniverse>(func);
             var symbols = new[]
             {
                 Symbol.CreateFuture("VX", Market.CFE, time.AddDays(0)), // 0 Standard!!
@@ -92,10 +92,10 @@ namespace QuantConnect.Tests.Common.Securities
         {
             Func<FutureFilterUniverse, FutureFilterUniverse> universeFunc = universe => universe;
 
-            Func<IDerivativeSecurityFilterUniverse, IDerivativeSecurityFilterUniverse> func =
-                universe => universeFunc(universe as FutureFilterUniverse).ApplyTypesFilter();
+            Func<FutureFilterUniverse, IEnumerable<Symbol>> func =
+                universe => universeFunc(universe).ApplyTypesFilter();
 
-            var filter = new FuncSecurityDerivativeFilter(func);
+            var filter = new FuncSecurityDerivativeFilter<FutureFilterUniverse>(func);
             var symbols = new[]
             {
                 Symbol.CreateFuture("CL", Market.NYMEX, new DateTime(2020, 11, 20)),
@@ -124,10 +124,10 @@ namespace QuantConnect.Tests.Common.Securities
             // Include Weeklys to get both types of contracts through
             Func<FutureFilterUniverse, FutureFilterUniverse> universeFunc = universe => universe.IncludeWeeklys();
 
-            Func<IDerivativeSecurityFilterUniverse, IDerivativeSecurityFilterUniverse> func =
-                universe => universeFunc(universe as FutureFilterUniverse).ApplyTypesFilter();
+            Func<FutureFilterUniverse, IEnumerable<Symbol>> func =
+                universe => universeFunc(universe).ApplyTypesFilter();
 
-            var filter = new FuncSecurityDerivativeFilter(func);
+            var filter = new FuncSecurityDerivativeFilter<FutureFilterUniverse>(func);
             var symbols = new[]
             {
                 Symbol.CreateFuture("VX", Market.CFE, time.AddDays(0)), // 0 Standard!!
@@ -151,10 +151,10 @@ namespace QuantConnect.Tests.Common.Securities
             // Weeklys only to drop standard contracts
             Func<FutureFilterUniverse, FutureFilterUniverse> universeFunc = universe => universe.WeeklysOnly();
 
-            Func<IDerivativeSecurityFilterUniverse, IDerivativeSecurityFilterUniverse> func =
-                universe => universeFunc(universe as FutureFilterUniverse).ApplyTypesFilter();
+            Func<FutureFilterUniverse, IEnumerable<Symbol>> func =
+                universe => universeFunc(universe).ApplyTypesFilter();
 
-            var filter = new FuncSecurityDerivativeFilter(func);
+            var filter = new FuncSecurityDerivativeFilter<FutureFilterUniverse>(func);
             var symbols = new[]
             {
                 Symbol.CreateFuture("VX", Market.CFE, time.AddDays(0)), // 0 Standard!!
@@ -183,10 +183,10 @@ namespace QuantConnect.Tests.Common.Securities
 
             Func<FutureFilterUniverse, FutureFilterUniverse> universeFunc = universe => universe.FrontMonth();
 
-            Func<IDerivativeSecurityFilterUniverse, IDerivativeSecurityFilterUniverse> func =
-                universe => universeFunc(universe as FutureFilterUniverse);
+            Func<FutureFilterUniverse, IEnumerable<Symbol>> func =
+                universe => universeFunc(universe);
 
-            var filter = new FuncSecurityDerivativeFilter(func);
+            var filter = new FuncSecurityDerivativeFilter<FutureFilterUniverse>(func);
             var symbols = new[]
             {
                 Symbol.CreateFuture("SPY", Market.USA, expiry1),  // 0
@@ -215,10 +215,10 @@ namespace QuantConnect.Tests.Common.Securities
 
             Func<FutureFilterUniverse, FutureFilterUniverse> universeFunc = universe => universe.BackMonth();
 
-            Func<IDerivativeSecurityFilterUniverse, IDerivativeSecurityFilterUniverse> func =
-                universe => universeFunc(universe as FutureFilterUniverse);
+            Func<FutureFilterUniverse, IEnumerable<Symbol>> func =
+                universe => universeFunc(universe);
 
-            var filter = new FuncSecurityDerivativeFilter(func);
+            var filter = new FuncSecurityDerivativeFilter<FutureFilterUniverse>(func);
             var symbols = new[]
             {
                 Symbol.CreateFuture("SPY", Market.USA, expiry1),  // 0
@@ -247,10 +247,10 @@ namespace QuantConnect.Tests.Common.Securities
 
             Func<FutureFilterUniverse, FutureFilterUniverse> universeFunc = universe => universe.ExpirationCycle(FutureExpirationCycles.March);
 
-            Func<IDerivativeSecurityFilterUniverse, IDerivativeSecurityFilterUniverse> func =
-                universe => universeFunc(universe as FutureFilterUniverse);
+            Func<FutureFilterUniverse, IEnumerable<Symbol>> func =
+                universe => universeFunc(universe);
 
-            var filter = new FuncSecurityDerivativeFilter(func);
+            var filter = new FuncSecurityDerivativeFilter<FutureFilterUniverse>(func);
             var symbols = new[]
             {
                 Symbol.CreateFuture("SPY", Market.USA, expiry1),  // 0
@@ -278,10 +278,10 @@ namespace QuantConnect.Tests.Common.Securities
             // By Default only includes standards
             Func<FutureFilterUniverse, FutureFilterUniverse> universeFunc = universe => universe;
 
-            Func<IDerivativeSecurityFilterUniverse, IDerivativeSecurityFilterUniverse> func =
-                universe => universeFunc(universe as FutureFilterUniverse).ApplyTypesFilter();
+            Func<FutureFilterUniverse, IEnumerable<Symbol>> func =
+                universe => universeFunc(universe).ApplyTypesFilter();
 
-            var filter = new FuncSecurityDerivativeFilter(func);
+            var filter = new FuncSecurityDerivativeFilter<FutureFilterUniverse>(func);
             var symbols = new[]
             {
                 Symbol.CreateFuture("VX", Market.USA, time.AddDays(0)), // There is no Expiry function for VX on Market.USA

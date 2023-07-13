@@ -26,13 +26,15 @@ namespace QuantConnect.Securities
     /// Base class for contract symbols filtering universes.
     /// Used by OptionFilterUniverse and FutureFilterUniverse
     /// </summary>
-    public abstract class ContractSecurityFilterUniverse<T> : IDerivativeSecurityFilterUniverse
-    where T: ContractSecurityFilterUniverse<T>
+    public abstract class ContractSecurityFilterUniverse<T> : IEnumerable<Symbol>
+        where T: ContractSecurityFilterUniverse<T>
     {
+        private DateTime _cacheDate;
+
         /// <summary>
         /// Mark this filter to be applied only on market open, even if it's dynamic
         /// </summary>
-        private bool _onlyApplyOnMarketOpen;
+        private Func<DateTime, bool> _shouldSelectSymbols;
 
         /// <summary>
         /// Defines listed contract types with Flags attribute
@@ -75,26 +77,33 @@ namespace QuantConnect.Securities
         internal bool IsDynamicInternal;
 
         /// <summary>
-        /// True if the universe is dynamic and filter needs to be reapplied
-        /// </summary>
-        public bool IsDynamic => IsDynamicInternal && !_onlyApplyOnMarketOpen;
-
-        /// <summary>
         /// Constructs ContractSecurityFilterUniverse
         /// </summary>
         protected ContractSecurityFilterUniverse()
         {
+            _shouldSelectSymbols = (_) => {
+                if (_cacheDate == default)
+                {
+                    // initial selection
+                    return true;
+                }
+
+                if (!IsDynamicInternal)
+                {
+                    // if we are not dynamic, let's select once per day
+                    return _cacheDate != LocalTime.Date;
+                }
+                // we are a dynamic filter
+                return true;
+            };
         }
 
         /// <summary>
         /// Constructs ContractSecurityFilterUniverse
         /// </summary>
-        protected ContractSecurityFilterUniverse(IEnumerable<Symbol> allSymbols, DateTime localTime)
+        protected ContractSecurityFilterUniverse(IEnumerable<Symbol> allSymbols, DateTime localTime) : this()
         {
-            AllSymbols = allSymbols;
-            LocalTime = localTime;
-            Type = ContractExpirationType.Standard;
-            IsDynamicInternal = false;
+            Refresh(allSymbols, localTime);
         }
 
         /// <summary>
@@ -144,17 +153,30 @@ namespace QuantConnect.Securities
         }
 
         /// <summary>
+        /// Returns true if selection should happen
+        /// </summary>
+        internal bool ShouldSelectSymbols()
+        {
+            var result = _shouldSelectSymbols(LocalTime);
+            _cacheDate = LocalTime.Date;
+            if(result)
+            {
+                // refresh this before selection
+                IsDynamicInternal = false;
+            }
+            return result;
+        }
+
+        /// <summary>
         /// Refreshes this filter universe
         /// </summary>
         /// <param name="allSymbols">All the contract symbols for the Universe</param>
         /// <param name="localTime">The local exchange current time</param>
-        public virtual void Refresh(IEnumerable<Symbol> allSymbols, DateTime localTime)
+        public void Refresh(IEnumerable<Symbol> allSymbols, DateTime localTime)
         {
             AllSymbols = allSymbols;
             LocalTime = localTime;
             Type = ContractExpirationType.Standard;
-            IsDynamicInternal = false;
-            _onlyApplyOnMarketOpen = false;
         }
 
         /// <summary>
@@ -308,8 +330,29 @@ namespace QuantConnect.Securities
         /// <returns>Universe with filter applied</returns>
         public T OnlyApplyFilterAtMarketOpen()
         {
-            _onlyApplyOnMarketOpen = true;
+            Schedule(localTime => _cacheDate != localTime.Date );
             return (T) this;
+        }
+
+        /// <summary>
+        /// Instructs the engine to only trigger selection based on the given functions result
+        /// </summary>
+        /// <param name="shouldSelect">A function which returns true if selection should happen for the given current local exchange time</param>
+        /// <returns>Universe with filter applied</returns>
+        public T Schedule(Func<DateTime, bool> shouldSelect)
+        {
+            _shouldSelectSymbols = shouldSelect;
+            return (T) this;
+        }
+
+        /// <summary>
+        /// Instructs the engine to only trigger selection based on the given functions result
+        /// </summary>
+        /// <param name="shouldSelect">A function which returns true if selection should happen for the given current local exchange time</param>
+        /// <returns>Universe with filter applied</returns>
+        public T Schedule(PyObject shouldSelect)
+        {
+            return Schedule(shouldSelect.ConvertToDelegate<Func<DateTime, bool>>());
         }
 
         /// <summary>
@@ -326,7 +369,7 @@ namespace QuantConnect.Securities
         /// </summary>
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return AllSymbols.GetEnumerator();
+            return GetEnumerator();
         }
     }
 }
