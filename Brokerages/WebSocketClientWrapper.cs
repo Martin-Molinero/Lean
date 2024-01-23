@@ -284,7 +284,7 @@ namespace QuantConnect.Brokerages
 
                 do
                 {
-                    result = webSocket.ReceiveAsync(buffer, ct).SynchronouslyAwaitTask();
+                    result = webSocket.ReceiveAsync(buffer, ct).SynchronouslyAwaitTaskResult();
                     ms.Write(buffer.Array, buffer.Offset, result.Count);
                     if (ms.Length > maxSize)
                     {
