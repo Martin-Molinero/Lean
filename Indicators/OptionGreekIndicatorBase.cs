@@ -85,7 +85,7 @@ namespace QuantConnect.Indicators
         /// <param name="period">The lookback period of historical volatility</param>
         protected OptionGreeksIndicatorBase(string name, Symbol option, decimal riskFreeRate = 0.05m, decimal dividendYield = 0.0m, Symbol mirrorOption = null,
             OptionPricingModelType optionModel = OptionPricingModelType.BlackScholes, OptionPricingModelType? ivModel = null, int period = 2)
-            : this(name, option, new ConstantRiskFreeRateInterestRateModel(riskFreeRate), new ConstantDividendYieldModel(dividendYield), 
+            : this(name, option, new ConstantRiskFreeRateInterestRateModel(riskFreeRate), new ConstantDividendYieldModel(dividendYield),
                   mirrorOption, optionModel, ivModel, period)
         {
         }
@@ -103,7 +103,7 @@ namespace QuantConnect.Indicators
         /// <param name="period">The lookback period of historical volatility</param>
         protected OptionGreeksIndicatorBase(string name, Symbol option, PyObject riskFreeRateModel, PyObject dividendYieldModel, Symbol mirrorOption = null,
             OptionPricingModelType optionModel = OptionPricingModelType.BlackScholes, OptionPricingModelType? ivModel = null, int period = 2)
-            : this(name, option, RiskFreeInterestRateModelPythonWrapper.FromPyObject(riskFreeRateModel), 
+            : this(name, option, RiskFreeInterestRateModelPythonWrapper.FromPyObject(riskFreeRateModel),
                 DividendYieldModelPythonWrapper.FromPyObject(dividendYieldModel), mirrorOption, optionModel, ivModel, period)
         {
         }
@@ -121,7 +121,7 @@ namespace QuantConnect.Indicators
         /// <param name="period">The lookback period of historical volatility</param>
         protected OptionGreeksIndicatorBase(string name, Symbol option, PyObject riskFreeRateModel, decimal dividendYield = 0.0m, Symbol mirrorOption = null,
             OptionPricingModelType optionModel = OptionPricingModelType.BlackScholes, OptionPricingModelType? ivModel = null, int period = 2)
-            : this(name, option, RiskFreeInterestRateModelPythonWrapper.FromPyObject(riskFreeRateModel), 
+            : this(name, option, RiskFreeInterestRateModelPythonWrapper.FromPyObject(riskFreeRateModel),
                 new ConstantDividendYieldModel(dividendYield), mirrorOption, optionModel, ivModel, period)
         {
         }
@@ -175,7 +175,7 @@ namespace QuantConnect.Indicators
                 DividendYield.Update(time, _dividendYieldModel.GetDividendYield(time));
 
                 var timeTillExpiry = Convert.ToDecimal((Expiry - time).TotalDays / 365);
-                _greekValue = timeTillExpiry < 0 ? 0 : CalculateGreek(timeTillExpiry);
+                _greekValue = timeTillExpiry <= 0 ? 0 : CalculateGreek(timeTillExpiry);
             }
 
             return _greekValue;

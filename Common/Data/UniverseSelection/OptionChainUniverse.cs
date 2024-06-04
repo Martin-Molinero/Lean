@@ -99,7 +99,8 @@ namespace QuantConnect.Data.UniverseSelection
                 return Unchanged;
             }
 
-            var availableContracts = data.Data.Select(x => x.Symbol);
+            var availableContracts = data.Data.Select(x => x.Symbol).ToList();
+
             // we will only update unique strikes when there is an exchange date change
             _optionFilterUniverse.Refresh(availableContracts, data.Underlying, localEndTime);
 
