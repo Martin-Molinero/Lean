@@ -16,6 +16,7 @@
 
 using System;
 using NodaTime;
+using System.Linq;
 using QuantConnect.Data;
 using QuantConnect.Logging;
 using QuantConnect.Interfaces;
@@ -454,7 +455,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
                         addedContract.Value.UnderlyingLastPrice = chain.Underlying.Price;
                     }
                 }
-                foreach (var contractSymbol in universeData.FilteredContracts)
+                foreach (var contractSymbol in universeData.FilteredContracts ?? Enumerable.Empty<Symbol>())
                 {
                     chain.FilteredContracts.Add(contractSymbol);
                 }
@@ -518,7 +519,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
             var universeData = baseData as BaseDataCollection;
             if (universeData != null)
             {
-                foreach (var contractSymbol in universeData.FilteredContracts)
+                foreach (var contractSymbol in universeData.FilteredContracts ?? Enumerable.Empty<Symbol>())
                 {
                     chain.FilteredContracts.Add(contractSymbol);
                 }

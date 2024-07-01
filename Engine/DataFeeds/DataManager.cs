@@ -157,7 +157,8 @@ namespace QuantConnect.Lean.Engine.DataFeeds
                                 }
 
                                 startLocalTime = Time.GetStartTimeForTradeBars(security.Exchange.Hours, startLocalTime,
-                                    Time.OneDay, 1, false, config.DataTimeZone);
+                                    // vix index options have a premarket on sunday but we don't want to select there, only days with regular market hours
+                                    Time.OneDay, 1, extendedMarketHours: false, config.DataTimeZone);
                                 start = startLocalTime.ConvertToUtc(security.Exchange.TimeZone);
                             }
 
@@ -221,8 +222,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds
                             // If it is an add we will set time 1 tick ahead to properly sync data
                             // with next timeslice, avoid emitting now twice.
                             // We do the same in the 'TimeTriggeredUniverseSubscriptionEnumeratorFactory' when handling changes
-                            var startUtc = Time.Min(request.StartTimeUtc, algorithm.UtcTime);
-                            AddSubscription(new SubscriptionRequest(request, startTimeUtc: startUtc.AddTicks(1)));
+                            AddSubscription(new SubscriptionRequest(request, startTimeUtc: algorithm.UtcTime.AddTicks(1)));
                         }
 
                         DataFeedSubscriptions.FreezeFillForwardResolution(false);

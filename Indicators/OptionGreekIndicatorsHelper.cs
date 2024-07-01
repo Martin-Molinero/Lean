@@ -14,8 +14,8 @@
 */
 
 using System;
-using MathNet.Numerics.Distributions;
 using QuantConnect.Util;
+using MathNet.Numerics.Distributions;
 
 namespace QuantConnect.Indicators
 {
@@ -34,8 +34,10 @@ namespace QuantConnect.Indicators
         /// </summary>
         public static decimal BlackTheoreticalPrice(decimal volatility, decimal spotPrice, decimal strikePrice, decimal timeToExpiration, decimal riskFreeRate, decimal dividendYield, OptionRight optionType)
         {
-            var d1 = CalculateD1(spotPrice, strikePrice, timeToExpiration, riskFreeRate, dividendYield, volatility);
-            var d2 = CalculateD2(d1, volatility, timeToExpiration);
+            var volatilityTimesSqrtTimeToExpiration = volatility * DecimalMath(Math.Sqrt, Math.Max(0m, timeToExpiration));
+
+            var d1 = CalculateD1(spotPrice, strikePrice, timeToExpiration, riskFreeRate, dividendYield, volatility, volatilityTimesSqrtTimeToExpiration);
+            var d2 = CalculateD2(d1, volatilityTimesSqrtTimeToExpiration);
             var norm = new Normal();
 
             var optionPrice = 0.0m;
@@ -60,19 +62,29 @@ namespace QuantConnect.Indicators
 
         internal static decimal CalculateD1(decimal spotPrice, decimal strikePrice, decimal timeToExpiration, decimal riskFreeRate, decimal dividendYield, decimal volatility)
         {
-            var numerator = DecimalMath(Math.Log, spotPrice / strikePrice) + (riskFreeRate - dividendYield + 0.5m * volatility * volatility) * timeToExpiration;
             var denominator = volatility * DecimalMath(Math.Sqrt, Math.Max(0m, timeToExpiration));
+            return CalculateD1(spotPrice, strikePrice, timeToExpiration, riskFreeRate, dividendYield, volatility, denominator);
+        }
+
+        internal static decimal CalculateD1(decimal spotPrice, decimal strikePrice, decimal timeToExpiration, decimal riskFreeRate, decimal dividendYield, decimal volatility, decimal denominator)
+        {
             if (denominator == 0m)
             {
                 // return a random variable large enough to produce normal probability density close to 1
                 return 10;
             }
+            var numerator = DecimalMath(Math.Log, spotPrice / strikePrice) + (riskFreeRate - dividendYield + 0.5m * volatility * volatility) * timeToExpiration;
             return numerator / denominator;
         }
 
         internal static decimal CalculateD2(decimal d1, decimal volatility, decimal timeToExpiration)
         {
-            return d1 - volatility * DecimalMath(Math.Sqrt, Math.Max(0m, timeToExpiration));
+            return CalculateD2(d1, volatility * DecimalMath(Math.Sqrt, Math.Max(0m, timeToExpiration)));
+        }
+
+        internal static decimal CalculateD2(decimal d1, decimal volatilityTimesSqrtTimeToExpiration)
+        {
+            return d1 - volatilityTimesSqrtTimeToExpiration;
         }
 
         /// <summary>
