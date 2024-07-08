@@ -18,82 +18,57 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using QuantConnect.Data;
-using QuantConnect.Data.Market;
-using QuantConnect.Orders;
 using QuantConnect.Interfaces;
+using QuantConnect.Data.UniverseSelection;
+using QuantConnect.Indicators;
+using MathNet.Numerics;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace QuantConnect.Algorithm.CSharp
 {
-    /// <summary>
-    /// This example demonstrates how to add options for a given underlying equity security.
-    /// It also shows how you can prefilter contracts easily based on strikes and expirations, and how you
-    /// can inspect the option chain to pick a specific option contract to trade.
-    /// </summary>
-    /// <meta name="tag" content="using data" />
-    /// <meta name="tag" content="options" />
-    /// <meta name="tag" content="filter selection" />
     public class BasicTemplateOptionsAlgorithm : QCAlgorithm, IRegressionAlgorithmDefinition
     {
-        private const string UnderlyingTicker = "GOOG";
-        private Symbol _optionSymbol;
-
         public override void Initialize()
         {
-            SetStartDate(2015, 12, 24);
-            SetEndDate(2015, 12, 24);
-            SetCash(100000);
+            SetStartDate(2024, 7, 2);
 
-            var equity = AddEquity(UnderlyingTicker);
-            var option = AddOption(UnderlyingTicker);
-            _optionSymbol = option.Symbol;
-
-            // set our strike/expiry filter for this option chain
-            option.SetFilter(u => u.Strikes(-2, +2)
-                                   // Expiration method accepts TimeSpan objects or integer for days.
-                                   // The following statements yield the same filtering criteria
-                                   .Expiration(0, 180));
-                                   // .Expiration(TimeSpan.Zero, TimeSpan.FromDays(180)));
-
-            // use the underlying equity as the benchmark
-            SetBenchmark(equity.Symbol);
-        }
-
-        /// <summary>
-        /// Event - v3.0 DATA EVENT HANDLER: (Pattern) Basic template for user to override for receiving all subscription data in a single event
-        /// </summary>
-        /// <param name="slice">The current slice of data keyed by symbol string</param>
-        public override void OnData(Slice slice)
-        {
-            if (!Portfolio.Invested && IsMarketOpen(_optionSymbol))
+            var etf = AddEquity("IWV").Symbol;
+            var universe = AddUniverse(Universe.ETF(etf, universeFilterFunc: (_) => Enumerable.Empty<Symbol>()));
+            var eTFConstituentUniverse = History(universe, 1, Resolution.Daily).SelectMany(x => x.Data).Cast<ETFConstituentUniverse>().ToList();
+            var start = DateTime.UtcNow;
+            var emptyHistory = 0;
+            var totalIVCount = 0;
+            Parallel.ForEach(eTFConstituentUniverse.OrderBy(x => x.Weight).Select(x => x.Symbol).Take(200),
+                //new ParallelOptions { MaxDegreeOfParallelism = 1 },
+                (underlying =>
             {
-                OptionChain chain;
-                if (slice.OptionChains.TryGetValue(_optionSymbol, out chain))
+                var dividendYieldModel = new DividendYieldProvider(underlying);
+                foreach (var symbol in OptionChainProvider.GetOptionContractList(underlying, Time))
                 {
-                    // we find at the money (ATM) put contract with farthest expiration
-                    var atmContract = chain
-                        .OrderByDescending(x => x.Expiry)
-                        .ThenBy(x => Math.Abs(chain.Underlying.Price - x.Strike))
-                        .ThenByDescending(x => x.Right)
-                        .FirstOrDefault();
-
-                    if (atmContract != null)
+                    var oppositeRight = symbol.ID.OptionRight == OptionRight.Call ? OptionRight.Put : OptionRight.Call;
+                    var mirrorOption = QuantConnect.Symbol.CreateOption(underlying, symbol.ID.Market, symbol.ID.OptionStyle, oppositeRight, symbol.ID.StrikePrice, symbol.ID.Date);
+                    var impliedVolatility = new ImpliedVolatility(symbol, mirrorOption: mirrorOption, riskFreeRateModel: RiskFreeInterestRateModel, dividendYieldModel: dividendYieldModel, period: 1
+                        //, optionModel: OptionPricingModelType.ForwardTree
+                        //, optionModel: OptionPricingModelType.BinomialCoxRossRubinstein
+                        );
+                    var history = IndicatorHistory(impliedVolatility, new[] { symbol, mirrorOption, underlying }, 1, resolution: Resolution.Daily);
+                    Interlocked.Increment(ref totalIVCount);
+                    if (history.Count == 0)
                     {
-                        // if found, trade it
-                        MarketOrder(atmContract.Symbol, 1);
-                        MarketOnCloseOrder(atmContract.Symbol, -1);
+                        Interlocked.Increment(ref emptyHistory);
+                        //Log($"Empty history for {symbol} & {mirrorOption}");
                     }
                 }
-            }
-        }
+            }));
 
-        /// <summary>
-        /// Order fill event handler. On an order fill update the resulting information is passed to this method.
-        /// </summary>
-        /// <param name="orderEvent">Order event details containing details of the events</param>
-        /// <remarks>This method can be called asynchronously and so should only be used by seasoned C# experts. Ensure you use proper locks on thread-unsafe objects</remarks>
-        public override void OnOrderEvent(OrderEvent orderEvent)
-        {
-            Log(orderEvent.ToString());
+            var percentage = 0m;
+            if (ImpliedVolatility.TotalCallCount != 0)
+            {
+                percentage = ((ImpliedVolatility.SecondExceptionFailure * 1m) / ImpliedVolatility.TotalCallCount) * 100;
+            }
+            Quit($"Took: {DateTime.UtcNow - start} FirstExceptionFailure {ImpliedVolatility.FirstExceptionFailure} SecondExceptionFailure {ImpliedVolatility.SecondExceptionFailure}. TotalCount: {ImpliedVolatility.TotalCallCount}. Percent: {percentage.Round(2)}%." +
+                $" EmptyIndicatorHistory {emptyHistory} out of {totalIVCount}");
         }
 
         /// <summary>

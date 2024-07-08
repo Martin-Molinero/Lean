@@ -3312,7 +3312,7 @@ namespace QuantConnect.Algorithm
         public IndicatorHistory IndicatorHistory(IndicatorBase<IndicatorDataPoint> indicator, IEnumerable<Symbol> symbols, int period, Resolution? resolution = null, Func<IBaseData, decimal> selector = null)
         {
             var warmupPeriod = (indicator as IIndicatorWarmUpPeriodProvider)?.WarmUpPeriod ?? 0;
-            var history = History(symbols, period + warmupPeriod, resolution);
+            var history = History(symbols, period + warmupPeriod, resolution, dataNormalizationMode: DataNormalizationMode.ScaledRaw);
             return IndicatorHistory(indicator, history, selector);
         }
 

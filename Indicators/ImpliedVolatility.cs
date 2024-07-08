@@ -14,6 +14,8 @@
 */
 
 using System;
+using System.Threading;
+using MathNet.Numerics;
 using MathNet.Numerics.RootFinding;
 using Python.Runtime;
 using QuantConnect.Data;
@@ -330,16 +332,22 @@ namespace QuantConnect.Indicators
         /// <returns>Smoothened IV of the option</returns>
         protected virtual decimal CalculateIV(decimal timeTillExpiry)
         {
+            Interlocked.Increment(ref TotalCallCount);
+
             var impliedVol = 0m;
             try
             {
                 Func<double, double> f = (vol) => (double)(TheoreticalPrice(
                     Convert.ToDecimal(vol), UnderlyingPrice, Strike, timeTillExpiry, RiskFreeRate, DividendYield, Right, _optionModel) - Price);
-                impliedVol = Convert.ToDecimal(Brent.FindRoot(f, 1e-7d, 2.0d, 1e-4d, 100));
+                impliedVol = Convert.ToDecimal(Brent.FindRoot(f, 1e-7d, 4.0d, 1e-4d, 100));
             }
             catch
             {
-                Log.Error("ImpliedVolatility.CalculateIV(): Fail to converge, returning 0.");
+                Interlocked.Increment(ref FirstExceptionFailure);
+                if (_optionSymbol.ID.OptionRight == OptionRight.Call)
+                {
+                    LogFailure(_optionSymbol, UnderlyingPrice.Current);
+                }
             }
 
             if (UseMirrorContract)
@@ -349,18 +357,33 @@ namespace QuantConnect.Indicators
                 {
                     Func<double, double> f = (vol) => (double)(TheoreticalPrice(
                         Convert.ToDecimal(vol), UnderlyingPrice, Strike, timeTillExpiry, RiskFreeRate, DividendYield, _oppositeOptionSymbol.ID.OptionRight, _optionModel) - OppositePrice);
-                    mirrorImpliedVol = Convert.ToDecimal(Brent.FindRoot(f, 1e-7d, 2.0d, 1e-4d, 100));
+                    mirrorImpliedVol = Convert.ToDecimal(Brent.FindRoot(f, 1e-7d, 4.0d, 1e-4d, 100));
+
+                    return SmoothingFunction(impliedVol, mirrorImpliedVol);
                 }
                 catch
                 {
-                    Log.Error("ImpliedVolatility.CalculateIV(): Fail to converge, returning 0.");
+                    Interlocked.Increment(ref SecondExceptionFailure);
+                    if (_optionSymbol.ID.OptionRight == OptionRight.Call)
+                    {
+                        LogFailure(_oppositeOptionSymbol, UnderlyingPrice.Current);
+                    }
                 }
-
-                return SmoothingFunction(impliedVol, mirrorImpliedVol);
             }
 
             return impliedVol;
         }
+
+        private void LogFailure(Symbol symbol, IndicatorDataPoint underlying)
+        {
+            return;
+            Log.Error($"ImpliedVolatility.CalculateIV({symbol.ID}): Failed {underlying.Time:yyyyMMdd}." +
+                $" Strike {symbol.ID.StrikePrice}. Underlying {underlying.Value}. Price diff {((symbol.ID.StrikePrice - UnderlyingPrice) / UnderlyingPrice).Round(2) * 100}%");
+        }
+
+        public static long FirstExceptionFailure;
+        public static long SecondExceptionFailure;
+        public static long TotalCallCount;
 
         /// <summary>
         /// Resets this indicator and all sub-indicators
