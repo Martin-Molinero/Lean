@@ -56,7 +56,13 @@ namespace QuantConnect.Securities.Future
             { "RB", "OB" },
             { "YG", "OYG" },
             { "ZG", "OZG" },
-            { "ZI", "OZI" }
+            { "ZI", "OZI" },
+            { "6A", "ADU" },
+            { "6B", "GBU" },
+            { "6C", "CAU" },
+            { "6E", "EUU" },
+            { "6J", "JPU" },
+            { "6S", "CHU" }
         };
 
         private static Dictionary<string, string> _futureOptionsToFutureGLOBEX = _futureToFutureOptionsGLOBEX

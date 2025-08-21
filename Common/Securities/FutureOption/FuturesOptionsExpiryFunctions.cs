@@ -24,19 +24,17 @@ namespace QuantConnect.Securities.FutureOption
     /// </summary>
     public static class FuturesOptionsExpiryFunctions
     {
-        private static readonly MarketHoursDatabase _mhdb = MarketHoursDatabase.FromDataFolder();
-
-        private static readonly Symbol _lo = Symbol.CreateOption(Symbol.Create("CL", SecurityType.Future, Market.NYMEX), Market.NYMEX, default(OptionStyle), default(OptionRight), default(decimal), SecurityIdentifier.DefaultDate);
-        private static readonly Symbol _on = Symbol.CreateOption(Symbol.Create("NG", SecurityType.Future, Market.NYMEX), Market.NYMEX, default(OptionStyle), default(OptionRight), default(decimal), SecurityIdentifier.DefaultDate);
-        private static readonly Symbol _ozb = Symbol.CreateOption(Symbol.Create("ZB", SecurityType.Future, Market.CBOT), Market.CBOT, default(OptionStyle), default(OptionRight), default(decimal), SecurityIdentifier.DefaultDate);
-        private static readonly Symbol _ozc = Symbol.CreateOption(Symbol.Create("ZC", SecurityType.Future, Market.CBOT), Market.CBOT, default(OptionStyle), default(OptionRight), default(decimal), SecurityIdentifier.DefaultDate);
-        private static readonly Symbol _ozn = Symbol.CreateOption(Symbol.Create("ZN", SecurityType.Future, Market.CBOT), Market.CBOT, default(OptionStyle), default(OptionRight), default(decimal), SecurityIdentifier.DefaultDate);
-        private static readonly Symbol _ozs = Symbol.CreateOption(Symbol.Create("ZS", SecurityType.Future, Market.CBOT), Market.CBOT, default(OptionStyle), default(OptionRight), default(decimal), SecurityIdentifier.DefaultDate);
-        private static readonly Symbol _ozt = Symbol.CreateOption(Symbol.Create("ZT", SecurityType.Future, Market.CBOT), Market.CBOT, default(OptionStyle), default(OptionRight), default(decimal), SecurityIdentifier.DefaultDate);
-        private static readonly Symbol _ozw = Symbol.CreateOption(Symbol.Create("ZW", SecurityType.Future, Market.CBOT), Market.CBOT, default(OptionStyle), default(OptionRight), default(decimal), SecurityIdentifier.DefaultDate);
-        private static readonly Symbol _hxe = Symbol.CreateOption(Symbol.Create("HG", SecurityType.Future, Market.COMEX), Market.COMEX, default(OptionStyle), default(OptionRight), default(decimal), SecurityIdentifier.DefaultDate);
-        private static readonly Symbol _og = Symbol.CreateOption(Symbol.Create("GC", SecurityType.Future, Market.COMEX), Market.COMEX, default(OptionStyle), default(OptionRight), default(decimal), SecurityIdentifier.DefaultDate);
-        private static readonly Symbol _so = Symbol.CreateOption(Symbol.Create("SI", SecurityType.Future, Market.COMEX), Market.COMEX, default(OptionStyle), default(OptionRight), default(decimal), SecurityIdentifier.DefaultDate);
+        private static readonly Symbol _lo = Symbol.CreateCanonicalOption(Symbol.Create("CL", SecurityType.Future, Market.NYMEX));
+        private static readonly Symbol _on = Symbol.CreateCanonicalOption(Symbol.Create("NG", SecurityType.Future, Market.NYMEX));
+        private static readonly Symbol _ozb = Symbol.CreateCanonicalOption(Symbol.Create("ZB", SecurityType.Future, Market.CBOT));
+        private static readonly Symbol _ozc = Symbol.CreateCanonicalOption(Symbol.Create("ZC", SecurityType.Future, Market.CBOT));
+        private static readonly Symbol _ozn = Symbol.CreateCanonicalOption(Symbol.Create("ZN", SecurityType.Future, Market.CBOT));
+        private static readonly Symbol _ozs = Symbol.CreateCanonicalOption(Symbol.Create("ZS", SecurityType.Future, Market.CBOT));
+        private static readonly Symbol _ozt = Symbol.CreateCanonicalOption(Symbol.Create("ZT", SecurityType.Future, Market.CBOT));
+        private static readonly Symbol _ozw = Symbol.CreateCanonicalOption(Symbol.Create("ZW", SecurityType.Future, Market.CBOT));
+        private static readonly Symbol _hxe = Symbol.CreateCanonicalOption(Symbol.Create("HG", SecurityType.Future, Market.COMEX));
+        private static readonly Symbol _og = Symbol.CreateCanonicalOption(Symbol.Create("GC", SecurityType.Future, Market.COMEX));
+        private static readonly Symbol _so = Symbol.CreateCanonicalOption(Symbol.Create("SI", SecurityType.Future, Market.COMEX));
 
         /// <summary>
         /// Futures options expiry functions lookup table, keyed by canonical future option Symbol
