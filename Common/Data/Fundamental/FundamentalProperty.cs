@@ -4197,6 +4197,7 @@ namespace QuantConnect.Data.Fundamental
         CompanyProfile_FullTimeEmployeeNumber,
         CompanyProfile_PartTimeEmployeeNumber,
         CompanyProfile_TreasuryShares,
+        CompanyProfile_ShareClassMarketCap,
         AssetClassification_StockType,
         AssetClassification_StyleBox,
         AssetClassification_GrowthGrade,
